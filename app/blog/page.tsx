@@ -245,6 +245,7 @@ export default function BlogPage() {
                             month: "short",
                             day: "numeric",
                           })}
+                          
                       </span>
                       <div className="flex-grow pt-2">
                         {post.excerpt && (

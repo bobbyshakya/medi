@@ -1,20 +1,19 @@
-import { type NextRequest, NextResponse } from "next/server"
-import { wixServerClient } from "@/lib/wixServer"
+import { type NextRequest, NextResponse } from "next/server";
+import { wixServerClient } from "@/lib/wixServer";
 
+// fallback scraper function
 async function fetchWebsiteData() {
   const response = await fetch("https://www.medivisorindiatreatment.com", {
     headers: {
       "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
     },
-  })
+  });
 
   if (!response.ok) {
-    throw new Error(`Website fetch failed: ${response.status}`)
+    throw new Error(`Website fetch failed: ${response.status}`);
   }
 
-  const html = await response.text()
-
-  // Create mock blog posts from website content
+  // fake posts for fallback demo
   return [
     {
       _id: "website-post-1",
@@ -28,9 +27,7 @@ async function fetchWebsiteData() {
       author: "Digital Marketing Team",
       tags: ["Digital Marketing", "Future Trends", "Technology"],
       featuredMedia: {
-        image: {
-          url: "/placeholder.svg?height=400&width=600",
-        },
+        image: { url: "/placeholder.svg?height=400&width=600" },
       },
     },
     {
@@ -44,72 +41,45 @@ async function fetchWebsiteData() {
       author: "Event Team",
       tags: ["Speakers", "Webinar", "Experts"],
       featuredMedia: {
-        image: {
-          url: "/placeholder.svg?height=400&width=600",
-        },
+        image: { url: "/placeholder.svg?height=400&width=600" },
       },
     },
-  ]
+  ];
 }
 
+// --- MAIN HANDLER ---
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url)
-    const limit = Number.parseInt(searchParams.get("limit") || "9")
-    const offset = Number.parseInt(searchParams.get("offset") || "0")
-    const sort = searchParams.get("sort") || "PUBLISHED_DATE_DESC"
-    const useWebsiteFallback = searchParams.get("fallback") === "website"
-
-    console.log("[v0] Fetching posts with params:", { limit, offset, sort, useWebsiteFallback })
+    const { searchParams } = new URL(request.url);
+    const limit = Number.parseInt(searchParams.get("limit") || "9");
+    const offset = Number.parseInt(searchParams.get("offset") || "0");
+    const sort = searchParams.get("sort") || "PUBLISHED_DATE_DESC";
+    const useWebsiteFallback = searchParams.get("fallback") === "website";
 
     if (useWebsiteFallback) {
-      try {
-        const websiteData = await fetchWebsiteData()
-        return NextResponse.json(
-          {
-            posts: websiteData,
-            total: websiteData.length,
-            hasMore: false,
-            source: "website",
-          },
-          {
-            headers: {
-              "Access-Control-Allow-Origin": "*",
-              "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-              "Access-Control-Allow-Headers": "Content-Type, Authorization",
-            },
-          },
-        )
-      } catch (websiteError) {
-        console.log("[v0] Website fallback failed, trying SDK:", websiteError)
-      }
+      const websiteData = await fetchWebsiteData();
+      return jsonWithCors({
+        posts: websiteData,
+        total: websiteData.length,
+        hasMore: false,
+        source: "website",
+      });
     }
 
+    // ✅ Wix SDK call (server-to-server, no CORS issue)
     const result = await wixServerClient.posts.listPosts({
       paging: { limit, offset },
       sort: sort as any,
-    })
-
-    console.log("[v0] Posts fetched successfully:", result.posts?.length || 0)
+    });
 
     const posts = Array.isArray(result.posts)
       ? result.posts.map((post: any) => {
-          console.log(`[v0] Processing images for post: ${post.title}`)
+          let imageUrl: string | null = null;
 
-          let imageUrl = null
-
-          // Try to get image from various Wix fields
-          if (post.coverMedia?.image?.url) {
-            imageUrl = post.coverMedia.image.url
-          } else if (post.featuredMedia?.image?.url) {
-            imageUrl = post.featuredMedia.image.url
-          } else if (post.media?.mainMedia?.image?.url) {
-            imageUrl = post.media.mainMedia.image.url
-          } else if (post.heroImage?.url) {
-            imageUrl = post.heroImage.url
-          }
-
-          console.log(`[v0] Direct image URL found: ${imageUrl || "None"}`)
+          if (post.coverMedia?.image?.url) imageUrl = post.coverMedia.image.url;
+          else if (post.featuredMedia?.image?.url) imageUrl = post.featuredMedia.image.url;
+          else if (post.media?.mainMedia?.image?.url) imageUrl = post.media.mainMedia.image.url;
+          else if (post.heroImage?.url) imageUrl = post.heroImage.url;
 
           return {
             ...post,
@@ -117,74 +87,59 @@ export async function GET(request: NextRequest) {
             content: post.content || "",
             coverMedia: {
               ...post.coverMedia,
-              processedImageUrl: imageUrl, // Use direct URL
-              originalImageUrl: imageUrl, // Same URL for fallback
+              processedImageUrl: imageUrl,
+              originalImageUrl: imageUrl,
             },
-          }
+          };
         })
-      : []
+      : [];
 
-    const response = NextResponse.json({
+    return jsonWithCors({
       posts,
       total: result.metaData?.total || 0,
       hasMore: offset + limit < (result.metaData?.total || 0),
       source: "wix-sdk",
-    })
-
-    // Set CORS headers to allow requests from any domain
-    response.headers.set("Access-Control-Allow-Origin", "*")
-    response.headers.set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-    response.headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization")
-
-    return response
+    });
   } catch (error) {
-    console.error("[v0] Failed to fetch posts:", error)
+    console.error("[API] Failed to fetch posts:", error);
 
     try {
-      console.log("[v0] Attempting website fallback after SDK failure")
-      const websiteData = await fetchWebsiteData()
-      return NextResponse.json(
+      const websiteData = await fetchWebsiteData();
+      return jsonWithCors({
+        posts: websiteData,
+        total: websiteData.length,
+        hasMore: false,
+        source: "website-fallback",
+      });
+    } catch {
+      return jsonWithCors(
         {
-          posts: websiteData,
-          total: websiteData.length,
-          hasMore: false,
-          source: "website-fallback",
+          error: "Failed to fetch blog posts",
+          details: error instanceof Error ? error.message : "Unknown error",
         },
-        {
-          headers: {
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-            "Access-Control-Allow-Headers": "Content-Type, Authorization",
-          },
-        },
-      )
-    } catch (fallbackError) {
-      console.error("[v0] Website fallback also failed:", fallbackError)
+        500
+      );
     }
-
-    const errorResponse = NextResponse.json(
-      {
-        error: "Failed to fetch blog posts",
-        details: error instanceof Error ? error.message : "Unknown error",
-      },
-      { status: 500 },
-    )
-
-    errorResponse.headers.set("Access-Control-Allow-Origin", "*")
-    errorResponse.headers.set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-    errorResponse.headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization")
-
-    return errorResponse
   }
 }
 
-export async function OPTIONS(request: NextRequest) {
+// --- OPTIONS handler (CORS preflight) ---
+export async function OPTIONS() {
   return new NextResponse(null, {
     status: 200,
-    headers: {
-      "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-      "Access-Control-Allow-Headers": "Content-Type, Authorization",
-    },
-  })
+    headers: corsHeaders(),
+  });
+}
+
+// --- HELPERS ---
+function corsHeaders() {
+  return {
+    "Access-Control-Allow-Origin": "*", // or restrict to your Vercel domain
+    "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization",
+  };
+}
+
+function jsonWithCors(data: any, status = 200) {
+  return NextResponse.json(data, { status, headers: corsHeaders() });
 }

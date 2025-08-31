@@ -27,7 +27,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   return res.status(405).json({ message: 'Method Not Allowed' });
  }
 
- const { offset = '0', limit = '12' } = req.query;
+ const { offset = '0', limit = '9' } = req.query;
  const offsetNum = parseInt(offset as string, 10);
  const limitNum = parseInt(limit as string, 10);
 

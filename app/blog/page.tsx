@@ -89,7 +89,7 @@ export default function BlogPage() {
 
   const postsContainerRef = useRef<HTMLDivElement>(null)
 
-  const LIMIT = 12
+  const LIMIT = 9
 
   const fetchPosts = useCallback(
     async (pageToFetch: number) => {
@@ -245,7 +245,7 @@ export default function BlogPage() {
                             month: "short",
                             day: "numeric",
                           })}
-                          
+
                       </span>
                       <div className="flex-grow pt-2">
                         {post.excerpt && (

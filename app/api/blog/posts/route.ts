@@ -55,7 +55,7 @@ async function fetchWebsiteData() {
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
-    const limit = Number.parseInt(searchParams.get("limit") || "12")
+    const limit = Number.parseInt(searchParams.get("limit") || "9")
     const offset = Number.parseInt(searchParams.get("offset") || "0")
     const sort = searchParams.get("sort") || "PUBLISHED_DATE_DESC"
     const useWebsiteFallback = searchParams.get("fallback") === "website"

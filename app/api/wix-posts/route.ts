@@ -3,13 +3,14 @@ import { wixServerClient } from "@/lib/wixServer"
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
-  const limit = Number.parseInt(searchParams.get("limit") || "12", 10)
+  const limit = Number.parseInt(searchParams.get("limit") || "4", 10)
   const offset = Number.parseInt(searchParams.get("offset") || "0", 10)
   const sort = searchParams.get("sort") || "PUBLISHED_DATE_DESC"
 
   try {
     const result = await wixServerClient.posts.listPosts({
       paging: { limit, offset },
+      // @ts-expect-error Wix types accept union strings here
       sort,
     })
 

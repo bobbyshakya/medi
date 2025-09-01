@@ -1,7 +1,6 @@
 "use client"
 
 import { useEffect, useState, useCallback, useRef } from "react"
-import { wixClient } from "@/lib/wixClient"
 import { media } from "@wix/sdk"
 import Link from "next/link"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
@@ -9,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { ChevronLeft, ChevronRight, Play, Pause } from "lucide-react"
 import useEmblaCarousel from "embla-carousel-react"
 import { Skeleton } from "@/components/ui/skeleton"
+import useSWR from "swr"
 
 interface Post {
   _id: string
@@ -83,15 +83,24 @@ function calculateReadTime(text: string | undefined): string {
   return minutes === 0 ? " 1 min read" : `${minutes} min read`
 }
 
+const LIMIT = 12
+const fetcher = (url: string) => fetch(url).then((r) => r.json())
+
 export default function BlogCarousel() {
-  const [posts, setPosts] = useState<Post[]>([])
-  const [isLoading, setIsLoading] = useState(true)
   const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true, align: "start", skipSnaps: false, dragFree: false })
   const [isPlaying, setIsPlaying] = useState(true)
   const autoplayRef = useRef<NodeJS.Timeout | null>(null)
   const AUTOPLAY_DELAY = 3000 // 3 seconds
 
-  const LIMIT = 6 // Number of posts for the carousel
+  const { data, error, isLoading } = useSWR(`/api/wix-posts?limit=${LIMIT}&offset=${0}`, fetcher)
+
+  const posts: Post[] = Array.isArray(data?.posts)
+    ? data.posts.map((p: any) => ({
+        ...p,
+        excerpt: p.excerpt || "No description available.",
+        content: p.content || "",
+      }))
+    : []
 
   const startAutoplay = useCallback(() => {
     if (!emblaApi) return
@@ -123,41 +132,6 @@ export default function BlogCarousel() {
     }
   }, [isPlaying, startAutoplay, stopAutoplay])
 
-  const fetchCarouselPosts = useCallback(async () => {
-    setIsLoading(true)
-    try {
-      if (!wixClient.posts || typeof wixClient.posts.listPosts !== "function") {
-        console.error(
-          "Error: wixClient.posts module or listPosts method is not available. " +
-          "This is likely due to an incorrect NEXT_PUBLIC_WIX_CLIENT_ID or Wix app configuration/permissions.",
-        )
-        setPosts([])
-        setIsLoading(false)
-        return
-      }
-
-      const result = await wixClient.posts.listPosts({
-        paging: { limit: LIMIT, offset: 0 },
-        sort: "PUBLISHED_DATE_DESC", // Fetch the latest posts
-      })
-
-      const newPosts = Array.isArray(result.posts)
-        ? result.posts.map((post: any) => ({
-          ...post,
-          excerpt: post.excerpt || "No description available.",
-          content: post.content || "",
-        }))
-        : ([] as Post[])
-
-      setPosts(newPosts)
-    } catch (error) {
-      console.error("Failed to fetch carousel posts:", error)
-      setPosts([])
-    } finally {
-      setIsLoading(false)
-    }
-  }, [LIMIT])
-
   const scrollPrev = useCallback(() => {
     emblaApi && emblaApi.scrollPrev()
   }, [emblaApi])
@@ -178,73 +152,43 @@ export default function BlogCarousel() {
     }
   }, [isPlaying, startAutoplay])
 
-  const formatDate = useCallback((dateString: string | undefined): string => {
-    if (!dateString) return ""
-    const date = new Date(dateString)
-    const today = new Date()
-    const yesterday = new Date(today)
-    yesterday.setDate(today.getDate() - 1)
-
-    const options: Intl.DateTimeFormatOptions = {
-      month: "short",
-      day: "numeric",
-      // year: "numeric",
-    }
-
-    if (date.toDateString() === today.toDateString()) {
-      return "Today"
-    } else if (date.toDateString() === yesterday.toDateString()) {
-      return "Yesterday"
-    } else {
-      return date.toLocaleDateString("en-US", options)
-    }
-  }, [])
-
-  useEffect(() => {
-    fetchCarouselPosts()
-  }, [fetchCarouselPosts])
-
   useEffect(() => {
     if (!emblaApi) return
-
-    // Start autoplay when component mounts
     startAutoplay()
-
-    // Cleanup on unmount
     return () => {
       stopAutoplay()
     }
   }, [emblaApi, startAutoplay, stopAutoplay])
 
   return (
-    <section className="py-4 md:py-10 ">
+    <section className="py-4 md:py-10">
       <div className="container mx-auto md:px-0 px-4">
         {isLoading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {Array.from({ length: 4 }).map((_, index) => (
-              <Card key={index} className="flex flex-col overflow-hidden border-gray-200 shadow-sm">
+              <div key={index} className="flex flex-col overflow-hidden border-gray-200 shadow-sm">
                 <Skeleton className="w-full h-56" />
-                <CardHeader className="pb-2">
-                  <Skeleton className="h-6 w-3/4 mb-2" />
-                  <Skeleton className="h-4 w-1/2" />
-                </CardHeader>
-                <CardContent className="flex-grow pt-2">
-                  <Skeleton className="h-4 w-full mb-1" />
-                  <Skeleton className="h-4 w-5/6" />
-                </CardContent>
-                <CardFooter className="flex justify-between items-center pt-4">
-                  <Skeleton className="h-4 w-1/4" />
-                  <Skeleton className="h-8 w-20" />
-                </CardFooter>
-              </Card>
+                <div className="p-4 bg-white">
+                  <div className="pb-2">
+                    <Skeleton className="h-6 w-3/4 mb-2" />
+                  </div>
+                  <Skeleton className="h-4 w-1/2 mb-1" />
+                  <div className="pt-2">
+                    <Skeleton className="h-4 w-full mb-1" />
+                    <Skeleton className="h-4 w-5/6" />
+                  </div>
+                  <div className="flex justify-between items-center pt-4">
+                    <Skeleton className="h-4 w-1/4" />
+                    <Skeleton className="h-8 w-20" />
+                  </div>
+                </div>
+              </div>
             ))}
           </div>
         ) : posts.length === 0 ? (
-          <p className="text-center text-gray-600 text-lg">No featured posts available.</p>
+          <p className="text-center text-gray-600 dark:text-gray-400 mt-10 text-lg">No featured posts available.</p>
         ) : (
           <div className="relative">
-
-
             <div
               className="overflow-hidden"
               ref={emblaRef}
@@ -261,76 +205,77 @@ export default function BlogCarousel() {
                   )
                   const readTime = calculateReadTime(post.content)
 
-
                   return (
                     <div key={post._id} className="flex-none w-full sm:w-1/2 lg:w-1/4 pl-4">
-                      <Card className="group flex flex-col overflow-hidden border border-gray-100 rounded-xs shadow-none hover:shadow-md transition-shadow duration-300 ease-in-out h-full bg-white">
+                      <div className="flex flex-col overflow-hidden border border-gray-100 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow duration-300 ease-in-out">
                         <Link href={`/blog/${post.slug}`} className="block">
-                            <div className="relative w-full h-48 overflow-hidden">
-                        {youtubeEmbedUrl ? (
-                          <iframe
-                            className="absolute top-0 left-0 w-full h-full"
-                            src={youtubeEmbedUrl}
-                            title={post.title}
-                            frameBorder="0"
-                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                            allowFullScreen
-                          ></iframe>
-                        ) : embedVideoUrl ? (
-                          <video
-                            src={embedVideoUrl}
-                            poster={embedThumbnailUrl || "/placeholder.svg"}
-                            controls
-                            className="w-full h-full object-cover"
-                            aria-label={`Play video for ${post.title}`}
-                          >
-                            Your browser does not support the video tag.
-                          </video>
-                        ) : wixImageUrl ? (
-                          <img
-                            src={wixImageUrl}
-                            alt={post.title}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
-                          />
-                        ) : (
-                          <div className="w-full h-48 bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-gray-500 dark:text-gray-400 text-lg">
-                            No Media Available
-                          </div>
-                        )}
-                      </div>
-
-                          {/* Meta Info */}
-                          <div className="flex justify-start items-center gap-x-4 pt-3 mt-3 px-4">
-                            {post.firstPublishedDate && (
-                              <CardDescription className="text-xs text-gray-600 font-medium">
-                                <span className="dark:text-gray-400">{formatDate(post.firstPublishedDate)}</span>
-                              </CardDescription>
+                          <div className="relative w-full h-48 overflow-hidden">
+                            {youtubeEmbedUrl ? (
+                              <iframe
+                                className="absolute top-0 left-0 w-full h-full"
+                                src={youtubeEmbedUrl}
+                                title={post.title}
+                                frameBorder="0"
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                allowFullScreen
+                              />
+                            ) : embedVideoUrl ? (
+                              <video
+                                src={embedVideoUrl}
+                                poster={embedThumbnailUrl || "/placeholder.svg"}
+                                controls
+                                className="w-full h-full object-cover"
+                                aria-label={`Play video for ${post.title}`}
+                              >
+                                Your browser does not support the video tag.
+                              </video>
+                            ) : wixImageUrl ? (
+                              <img
+                                src={wixImageUrl || "/placeholder.svg"}
+                                alt={post.title}
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                              />
+                            ) : (
+                              <div className="w-full h-48 bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-gray-500 dark:text-gray-400 text-lg">
+                                No Media Available
+                              </div>
                             )}
-                            <span className="text-xs text-gray-600 flex items-center gap-x-2">
-                              <div className="h-1 w-1 rounded-full bg-gray-600"></div>
-                              <span className="dark:text-gray-400">{readTime}</span>
-                            </span>
                           </div>
-
-                          {/* Title */}
-                          <CardHeader className="pt-2 pb-0 mt-2 px-4">
-                            <CardTitle className="text-lg md:text-xl font-medium text-darkText mb-3 flex items-center line-clamp-2 group-hover:text-gray-700 transition-colors duration-200 font-helvetica">
-                              <Link href={`/blog/${post.slug}`}>
+                        </Link>
+                        <div className="p-4 bg-white flex flex-col flex-grow">
+                          <div className="pb-2">
+                            <div className="text-xl font-medium leading-tight">
+                              <Link
+                                href={`/blog/${post.slug}`}
+                                className="hover:text-primary line-clamp-2 text-gray-700 transition-colors duration-200"
+                              >
                                 {post.title}
                               </Link>
-                            </CardTitle>
-                          </CardHeader>
-
-                          {/* Excerpt */}
-                          <CardContent className="flex-grow px-4">
+                            </div>
+                          </div>
+                          <span className="text-sm text-gray-600 dark:text-gray-400">
+                            {post.firstPublishedDate &&
+                              new Date(post.firstPublishedDate).toLocaleDateString("en-US", {
+                                year: "numeric",
+                                month: "short",
+                                day: "numeric",
+                              })}
+                          </span>
+                          <div className="flex-grow pt-2">
                             {post.excerpt && (
-                              <p className="text-gray-700 leading-relaxed text-base md:text-lg mb-4 min-h-[80px] flex items-center line-clamp-3">
-                                {post.excerpt}
-                              </p>
+                              <p className="text-gray-600 dark:text-gray-300 text-base line-clamp-3">{post.excerpt}</p>
                             )}
-                          </CardContent>
-                        </Link>
-                      </Card>
+                          </div>
+                          <div className="flex justify-between items-center pt-4 mt-auto">
+                            <span className="text-sm text-gray-600 dark:text-gray-400">{readTime}</span>
+                            <Link href={`/blog/${post.slug}`} passHref>
+                              <button className="border-gray-200 text-medium rounded-sm border px-3 py-1 text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors duration-200">
+                                Read More
+                              </button>
+                            </Link>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   )
                 })}
@@ -355,6 +300,7 @@ export default function BlogCarousel() {
           </div>
         )}
       </div>
+      
     </section>
   )
 }

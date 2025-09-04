@@ -171,18 +171,18 @@ export default function ContactModal({ isOpen, onClose }: ContactModalProps) {
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="w-[95vw] max-w-md h-auto mx-auto p-0 bg-white rounded-xs shadow-sm border-0 overflow-hidden">
         {/* Compact Header */}
-        <div className="relative bg- px-4 py-4">
+        <div className="relative border border-gray-200 px-4 pt-10">
           <Button
             variant="ghost"
             size="icon"
             onClick={handleClose}
-            className="absolute top-2 right-2 h-6 w-6 rounded-full text-white transition-colors"
+            className="absolute top-2 bg-gray-100 right-2 h-6 w-6 rounded-full text-white transition-colors"
           >
             <X className="h-3 w-3  " />
           </Button>
 
           <div className="text-center pr-8">
-            <DialogTitle className="text-2xl font-bold text-gray-700 mb-1">
+            <DialogTitle className="text-2xl font-bold text-gray-600 mb-1">
               Explore Advanced Medical Care in India
             </DialogTitle>
           </div>
@@ -216,7 +216,7 @@ export default function ContactModal({ isOpen, onClose }: ContactModalProps) {
                 name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <Label htmlFor="name" className="text-sm font-medium mb-1 text-gray-700 flex items-center">
+                    <Label htmlFor="name" className="text-sm font-medium mb-1 text-gray-600 flex items-center">
                       <User className="w-4 h-4 mr-1" />
                       Full Name
                     </Label>
@@ -239,7 +239,7 @@ export default function ContactModal({ isOpen, onClose }: ContactModalProps) {
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <Label htmlFor="email" className="text-sm font-medium mb-1 text-gray-700 flex items-center">
+                    <Label htmlFor="email" className="text-sm font-medium mb-1 text-gray-600 flex items-center">
                       <Mail className="w-4 h-4 mr-1" />
                       Email
                     </Label>
@@ -259,7 +259,7 @@ export default function ContactModal({ isOpen, onClose }: ContactModalProps) {
 
               {/* Country Selection */}
               <div className="relative">
-                <Label htmlFor="country-select" className="text-sm font-medium mb-1 text-gray-700 flex items-center">
+                <Label htmlFor="country-select" className="text-sm font-medium mb-1 text-gray-600 flex items-center">
                   <MapPin className="w-4 h-4 mr-1" />
                   Country
                 </Label>
@@ -293,7 +293,7 @@ export default function ContactModal({ isOpen, onClose }: ContactModalProps) {
 
               {/* Phone Number */}
               <div>
-                <Label htmlFor="whatsapp" className="text-sm font-medium mb-1 text-gray-700 flex items-center">
+                <Label htmlFor="whatsapp" className="text-sm font-medium mb-1 text-gray-600 flex items-center">
                   <Phone className="w-4 h-4 mr-1" />
                   WhatsApp/Viber
                 </Label>
@@ -342,7 +342,7 @@ export default function ContactModal({ isOpen, onClose }: ContactModalProps) {
                 name="message"
                 render={({ field }) => (
                   <FormItem>
-                    <Label htmlFor="message" className="text-sm font-medium mb-1 text-gray-700 flex items-center">
+                    <Label htmlFor="message" className="text-sm font-medium mb-1 text-gray-600 flex items-center">
                       <MessageSquare className="w-4 h-4 mr-1" />
                       Message
                     </Label>

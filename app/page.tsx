@@ -27,7 +27,7 @@ export const generateMetadata = (): Metadata => {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Medivisor India | Premium Medical Treatment for International Patients',
+    title: 'Medivisor India Treatment | Premium Medical Treatment for International Patients',
     description: 'Affordable, high-quality medical treatment in India for international patients. Surgeries, IVF, kidney transplant, cancer care, and heart treatments with expert care.',
     site: '@MedivisorIndia',
   },

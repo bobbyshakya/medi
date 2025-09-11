@@ -65,145 +65,139 @@ interface DoctorProfile {
 
 // Static data for the doctor profile
 const mockDoctor: DoctorProfile = {
-  _id: "doc1",
-  name: "Dr. Ambrish Mithal",
-  title: "Chairman & Head - Endocrinology & Diabetes",
-  specialty: "Endocrinology & Diabetes",
-  photo: "https://max-website20-images.s3.ap-south-1.amazonaws.com/Dr_Ambrish_4b333d76bd_2f57625e3f.jpg",
-  experience: "36+",
+  _id: "doc2",
+  name: "Dr. Anant Kumar",
+  title: "Chairman - Urology Renal Transplant and Robotics of Max Saket Complex and Uro-Oncology of MSSH Saket",
+  specialty: "Urology, Kidney Transplant, Robotic Surgery",
+  photo: "https://max-website20-images.s3.ap-south-1.amazonaws.com/Dr_Anant_Kumar_50e3223068.jpg",
+  experience: "38+",
   languages: ["English", "Hindi"],
-  hospitals: ["Max Hospital, Gurugram, India", "Max Super Speciality Hospital, Saket, Delhi, India"],
+  hospitals: ["Max Hospital, Saket, India", "Max Hospital, Vaishali, India"],
   contactPhone: "+91 926 888 0303",
   whatsapp: "+91 926 888 0303",
-  rating: 4.9,
-  reviewsCount: 2150,
-  about:
-    "Dr. Ambrish Mithal is an endocrinologist and the Chairman and Head of Endocrinology and Diabetes at Max Healthcare, Saket, New Delhi. One of the most renowned names in the field of Endocrinology, Dr. Ambrish Mithal is considered to be a thought leader in the medical community. He has been nominated to the Governing Council of the National Health Authority and appointed as honorary President, All India Institute of Medical Sciences, Gorakhpur.",
+  rating: 4.8,
+  reviewsCount: 1800,
+  about: "Dr. Anant Kumar has 35 years of experience in Urology & Kidney Transplant. He is currently,Chairman of Uro-Oncology, Robotic & Kidney Transplantation, Max Hospital at Saket New Delhi & Max Hospital Vaishali. He is well-known as one of the best robotic and laparoscopic surgeons in India. He was also Director of the Department of Urology, Renal transplantation and Robotics at Fortis hospital & Apollo Hospital in Delhi & NCR. Prior to this, he was the Professor and Head, Urology & Kidney Transplantation at SGPGIMS, Lucknow. He was also a Consultant Urologist in Addenbrooke’s Hospital, Cambridge, UK.\nDr. Anant Kumar,widely known as the best urologist in NCR, is also known as the best robotic surgeon in Delhi and highly-skilled kidney stone specialist in Delhi. Being the best urologist in Delhi, he specialises in Kidney Transplantation, Robotic Assisted Laparoscopic Urology, Reno vascular Hypertension, Laparoscopic Urology, Urological Oncology, Laser Urological Surgery and Reconstructive Urology. Currently regarded as one of the most well-known Urologists in India.\nPopularly known as the best urologist in Delhi and Uro-oncology in Delhi, Dr. Anant Kumar has 35 years of experience in Urology & Renal Transplantation as a teacher and clinician. A leading urologist in Delhi NCR, he has truly earned the title of the best robotic surgeon in Delhi by performing over 500 robotic surgeries in the last 5 years. Also, He has done over 3500 kidney transplants in the last 30 years & has been retrieving all kidneys laparoscopically in the last 20 years and has done over 2200 lap donor nephrectomy.\n\u00a0He has extensive experience in Reno vascular hypertension. Being a highly skilled, experienced and best robotic surgeon in Delhi, he has done several hundred endourological procedures like PCNL, URS, flexible ureteroscopy, endopyelotomy, TURP, TUBT, optical urethrotomy etc. Dr. Anant Kumar has been removing prostate gland by laser for the last 10 years and has used Thulium, green light and Holmium laser. Presently he has been doing HOLEP by Lumenis machine. He has done all kinds of reconstructive urology of kidney, bladder & urethra. He has been doing urethral stricture surgery for the last 30 years and has performed over 700 such cases. For the last 20 years, he has developed special interest in laparoscopic urology & has now performed almost all laparoscopic urological procedures including radical Prostatectomy, Cystectomy and Partial Nephrectomy. He has started Robotic assisted urological surgery for the last 6 years for prostate, kidney and bladder cancer and other urological reconstructions like pyeloplasty, ureteric reimplantation bladder augmentation etc. and is well-known as one of the best robotic surgeons in Delhi.",
   workExperience: [
     {
-      position: "Chairman and Head of Endocrinology and Diabetes",
-      organization: "Max Healthcare",
-      period: "2019 - Present",
+      position: "Chairman - Urology Renal Transplant and Robotics",
+      organization: "Max Saket Complex",
+      period: "Present",
     },
     {
-      position: "Chairman, Division of Endocrinology and Diabetes",
-      organization: "Medanta - The Medicity",
-      period: "2009 - 2019",
+      position: "Professor and Head, Department of Urology & Renal Transplantation",
+      organization: "Sanjay Gandhi Post Graduate Institute of Medical Sciences, Lucknow",
+      period: "1988 - 1998",
     },
     {
-      position: "Senior Consultant",
-      organization: "Indraprastha Apollo Hospital",
+      position: "Director, Department of Urology, Robotic and Kidney Transplantation",
+      organization: "Fortis Group of Hospitals, Delhi and NCR",
       period: "1998 - 2009",
     },
     {
-      position: "Faculty member (Endocrinology)",
-      organization: "Sanjay Gandhi PGI, Lucknow",
-      period: "1988 - 1998",
+      position: "Senior Consultant, Urology and Transplantation",
+      organization: "Indraprastha Apollo Hospital, New Delhi",
+      period: "2009 - 2019",
+    },
+    {
+      position: "Consultant Urologist",
+      organization: "Addenbrooke's NHS foundation, Cambridge, UK",
+      period: "1998 - 2009",
     },
   ],
   education: [
     {
-      degree: "D.M. (Endocrinology)",
-      institution: "AIIMS, New Delhi",
-      year: "1987",
+      degree: "DNB (Urology)",
+      institution: "PGIMER, Chandigarh, India",
+      year: "",
     },
     {
-      degree: "M.D.",
-      institution: "Kanpur University",
-      year: "1984",
+      degree: "M.Ch(Urology)",
+      institution: "PGIMER, Chandigarh, India",
+      year: "",
     },
     {
-      degree: "M.B.B.S.",
-      institution: "Kanpur University",
-      year: "1980",
+      degree: "M.S(General Surgery)",
+      institution: "PGIMER, Chandigarh India",
+      year: "",
+    },
+    {
+      degree: "M.B.B.S",
+      institution: "King George Medical University, Lucknow, India",
+      year: "",
     },
   ],
   memberships: [
-    "Endocrine Society of India",
-    "American Society for Bone and Mineral Research",
-    "Founder-Secretary, Indian Society for Bone and Mineral Research",
-    "President, Indian Society for Bone and Mineral Research",
-    "Member, Governing Council, Indian Menopause Society",
-    "Endocrine Society (US)",
-    "Editorial Board, Apollo Medical Journal",
+    "American Urological Association",
+    "British Association of Urological Surgeon",
+    "Societe Internationale D'Urologie",
+    "International Transplant Society",
+    "International Society of Nephrology",
+    "European Association of Urology",
+    "Asian society of Transplantation",
+    "Association of Surgeons of India",
+    "Urological Society of India",
+    "Indian Society of Organ Transplantation",
+    "Urological Society of India(Northern Chapter)",
+    "Indian Society of Peritoneal Dialysis",
+    "Indian Science Congress Society",
   ],
   awards: [
     {
-      title: "Padma Bhushan",
-      year: "2015",
-      organization: "President of India",
-    },
-    {
-      title: "Laureate Award 2021, International Excellence in Endocrinology Award",
-      year: "2021",
-      organization: "International Society",
-    },
-    {
-      title: "Dr. B.C. Roy Award",
-      year: "2015",
-      organization: "Medical Council of India",
-    },
-    {
-      title: "International Osteoporosis Foundation - President's Award",
-      year: "2016",
-      organization: "International Osteoporosis Foundation",
-    },
-    {
-      title: "Boy Frame Award",
-      year: "2004",
-      organization: "American Society for Bone Mineral Research",
+      title: "Won many awards and distinctions during medical education and training",
+      year: "",
+      organization: "",
     },
   ],
-  specialtyInterests: ["Endocrinology", "Diabetes", "Bone and Mineral Disorders", "Osteoporosis"],
+  specialtyInterests: ["Kidney Transplantation and Renovascular Hypertension", "Robotic and Laparoscopic Urology", "Stricture Urethra", "Uro - Oncology", "Laser Prostate Surgery"],
   faqs: [
     {
-      q: "What conditions does Dr. Mithal specialize in treating?",
-      a: "Dr. Mithal specializes in endocrinology and diabetes, including thyroid disorders, diabetes management, osteoporosis, and other hormonal imbalances.",
+      q: "What conditions does Dr. Anant Kumar specialize in treating?",
+      a: "Dr. Anant Kumar specializes in a wide range of urological conditions, including Kidney Transplantation, Robotic and Laparoscopic Urology, Stricture Urethra, Uro-Oncology, and Laser Prostate Surgery.",
     },
     {
-      q: "How can I book an appointment with Dr. Mithal?",
+      q: "How can I book an appointment with Dr. Anant Kumar?",
       a: "You can book an appointment by calling +91 926 888 0303 or through WhatsApp. Online booking is also available through the hospital's website.",
     },
     {
-      q: "Does Dr. Mithal see international patients?",
-      a: "Yes, Dr. Mithal sees international patients at Max Healthcare facilities. The hospital provides comprehensive support for international patients including visa assistance and travel coordination.",
-    },
-    {
-      q: "What are Dr. Mithal's consultation hours?",
-      a: "Consultation hours vary by location. Please contact the hospital directly for current scheduling and availability.",
+      q: "Does Dr. Anant Kumar see international patients?",
+      a: "Yes, Dr. Anant Kumar sees international patients at Max Healthcare facilities. The hospital provides comprehensive support for international patients including visa assistance and travel coordination.",
     },
   ],
   testimonials: [
     {
       id: 1,
-      name: "Rajesh Kumar",
+      name: "Ravi Sharma",
       rating: 5,
-      text: "Dr. Mithal's expertise in diabetes management has been life-changing. His thorough approach and clear explanations make complex conditions understandable.",
+      text: "Dr. Anant Kumar is an excellent surgeon. He performed my kidney transplant with great expertise and care. Highly recommend him!",
     },
     {
       id: 2,
-      name: "Sarah Johnson",
+      name: "Priya Singh",
       rating: 5,
-      text: "Exceptional care and professionalism. Dr. Mithal took the time to explain my thyroid condition and treatment options in detail.",
-    },
-    {
-      id: 3,
-      name: "Ahmed Al-Rashid",
-      rating: 5,
-      text: "As an international patient, I received outstanding care. Dr. Mithal's reputation for excellence is well-deserved.",
+      text: "Exceptional care. Dr. Anant Kumar's experience and professionalism made me feel very comfortable throughout my treatment.",
     },
   ],
 }
 
 export default function DoctorProfileComponent() {
   const [expandedFaq, setExpandedFaq] = useState<number | null>(null)
+  const [isAboutExpanded, setIsAboutExpanded] = useState(false)
 
   const toggleFaq = (index: number) => {
     setExpandedFaq(expandedFaq === index ? null : index)
   }
 
+  const toggleAbout = () => {
+    setIsAboutExpanded(!isAboutExpanded)
+  }
+
   // The component now directly uses the mockDoctor object
   const doctor = mockDoctor
+
+  const aboutText = doctor.about.split('\n');
+  const initialAbout = aboutText.slice(0, 1).join(' ');
+  const fullAbout = aboutText.join('\n');
 
   return (
     <div className="min-h-screen bg-white">
@@ -258,7 +252,16 @@ export default function DoctorProfileComponent() {
                     </div>
                   </div>
                 </div>
-                <p className="text-foreground text-lg leading-relaxed text-pretty">{doctor.about}</p>
+                <div className="text-foreground text-lg leading-relaxed text-pretty">
+                  <p>{isAboutExpanded ? fullAbout : initialAbout}</p>
+                  <Button
+                    onClick={toggleAbout}
+                    variant="link"
+                    className="p-0 h-auto text-[#74BF44] font-semibold"
+                  >
+                    {isAboutExpanded ? "Read Less" : "Read More"}
+                  </Button>
+                </div>
               </div>
             </div>
           </div>
@@ -353,7 +356,7 @@ export default function DoctorProfileComponent() {
                   <Heart className="w-8 h-8 text-gray-700 mx-auto mb-3" />
                   <h3 className="text-2xl font-bold text-gray-700 mb-2">Need Medical Consultation?</h3>
                   <p className="text-gray-600 mb-4 text-lg text-pretty">
-                    Book an appointment with Dr. Mithal for expert endocrinology care.
+                    Book an appointment with Dr. Anant Kumar for expert urology care.
                   </p>
                   <Button className="w-full bg-primary text-lg text-gray-700 hover:bg-primary/90">
                     <Calendar className="w-6 h-6 mr-2" />

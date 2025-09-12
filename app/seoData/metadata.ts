@@ -17,8 +17,8 @@ export const siteMetadata = {
     images: [
       {
         url: "https://images.pexels.com/photos/40568/medical-appointment-doctor-healthcare-40568.jpeg",
-        width: 1200,
-        height: 630,
+        width: 800,
+        height: 250,
         alt: "Medivisor India Treatment",
       },
     ],

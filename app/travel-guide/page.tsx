@@ -14,8 +14,8 @@ export const metadata: Metadata = {
     images: [
       {
         url: 'https://medivisorindiatreatment.com/og-travel-guide.jpg',
-        width: 1200,
-        height: 630,
+        width: 800,
+        height: 250,
         alt: 'Medivisor India Travel Guide',
       },
     ],

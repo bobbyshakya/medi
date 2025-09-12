@@ -17,9 +17,9 @@ export const generateMetadata = (): Metadata => {
     siteName: 'Medivisor India Treatment',
     images: [
       {
-        url: 'https://medivisorindiatreatment.com/Medivisor-logo.svg',
-        width: 1200,
-        height: 630,
+        url: 'https://medivisorindiatreatment.com/MRX-Logo-PNG.png',
+        width: 800,
+        height: 250,
         alt: 'Medivisor India Treatment - Premium Medical Care',
       },
     ],

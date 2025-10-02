@@ -75,7 +75,7 @@ export default function WhyChooseUsSection() {
     },
     {
       icon: <Heart className="text-gray-800 w-10 h-10" />,
-      value: "95%",
+      value: "95%+",
       label: "Satisfaction Rate",
       description: "Top-rated experiences by real patients.",
       hoverIcon: <ThumbsUp className="text-gray-800 w-10 h-10" />,

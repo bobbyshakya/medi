@@ -170,8 +170,8 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
       title,
       description,
       images: [imageUrl],
-      site: "@medivisorindia", // Replace with your actual Twitter handle
-      creator: "@medivisorindia", // Replace with your actual Twitter handle
+      site: "@medivisorindiatreatment", // Replace with your actual Twitter handle
+      creator: "@medivisorindiatreatment", // Replace with your actual Twitter handle
     },
     robots: {
       index: true,

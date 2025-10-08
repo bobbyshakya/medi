@@ -27,7 +27,7 @@ export interface HospitalBranch {
   branchImageUrl: string
   slug: string
   mapEmbedUrl: string
-  primaryLocation: primaryLocation | null
+  primaryLocation: | primaryLocation[]
   doctors: Doctor[]
   createdDate: string
   updatedDate: string
@@ -35,18 +35,14 @@ export interface HospitalBranch {
 
 export interface primaryLocation {
   _id: string
-  cityName: string
+  CityName: string
   state?: {
     _id: string
-    stateName: string
+    name: string
   }
   country?: {
     _id: string
-    countryName: string
-  }
-  city?: {
-    _id: string
-    cityName: string
+    name: string
   }
 }
 

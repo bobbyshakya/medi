@@ -1,197 +1,144 @@
-// components/seach-page/HospitalCard.tsx
-import { Hospital } from '@/types/hospital'
-import { MapPin, Phone, Mail, Calendar, Star, Users } from 'lucide-react'
+"use client"
 
-interface HospitalCardProps {
-  hospital: Hospital
+import useSWR from "swr"
+import { useMemo, useState } from "react"
+
+type City = {
+  _id: string
+  name: string
+  state?: { _id: string; name: string } | null
+  country?: { _id: string; name: string } | null
 }
 
-export default function HospitalCard({ hospital }: HospitalCardProps) {
-  const mainBranch = hospital.branches[0]
-  
-  // Safely handle specialtiesTags - ensure it's always an array
-  const specialties = Array.isArray(hospital.specialtiesTags) 
-    ? hospital.specialtiesTags.slice(0, 4) 
-    : []
+type Branch = {
+  _id: string
+  branchName: string
+  address?: string
+  primaryLocation?: City | 'jdjdh'
+}
 
-  // Safely handle other array fields
-  const gallery = Array.isArray(hospital.gallery) ? hospital.gallery : []
-  const branches = Array.isArray(hospital.branches) ? hospital.branches : []
+type Hospital = {
+  _id: string
+  name: string
+  slug?: string
+  logo?: string
+  description?: string
+  branches: Branch[]
+  branchCount: number
+}
+
+const fetcher = (url: string) => fetch(url).then((r) => r.json())
+
+export default function HospitalSearch() {
+  const [search, setSearch] = useState("")
+  const [cityId, setCityId] = useState("")
+
+  const { data: citiesRes } = useSWR<{ data: City[] }>("/api/cities?limit=1000", fetcher)
+  const cities = citiesRes?.data ?? []
+
+  const qs = useMemo(() => {
+    const params = new URLSearchParams()
+    if (search) params.set("search", search)
+    if (cityId) params.set("cityId", cityId)
+    params.set("limit", "50")
+    return params.toString()
+  }, [search, cityId])
+
+  const { data: hospitalsRes, isLoading } = useSWR<{ data: Hospital[] }>(`/api/hospitals?${qs}`, fetcher)
+
+  const hospitals = hospitalsRes?.data ?? []
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-all duration-300 overflow-hidden">
-      {/* Hospital Header */}
-      <div className="p-6 border-b border-gray-100">
-        <div className="flex items-start justify-between">
-          <div className="flex items-start space-x-4">
-            {hospital.logo && (
-              <div className="flex-shrink-0">
-                <img
-                  src={hospital.logo}
-                  alt={hospital.name}
-                  className="h-16 w-16 rounded-lg object-cover border border-gray-200"
-                  onError={(e) => {
-                    // Fallback if image fails to load
-                    e.currentTarget.style.display = 'none'
-                  }}
-                />
-              </div>
-            )}
-            <div className="flex-1 min-w-0">
-              <h3 className="text-xl font-semibold text-gray-900 hover:text-blue-600 transition-colors cursor-pointer">
-                {hospital.name || "Unnamed Hospital"}
-              </h3>
-              <p className="mt-1 text-gray-600 line-clamp-2">
-                {hospital.description || "No description available"}
-              </p>
-              {specialties.length > 0 && (
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {specialties.map((specialty, index) => (
-                    <span
-                      key={index}
-                      className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
-                    >
-                      {specialty}
-                    </span>
-                  ))}
-                  {hospital.specialtiesTags && hospital.specialtiesTags.length > 4 && (
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                      +{hospital.specialtiesTags.length - 4} more
-                    </span>
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
-          <div className="flex-shrink-0 text-right">
-            <div className="flex items-center justify-end space-x-1 text-amber-500">
-              <Star className="h-4 w-4 fill-current" />
-              <span className="text-sm font-medium">4.8</span>
-            </div>
-            <div className="mt-1 text-sm text-gray-500 flex items-center justify-end space-x-1">
-              <Users className="h-4 w-4" />
-              <span>
-                {hospital.branchCount || 0} branch{(hospital.branchCount || 0) !== 1 ? 'es' : ''}
-              </span>
-            </div>
-          </div>
+    <section className="flex flex-col gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="flex flex-col gap-2">
+          <label className="text-sm">Search by hospital name</label>
+          <input
+            className="h-10 w-full rounded-md border bg-background px-3 text-sm"
+            placeholder="e.g., City Care Hospital"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            aria-label="Hospital name search"
+          />
         </div>
-      </div>
 
-      {/* Branches */}
-      {branches.length > 0 && (
-        <div className="p-6">
-          <h4 className="text-sm font-medium text-gray-900 mb-4">Branches</h4>
-          <div className="space-y-4">
-            {branches.slice(0, 2).map((branch) => (
-              <div key={branch._id} className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg">
-                <div className="flex-shrink-0 w-2 h-2 mt-2 bg-blue-500 rounded-full"></div>
-                <div className="flex-1 min-w-0">
-                  <h5 className="font-medium text-gray-900">
-                    {branch.branchName || "Main Branch"}
-                  </h5>
-                  <div className="mt-1 space-y-1 text-sm text-gray-600">
-                    {branch.primaryLocation && (
-                      <div className="flex items-center space-x-1">
-                        <MapPin className="h-4 w-4 flex-shrink-0" />
-                        <span>
-                          {branch.primaryLocation.cityName || "Unknown City"}
-                          {branch.primaryLocation.state && `, ${branch.primaryLocation.state.stateName}`}
-                        </span>
-                      </div>
-                    )}
-                    {branch.address && (
-                      <p className="line-clamp-1">{branch.address}</p>
-                    )}
-                    {branch.phone && (
-                      <div className="flex items-center space-x-1">
-                        <Phone className="h-4 w-4 flex-shrink-0" />
-                        <span>{branch.phone}</span>
-                      </div>
-                    )}
-                    {branch.email && (
-                      <div className="flex items-center space-x-1">
-                        <Mail className="h-4 w-4 flex-shrink-0" />
-                        <span className="truncate">{branch.email}</span>
-                      </div>
-                    )}
-                  </div>
-                  {branch.doctors && branch.doctors.length > 0 && (
-                    <div className="mt-2">
-                      <div className="flex items-center space-x-2">
-                        <span className="text-xs font-medium text-gray-500">Doctors:</span>
-                        <div className="flex -space-x-2">
-                          {branch.doctors.slice(0, 3).map((doctor, index) => (
-                            <div
-                              key={doctor._id}
-                              className="relative group"
-                              style={{ zIndex: 3 - index }}
-                            >
-                              <img
-                                src={doctor.imageUrl || '/doctor-placeholder.jpg'}
-                                alt={doctor.name}
-                                className="h-6 w-6 rounded-full border-2 border-white bg-gray-300"
-                                onError={(e) => {
-                                  e.currentTarget.src = '/doctor-placeholder.jpg'
-                                }}
-                              />
-                              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-                                {doctor.name}
-                              </div>
-                            </div>
-                          ))}
-                          {branch.doctors.length > 3 && (
-                            <div className="h-6 w-6 rounded-full border-2 border-white bg-gray-200 flex items-center justify-center text-xs font-medium text-gray-600">
-                              +{branch.doctors.length - 3}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
+        <div className="flex flex-col gap-2">
+          <label className="text-sm">City</label>
+          <select
+            className="h-10 w-full rounded-md border bg-background px-3 text-sm"
+            value={cityId}
+            onChange={(e) => setCityId(e.target.value)}
+            aria-label="City filter"
+          >
+            <option value="">All cities</option>
+            {cities.map((c) => (
+              <option key={c._id} value={c._id}>
+                {c.name}
+                {c.state?.name ? `, ${c.state.name}` : ""}
+              </option>
             ))}
-            {branches.length > 2 && (
-              <div className="text-center">
-                <button className="text-sm text-blue-600 hover:text-blue-700 font-medium">
-                  View {branches.length - 2} more branches
-                </button>
-              </div>
-            )}
-          </div>
+          </select>
         </div>
-      )}
 
-      {/* No Branches Message */}
-      {branches.length === 0 && (
-        <div className="p-6 text-center text-gray-500">
-          <MapPin className="h-8 w-8 mx-auto mb-2 text-gray-300" />
-          <p>No branch information available</p>
-        </div>
-      )}
-
-      {/* Footer */}
-      <div className="px-6 py-4 bg-gray-50 border-t border-gray-100">
-        <div className="flex items-center justify-between text-sm text-gray-500">
-          <div className="flex items-center space-x-4">
-            {hospital.establishedDate && (
-              <div className="flex items-center space-x-1">
-                <Calendar className="h-4 w-4" />
-                <span>Est. {new Date(hospital.establishedDate).getFullYear()}</span>
-              </div>
-            )}
-          </div>
-          <div className="flex items-center space-x-4">
-            <button className="text-blue-600 hover:text-blue-700 font-medium">
-              View Details
-            </button>
-            <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
-              Book Appointment
-            </button>
-          </div>
+        <div className="flex items-end">
+          <button
+            type="button"
+            onClick={() => {
+              setSearch("")
+              setCityId("")
+            }}
+            className="inline-flex h-10 items-center justify-center rounded-md border px-4 text-sm"
+            aria-label="Reset filters"
+          >
+            Reset
+          </button>
         </div>
       </div>
-    </div>
+
+      <div className="mt-4">
+        {isLoading ? (
+          <div className="text-sm text-muted-foreground">Loading hospitals…</div>
+        ) : hospitals.length === 0 ? (
+          <div className="text-sm text-muted-foreground">No hospitals found.</div>
+        ) : (
+          <ul className="grid grid-cols-1 gap-4">
+            {hospitals.map((h) => (
+              <li key={h._id} className="rounded-lg border p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <h3 className="text-lg font-medium">{h.name}</h3>
+                    {h.description ? (
+                      <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{h.description}</p>
+                    ) : null}
+                  </div>
+                  {typeof h.branchCount === "number" ? (
+                    <span className="text-xs rounded bg-secondary px-2 py-1">
+                      {h.branchCount} branch{h.branchCount === 1 ? "" : "es"}
+                    </span>
+                  ) : null}
+                </div>
+
+                {h.branches?.length ? (
+                  <div className="mt-3">
+                    <h4 className="text-sm font-semibold">Branches</h4>
+                    <div className="mt-2 grid grid-cols-1 gap-2">
+                      {h.branches.map((b) => (
+                        <div key={b._id} className="rounded border p-2">
+                          <div className="text-sm font-medium">{b.branchName}</div>
+                          <div className="text-xs text-muted-foreground">
+                            {typeof b.primaryLocation === 'object' && b.primaryLocation?.name ? b.primaryLocation?.name : "Unknown City"}
+                          </div>
+                          {b.address ? <div className="text-xs text-muted-foreground">{b.address}</div> : null}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </section>
   )
 }

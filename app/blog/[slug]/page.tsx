@@ -1,86 +1,96 @@
-import BlogPost from "@/components/BlogPostClientPage";
-import { Metadata } from "next";
-import { wixClient } from "@/lib/wixClient";
-import { media } from '@wix/sdk';
+import BlogPost from "@/components/BlogPostClientPage"
+import { Metadata } from "next"
+import { wixClient } from "@/lib/wixClient"
+import { media } from '@wix/sdk'
 
 interface Params {
-  params: { slug: string };
+  params: { slug: string }
 }
 
 // Function to get Wix Image URL for meta tags
 function getWixImageUrl(wixUrl: string | undefined): string | null {
   if (!wixUrl || !wixUrl.startsWith('wix:image://')) {
-    return null;
+    return null
   }
   try {
-    const { url } = media.getImageUrl(wixUrl);
-    return url;
+    const { url } = media.getImageUrl(wixUrl)
+    return url
   } catch (error) {
-    console.error('Error getting Wix image URL:', error);
-    return null;
+    console.error('Error getting Wix image URL:', error)
+    return null
   }
 }
 
 // Function to get optimized Wix Image URL for social sharing
 function getOptimizedWixImageUrl(wixUrl: string | undefined, width: number = 1200, height: number = 630): string | null {
   if (!wixUrl || !wixUrl.startsWith('wix:image://')) {
-    return null;
+    return null
   }
   try {
     const { url } = media.getImageUrl(wixUrl, {
       width,
       height,
       fit: 'fill'
-    });
-    return url;
+    })
+    return url
   } catch (error) {
-    console.error('Error getting optimized Wix image URL:', error);
-    return null;
+    console.error('Error getting optimized Wix image URL:', error)
+    return null
   }
 }
 
 // Function to generate optimized share image URL
 function getOptimizedShareImage(wixUrl: string | undefined): string {
   // Try to get optimized image for social sharing first
-  const optimizedImageUrl = getOptimizedWixImageUrl(wixUrl, 1200, 630);
-  const imageUrl = optimizedImageUrl || getWixImageUrl(wixUrl);
+  const optimizedImageUrl = getOptimizedWixImageUrl(wixUrl, 1200, 630)
+  const imageUrl = optimizedImageUrl || getWixImageUrl(wixUrl)
   
   if (imageUrl) {
-    return imageUrl;
+    return imageUrl
   }
   
   // Fallback to default share image
-  return "https://medivisorindiatreatment.com/default-share-image.jpg";
+  return "https://medivisorindiatreatment.com/default-share-image.jpg"
+}
+
+// Function to extract text from content for meta description
+function extractTextForMeta(content: any): string {
+  if (!content) return ''
+  
+  if (typeof content === 'string') {
+    return content.replace(/<[^>]*>/g, '').trim()
+  }
+  
+  // For Ricos content, return a generic description since we can't parse it here
+  if (content.nodes) {
+    return 'Informative medical blog post from Medivisor India.'
+  }
+  
+  return ''
 }
 
 // Function to generate meta description from content
 function generateMetaDescription(content: any, excerpt?: string): string {
   if (excerpt && excerpt.trim().length > 0) {
-    return excerpt.trim();
+    return excerpt.trim()
   }
 
-  let text = '';
-  if (typeof content === 'string') {
-    text = content.replace(/<[^>]*>/g, '').trim();
-  } else if (content?.nodes) {
-    // You might need to import and use extractTextFromRicos here if needed
-    text = 'Informative medical blog post from Medivisor India.';
-  }
+  const text = extractTextForMeta(content)
 
   // Limit to 160 characters for SEO
   if (text.length > 160) {
-    return text.substring(0, 157) + '...';
+    return text.substring(0, 157) + '...'
   }
 
-  return text || 'Read this informative blog post about medical treatment, patient journeys, and healthcare tips in India.';
+  return text || 'Read this informative blog post about medical treatment, patient journeys, and healthcare tips in India.'
 }
 
-// ✅ Helper function to fetch blog by slug from Wix
+// Helper function to fetch blog by slug from Wix
 async function fetchBlogBySlug(slug: string) {
   try {
-    if (!wixClient.posts) return null;
+    if (!wixClient.posts) return null
 
-    let blog = null;
+    let blog = null
     
     // Try getPostBySlug first
     if (typeof wixClient.posts.getPostBySlug === "function") {
@@ -100,44 +110,56 @@ async function fetchBlogBySlug(slug: string) {
           "FIRST_PUBLISHED_DATE",
           "LAST_PUBLISHED_DATE",
         ],
-      });
-      if (response.post) blog = response.post;
+      })
+      if (response.post) blog = response.post
     }
 
     // Fallback to queryPosts if getPostBySlug fails
     if (!blog && typeof wixClient.posts.queryPosts === "function") {
       const response = await wixClient.posts.queryPosts()
         .eq('slug', slug)
-        .find();
+        .find()
       
       if (response.items && response.items.length > 0) {
-        blog = response.items[0];
+        blog = response.items[0]
       }
     }
 
-    return blog;
+    return blog
   } catch (err) {
-    console.error("Error fetching blog:", err);
-    return null;
+    console.error("Error fetching blog:", err)
+    return null
   }
 }
 
-// ✅ Dynamic Metadata for Blog Post
+// Dynamic Metadata for Blog Post
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
-  const blog = await fetchBlogBySlug(params.slug);
+  const blog = await fetchBlogBySlug(params.slug)
 
   if (!blog) {
     return {
       title: "Blog Post Not Found | Medivisor India",
       description: "The requested blog post doesn't exist.",
       robots: "noindex, nofollow",
-    };
+    }
   }
 
-  const title = blog.title || "Medivisor India Blog";
-  const description = generateMetaDescription(blog.richContent || blog.contentText || blog.content, blog.excerpt);
-  const imageUrl = getOptimizedShareImage(blog.media?.wixMedia?.image || blog.coverMedia?.image);
-  const url = `https://medivisorindiatreatment.com/blog/${params.slug}`;
+  const title = blog.title || "Medivisor India Blog"
+  const description = generateMetaDescription(blog.richContent || blog.contentText || blog.content, blog.excerpt)
+  const imageUrl = getOptimizedShareImage(blog.media?.wixMedia?.image || blog.coverMedia?.image)
+  const url = `https://medivisorindiatreatment.com/blog/${params.slug}`
+
+  // Article specific meta tags
+  const articleMeta: any = {}
+  if (blog.firstPublishedDate) {
+    articleMeta.publishedTime = blog.firstPublishedDate
+  }
+  if (blog.lastPublishedDate) {
+    articleMeta.modifiedTime = blog.lastPublishedDate
+  }
+  if (blog.tags && blog.tags.length > 0) {
+    articleMeta.tags = blog.tags
+  }
 
   return {
     title: `${title} | Medivisor India`,
@@ -161,8 +183,7 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
       ],
       locale: "en_US",
       type: "article",
-      publishedTime: blog.firstPublishedDate,
-      modifiedTime: blog.lastPublishedDate || blog.firstPublishedDate,
+      ...articleMeta,
       authors: ["Medivisor India"],
     },
     twitter: {
@@ -170,8 +191,8 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
       title,
       description,
       images: [imageUrl],
-      site: "@medivisorindiatreatment", // Replace with your actual Twitter handle
-      creator: "@medivisorindiatreatment", // Replace with your actual Twitter handle
+      site: "@medivisorindiatreatment",
+      creator: "@medivisorindiatreatment",
     },
     robots: {
       index: true,
@@ -189,52 +210,42 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
     authors: [{ name: "Medivisor India" }],
     publisher: "Medivisor India",
     category: "healthcare",
-    // Article specific meta tags
-    ...(blog.firstPublishedDate && {
-      publishedTime: blog.firstPublishedDate,
-    }),
-    ...(blog.lastPublishedDate && {
-      modifiedTime: blog.lastPublishedDate,
-    }),
-    // Add article tags if available
-    ...(blog.tags && blog.tags.length > 0 && {
-      tags: blog.tags,
-    }),
-  };
+    ...articleMeta,
+  }
 }
 
-// ✅ Generate Static Params for SSG
+// Generate Static Params for SSG
 export async function generateStaticParams() {
   try {
-    if (!wixClient.posts) return [];
+    if (!wixClient.posts) return []
 
-    let posts = [];
+    let posts: any[] = []
     
     // Try queryPosts first
     if (typeof wixClient.posts.queryPosts === "function") {
       const response = await wixClient.posts.queryPosts()
         .limit(50)
-        .find();
-      posts = response.items || [];
+        .find()
+      posts = response.items || []
     } 
     // Fallback to listPosts
     else if (typeof wixClient.posts.listPosts === "function") {
       const response = await wixClient.posts.listPosts({
         paging: { limit: 50 },
-      });
-      posts = response.posts || [];
+      })
+      posts = response.posts || []
     }
 
     return posts.map((post: any) => ({
       slug: post.slug,
-    }));
+    }))
   } catch (err) {
-    console.error("Error generating static params:", err);
-    return [];
+    console.error("Error generating static params:", err)
+    return []
   }
 }
 
-// ✅ Blog Post Page Component
+// Blog Post Page Component
 export default function BlogPostPage({ params }: Params) {
-  return <BlogPost slug={params.slug} />;
+  return <BlogPost slug={params.slug} />
 }

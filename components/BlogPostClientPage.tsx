@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useEffect, useState } from 'react'
@@ -124,7 +123,7 @@ function calculateReadTime(content: string | RicosContent | undefined, minutesTo
   let text = ''
   if (typeof content === 'string') {
     text = content.replace(/<[^>]*>/g, '')
-  } else if (content.nodes) {
+  } else if (content && 'nodes' in content) {
     text = extractTextFromRicos(content.nodes)
   }
 
@@ -144,36 +143,15 @@ function formatDate(dateString: string | undefined): string {
   })
 }
 
-// Function to generate meta description from content
-function generateMetaDescription(content: string | RicosContent | undefined, excerpt?: string): string {
-  if (excerpt && excerpt.trim().length > 0) {
-    return excerpt.trim()
-  }
-
-  let text = ''
-  if (typeof content === 'string') {
-    text = content.replace(/<[^>]*>/g, '').trim()
-  } else if (content?.nodes) {
-    text = extractTextFromRicos(content.nodes).trim()
-  }
-
-  // Limit to 160 characters for SEO
-  if (text.length > 160) {
-    return text.substring(0, 157) + '...'
-  }
-
-  return text || 'Read this informative blog post to learn more.'
-}
-
 // Function to get optimized share image URL
-function getShareImageUrl(wixUrl: string | undefined, fallbackImage?: string): string {
+function getShareImageUrl(wixUrl: string | undefined): string {
   // Try to get optimized image for social sharing
   const optimizedImageUrl = getOptimizedWixImageUrl(wixUrl, 1200, 630)
-  const imageUrl = optimizedImageUrl || getWixImageUrl(wixUrl) || fallbackImage
+  const imageUrl = optimizedImageUrl || getWixImageUrl(wixUrl)
   
   if (!imageUrl) {
     // Return a default share image if no image is available
-    return '/default-share-image.jpg' // Replace with your default share image path
+    return '/default-share-image.jpg'
   }
   
   return imageUrl
@@ -191,88 +169,16 @@ export default function BlogPost({ slug }: BlogPostProps) {
   const [isBookmarked, setIsBookmarked] = useState(false)
   const [isLiked, setIsLiked] = useState(false)
 
-  // Update SEO meta tags on client side (for dynamic updates)
+  // Client-side meta tag updates (only for dynamic content that changes after load)
   useEffect(() => {
     if (!post) return
 
-    const shareImageUrl = getShareImageUrl(
-      post.media?.wixMedia?.image || post.coverMedia?.image,
-      '/default-share-image.jpg'
-    )
-    const description = generateMetaDescription(post.richContent || post.contentText || post.content, post.excerpt)
-    const currentUrl = window.location.href
+    // Update document title only
+    document.title = `${post.title} | Medivisor India`
 
-    // Update document title
-    document.title = `${post.title} | Your Blog Name`
-
-    // Update meta description
-    const updateMetaTag = (name: string, content: string, attribute: string = 'name') => {
-      let metaTag = document.querySelector(`meta[${attribute}="${name}"]`)
-      if (!metaTag) {
-        metaTag = document.createElement('meta')
-        metaTag.setAttribute(attribute, name)
-        document.head.appendChild(metaTag)
-      }
-      metaTag.setAttribute('content', content)
-    }
-
-    // Update link canonical
-    const updateLinkTag = (rel: string, href: string) => {
-      let linkTag = document.querySelector(`link[rel="${rel}"]`)
-      if (!linkTag) {
-        linkTag = document.createElement('link')
-        linkTag.setAttribute('rel', rel)
-        document.head.appendChild(linkTag)
-      }
-      linkTag.setAttribute('href', href)
-    }
-
-    // Basic meta tags
-    updateMetaTag('description', description)
-    updateLinkTag('canonical', currentUrl)
-
-    // Open Graph meta tags (Facebook, LinkedIn, WhatsApp, etc.)
-    updateMetaTag('og:title', post.title, 'property')
-    updateMetaTag('og:description', description, 'property')
-    updateMetaTag('og:image', shareImageUrl, 'property')
-    updateMetaTag('og:image:width', '1200', 'property')
-    updateMetaTag('og:image:height', '630', 'property')
-    updateMetaTag('og:image:alt', post.title, 'property')
-    updateMetaTag('og:image:type', 'image/jpeg', 'property')
-    updateMetaTag('og:url', currentUrl, 'property')
-    updateMetaTag('og:type', 'article', 'property')
-    updateMetaTag('og:site_name', 'Your Blog Name', 'property')
-    
-    // Article specific OG tags
-    if (post.firstPublishedDate) {
-      updateMetaTag('article:published_time', post.firstPublishedDate, 'property')
-    }
-    if (post.lastPublishedDate) {
-      updateMetaTag('article:modified_time', post.lastPublishedDate, 'property')
-    }
-    
-    // Add article tags if available
-    if (post.tags && post.tags.length > 0) {
-      post.tags.forEach(tag => {
-        updateMetaTag('article:tag', tag, 'property')
-      })
-    }
-
-    // Twitter Card meta tags
-    updateMetaTag('twitter:card', 'summary_large_image')
-    updateMetaTag('twitter:title', post.title)
-    updateMetaTag('twitter:description', description)
-    updateMetaTag('twitter:image', shareImageUrl)
-    updateMetaTag('twitter:image:alt', post.title)
-    updateMetaTag('twitter:url', currentUrl)
-    updateMetaTag('twitter:site', '@yourtwitterhandle') // Replace with your Twitter handle
-
-    // Additional social media meta tags
-    updateMetaTag('image', shareImageUrl) // Fallback for some platforms
-
-    // Cleanup function to reset meta tags when component unmounts
+    // Cleanup function to reset title when component unmounts
     return () => {
-      document.title = 'Your Blog Name' // Reset to default title
+      document.title = 'Medivisor India'
     }
   }, [post])
 
@@ -309,8 +215,6 @@ export default function BlogPost({ slug }: BlogPostProps) {
             if (response.post) {
               fetchedPost = response.post as Post
               console.log('Successfully fetched post using getPostBySlug')
-              console.log('Cover media:', fetchedPost.coverMedia)
-              console.log('Media:', fetchedPost.media)
             }
           }
         } catch (getBySlugError) {
@@ -358,7 +262,6 @@ export default function BlogPost({ slug }: BlogPostProps) {
           // Fetch related posts
           try {
             let relatedPostsData: Post[] = []
-            let relatedResponse
             if (typeof wixClient.posts.queryPosts === 'function') {
               console.log('Trying to fetch related posts using queryPosts...')
               const postTags = fetchedPost.tags || []
@@ -367,21 +270,21 @@ export default function BlogPost({ slug }: BlogPostProps) {
               let query = wixClient.posts.queryPosts().ne('_id', fetchedPost._id).limit(6)
               
               if (postTags.length > 0) {
-                query = query.hasSome('hashtags', postTags);
+                query = query.hasSome('hashtags', postTags)
                 console.log('Querying related posts by hashtags:', postTags)
               } else if (postCategories.length > 0) {
-                query = query.hasSome('categoryIds', postCategories);
+                query = query.hasSome('categoryIds', postCategories)
                 console.log('Querying related posts by categories:', postCategories)
               } else {
                 console.log('No tags or categories found, fetching recent posts instead.')
               }
 
-              relatedResponse = await query.find()
+              const relatedResponse = await query.find()
               relatedPostsData = relatedResponse.items as Post[]
             } else if (typeof wixClient.posts.listPosts === 'function') {
               console.log('Falling back to listPosts for related content...')
               // Fallback to listPosts and filter
-              relatedResponse = await wixClient.posts.listPosts({
+              const relatedResponse = await wixClient.posts.listPosts({
                 paging: { limit: 10 },
               })
               const postsList = relatedResponse.posts || []
@@ -409,10 +312,7 @@ export default function BlogPost({ slug }: BlogPostProps) {
   }, [slug])
 
   const handleShare = async (platform?: string) => {
-    const shareImageUrl = getShareImageUrl(
-      post?.media?.wixMedia?.image || post?.coverMedia?.image,
-      '/default-share-image.jpg'
-    )
+    const shareImageUrl = getShareImageUrl(post?.media?.wixMedia?.image || post?.coverMedia?.image)
     const shareUrl = window.location.href
     const shareTitle = post?.title || ''
     const shareText = post?.excerpt || ''
@@ -499,13 +399,13 @@ export default function BlogPost({ slug }: BlogPostProps) {
           <div className="max-w-md mx-auto">
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
               <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-2xl"></span>
+                <span className="text-2xl">⚠️</span>
               </div>
               <h1 className="text-2xl font-bold text-gray-900 mb-4">Oops! Something went wrong</h1>
               <p className="text-gray-600 mb-6">{error}</p>
               <p className="text-sm text-gray-500 mb-6">Slug: {slug}</p>
               <button
-                onClick={() =>  window.history.back()}
+                onClick={() => window.history.back()}
                 className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200"
               >
                 <ChevronLeft className="w-4 h-4 mr-2" />
@@ -525,10 +425,10 @@ export default function BlogPost({ slug }: BlogPostProps) {
            <div className="max-w-md mx-auto">
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
               <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-2xl">剥</span>
+                <span className="text-2xl">📄</span>
               </div>
               <h1 className="text-2xl font-bold text-gray-900 mb-4">Post Not Found</h1>
-              <p className="text-gray-600 mb-6">The blog post you're looking for doesn't exist.</p>
+              <p className="text-gray-600 mb-6">The blog post you&apos;re looking for doesn&apos;t exist.</p>
               <p className="text-sm text-gray-500 mb-6">Slug: {slug}</p>
               <button
                 onClick={() => window.history.back()}
@@ -545,45 +445,12 @@ export default function BlogPost({ slug }: BlogPostProps) {
   }
 
   const embedVideoUrl = post.media?.embedMedia?.video?.url
-  const embedThumbnailUrl = post.media?.embedMedia?.thumbnail?.url
   const youtubeEmbedUrl = getYouTubeEmbedUrl(embedVideoUrl)
   const imageUrl = getWixImageUrl(post.media?.wixMedia?.image || post.coverMedia?.image)
   const readTime = calculateReadTime(post.richContent || post.contentText || post.content, post.minutesToRead)
 
   return (
     <div className="min-h-screen bg-gradient-to-br px-4 md:px-0 py-4 md:py-10 from-gray-50 to-white">
-      {/* Structured Data for SEO */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "BlogPosting",
-            "headline": post.title,
-            "description": generateMetaDescription(post.richContent || post.contentText || post.content, post.excerpt),
-            "image": imageUrl ? [imageUrl] : [],
-            "datePublished": post.firstPublishedDate,
-            "dateModified": post.lastPublishedDate || post.firstPublishedDate,
-            "author": {
-              "@type": "Organization",
-              "name": "Your Organization Name"
-            },
-            "publisher": {
-              "@type": "Organization",
-              "name": "Your Organization Name",
-              "logo": {
-                "@type": "ImageObject",
-                "url": "https://yourwebsite.com/logo.png"
-              }
-            },
-            "mainEntityOfPage": {
-              "@type": "WebPage",
-              "@id": window.location.href
-            }
-          })
-        }}
-      />
-      
       <main className="container mx-auto">
         <div className="mx-auto">
           {/* Breadcrumb */}
@@ -626,18 +493,6 @@ export default function BlogPost({ slug }: BlogPostProps) {
                           </div>
                         )}
                       </div>
-
-                      {/* Featured Image */}
-                      {/* {imageUrl && (
-                        <div className="mb-8 rounded-lg overflow-hidden">
-                          <img
-                            src={imageUrl}
-                            alt={post.title}
-                            className="w-full h-auto object-cover"
-                            loading="eager"
-                          />
-                        </div>
-                      )} */}
                     </header>
 
                     {/* Article Content */}
@@ -751,7 +606,7 @@ export default function BlogPost({ slug }: BlogPostProps) {
                       {relatedPosts.map((relatedPost) => {
                         const relatedImageUrl = getWixImageUrl(
                           relatedPost.media?.wixMedia?.image || relatedPost.coverMedia?.image
-                        );
+                        )
                         return (
                           <a
                             key={relatedPost._id}
@@ -771,7 +626,7 @@ export default function BlogPost({ slug }: BlogPostProps) {
                               {relatedPost.title}
                             </h3>
                           </a>
-                        );
+                        )
                       })}
                     </div>
                   </section>

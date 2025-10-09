@@ -67,7 +67,7 @@ export default function Header() {
       subItems: [
         { href: '/patient-testimonials', label: 'Patient Testimonials' },
         { href: '/photo-albums', label: 'Patient Activities' },
-        { href: '/media-coverage', label: 'News Coverage' },
+        // { href: '/media-coverage', label: 'News Coverage' },
         { href: '/blog', label: 'Blog' },
       ],
     },

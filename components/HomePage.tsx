@@ -51,7 +51,7 @@ export default function Home() {
           <PaitentSupport />
           <Activities />
           <ExtentCare />
-          {/* <MediaCoverage /> */}
+          <MediaCoverage />
           <PartnerSection />
           <CtaSection />
         </main>

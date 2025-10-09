@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+// Assuming wixClient and wixMedia utilities are correctly imported
 import { wixClient } from "@/lib/wixClient"
 import {
   getWixImageUrl,
@@ -40,6 +41,10 @@ import {
   Eye,
 } from "lucide-react"
 import { OptimizedImage } from "@/components/optimized-image"
+
+
+
+const SPECIFIC_GALLERY_ID = "997e2445-8276-48fb-8c20-6b9a714cbb0b"
 
 interface GalleryItem {
   _id: string
@@ -219,7 +224,7 @@ export default function MediaCoveragePage() {
           : wixVideoThumbnail
 
         return (
-          <div className="relative w-full h-full bg-black/80 flex items-center justify-center">
+          <div className="relative w-full h-full bg-black/80 flex items-center justify-center group">
             {thumbnailUrl ? (
               <OptimizedImage
                 src={thumbnailUrl}
@@ -299,47 +304,52 @@ export default function MediaCoveragePage() {
       setLoading(true)
       setError(null)
 
-      const galleriesResponse = await wixClient.proGallery.listGalleries()
+      if (typeof SPECIFIC_GALLERY_ID !== "string") {
+        throw new Error("Specific gallery ID is not configured correctly.")
+      }
+
+      // 1. Fetch the gallery details first (should return at most one gallery with this ID)
+      const galleriesResponse = await wixClient.proGallery.listGalleries([SPECIFIC_GALLERY_ID])
       const fetchedGalleries = (galleriesResponse.galleries || []).map((gallery) => ({
         ...gallery,
-        _id: typeof gallery._id === "string" ? gallery._id : String(gallery._id ?? ""),
+        _id: gallery._id ?? SPECIFIC_GALLERY_ID,
         _createdDate: gallery._createdDate ? new Date(gallery._createdDate) : new Date(),
         totalItems: gallery.totalItems ?? 0,
         sortOrder: gallery.sortOrder ?? 0,
-        name: gallery.name ?? "",
+        name: gallery.name ?? `Gallery ${SPECIFIC_GALLERY_ID.slice(0, 8)}`,
       }))
       setGalleries(fetchedGalleries)
 
-      const allItemsPromises = fetchedGalleries.map(async (gallery) => {
-        try {
-          if (typeof gallery._id !== "string") {
-            console.warn(`Gallery _id is not a string:`, gallery._id)
-            return []
-          }
-          const itemsResponse = await wixClient.proGallery.listGalleryItems(gallery._id)
-          return (
-            itemsResponse.items?.map((item) => ({
-              ...item,
-              galleryId: gallery._id,
-              galleryName: gallery.name || `Gallery ${(gallery._id ?? "").slice(0, 8)}`,
-            })) || []
-          )
-        } catch (error) {
-          console.error(`Error fetching items for gallery ${gallery._id}:`, error)
-          return []
-        }
-      })
+      const targetGallery = fetchedGalleries.find(g => g._id === SPECIFIC_GALLERY_ID)
 
-      const allItemsArrays = await Promise.all(allItemsPromises)
-      const allItems = allItemsArrays
-        .flat()
+      if (!targetGallery) {
+          // It's possible for listGalleries to return an empty array even if we ask for a specific ID
+          // Let's create a placeholder gallery object for the item mapping if it's missing
+          setGalleries([{
+            _id: SPECIFIC_GALLERY_ID,
+            _createdDate: new Date(),
+            name: `Gallery ${SPECIFIC_GALLERY_ID.slice(0, 8)}`,
+            sortOrder: 0,
+            totalItems: 0,
+          }])
+      }
+
+      const galleryName = targetGallery?.name || `Gallery ${SPECIFIC_GALLERY_ID.slice(0, 8)}`
+
+      // 2. Fetch items ONLY for the specific gallery ID once
+      const itemsResponse = await wixClient.proGallery.listGalleryItems(SPECIFIC_GALLERY_ID)
+      
+      const allItems = (itemsResponse.items || [])
         .map((item: any) => ({
           ...item,
-          _id: typeof item._id === "string" && item._id ? item._id : String(item._id ?? ""),
+          galleryId: SPECIFIC_GALLERY_ID,
+          galleryName: galleryName,
+          _id: typeof item._id === "string" && item._id ? item._id : String(item._id ?? `temp-${Math.random()}`),
           _createdDate: item._createdDate ? new Date(item._createdDate) : new Date(),
           _updatedDate: item._updatedDate ? new Date(item._updatedDate) : new Date(),
         }))
-        .filter((item) => !!item._id)
+        .filter((item) => !!item._id && !item._id.startsWith("temp-")) // Filter out items without proper ID, though Wix usually provides one
+
 
       setAllItems(allItems)
       setFilteredItems(allItems)
@@ -472,7 +482,6 @@ export default function MediaCoveragePage() {
         title="Stay Updated with Medivisor in the News"
         description="
 Our organization and its work have garnered widespread appreciation and media coverage. The following mentions serve as a testament to the positive recognition we've received.
-
 "
         buttonText="Browse Hospital Articles"
         buttonLink="/hospital-network/#hospital-blogs"
@@ -573,6 +582,7 @@ Our organization and its work have garnered widespread appreciation and media co
                         <div
                           className={`relative overflow-hidden bg-gray-100 flex items-center justify-center ${viewMode === "grid" ? "aspect-video" : "w-full sm:w-48 aspect-[16/9] flex-shrink-0"}`}
                         >
+                          {/* Ensure renderMediaItem is called correctly */}
                           {renderMediaItem(item, false)}
                           <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
                             <Button

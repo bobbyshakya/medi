@@ -147,7 +147,7 @@ export default function FilterSection({ onSearch, onFilterChange, searchTerm }: 
               <Button
                 onClick={clearAllFilters}
                 variant="ghost"
-                className="text-gray-500 hover:text-gray-700 rounded-xl"
+                className="text-gray-500 hover:text-[#241d1f] rounded-xl"
               >
                 <X className="h-4 w-4 mr-1" />
                 Clear All

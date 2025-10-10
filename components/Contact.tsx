@@ -138,7 +138,7 @@ const onSubmit = async (e: React.FormEvent) => {
               {/* Company Info Card */}
               <div className="rounded-xs border border-gray-100 bg-white text-gray-800 shadow-xs p-6">
                 <h3 className="text-xl md:text-2xl font-semibold text-gray-900">Medivisor India Treatment</h3>
-                <p className="mt-1 text-gray-600">
+                <p className="mt-1 text-[#241d1f]">
                   Medivisor House 359, Sector 1, Vaishali, Ghaziabad, (Delhi/NCR) India
                 </p>
               </div>

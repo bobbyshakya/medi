@@ -169,7 +169,7 @@ export default function TreatmentsPage() {
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">
                   {feature.title}
                 </h3>
-                <p className="text-gray-600 text-sm">
+                <p className="text-[#241d1f] text-sm">
                   {feature.description}
                 </p>
               </div>
@@ -182,10 +182,10 @@ export default function TreatmentsPage() {
       <section className="py-20">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold text-[#241d1f] mb-4">
               Our Treatment Specialties
             </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+            <p className="text-xl text-[#241d1f] max-w-3xl mx-auto">
               Comprehensive medical care across all major specialties
             </p>
           </div>
@@ -210,12 +210,12 @@ export default function TreatmentsPage() {
                   </div>
                 </div>
                 <div className="p-6">
-                  <p className="text-gray-600 mb-4">
+                  <p className="text-[#241d1f] mb-4">
                     {category.description}
                   </p>
                   <ul className="space-y-2 mb-6">
                     {category.treatments.map((treatment, treatmentIndex) => (
-                      <li key={treatmentIndex} className="text-sm text-gray-700 flex items-center">
+                      <li key={treatmentIndex} className="text-sm text-[#241d1f] flex items-center">
                         <div className="w-2 h-2 bg-[#E22026] rounded-full mr-3"></div>
                         {treatment}
                       </li>
@@ -248,7 +248,7 @@ export default function TreatmentsPage() {
                     <h3 className="text-lg font-semibold text-gray-900 mb-2">
                       Cost Advantage
                     </h3>
-                    <p className="text-gray-600">
+                    <p className="text-[#241d1f]">
                       Save up to 70% on medical costs compared to Western countries without compromising on quality.
                     </p>
                   </div>
@@ -261,7 +261,7 @@ export default function TreatmentsPage() {
                     <h3 className="text-lg font-semibold text-gray-900 mb-2">
                       World-Class Infrastructure
                     </h3>
-                    <p className="text-gray-600">
+                    <p className="text-[#241d1f]">
                       State-of-the-art hospitals with international accreditations and latest medical technology.
                     </p>
                   </div>
@@ -274,7 +274,7 @@ export default function TreatmentsPage() {
                     <h3 className="text-lg font-semibold text-gray-900 mb-2">
                       Expert Medical Professionals
                     </h3>
-                    <p className="text-gray-600">
+                    <p className="text-[#241d1f]">
                       Highly qualified doctors and surgeons with international training and experience.
                     </p>
                   </div>
@@ -287,7 +287,7 @@ export default function TreatmentsPage() {
                     <h3 className="text-lg font-semibold text-gray-900 mb-2">
                       No Waiting Time
                     </h3>
-                    <p className="text-gray-600">
+                    <p className="text-[#241d1f]">
                       Immediate access to treatments without long waiting periods common in other countries.
                     </p>
                   </div>

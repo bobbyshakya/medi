@@ -184,12 +184,12 @@ const HospitalCard = ({ hospital, onOpenModal }: { hospital: Hospital; onOpenMod
       </CardHeader>
 
       <CardContent className="pt-0 px-4 flex flex-col flex-grow my-0">
-        <p className="text-gray-600 text-[19px] md:text-base mb-2 text-left leading-relaxed flex-grow">{hospital.description}</p>
+        <p className="text-[#241d1f] text-[19px] md:text-base mb-2 text-left leading-relaxed flex-grow">{hospital.description}</p>
 
         <Button
           onClick={onOpenModal}
           variant="ghost"
-          className="text-base border border-gray-200 text-center px-0 justify-center text-gray-700 cursor-pointer "
+          className="text-base border border-gray-200 text-center px-0 justify-center text-[#241d1f] cursor-pointer "
         >
           Enquire Now
         </Button>
@@ -351,14 +351,14 @@ export default function HospitalCarousel() {
             <div className="flex gap-2">
               <button
                 onClick={() => sliderRef.current?.slickPrev()}
-                className="bg-white text-gray-700 p-2 rounded-full shadow-md hover:bg-gray-100 transition-colors"
+                className="bg-white text-[#241d1f] p-2 rounded-full shadow-md hover:bg-gray-100 transition-colors"
                 aria-label="Previous advisor"
               >
                 <ChevronLeft className="md:w-5 w-4 h-4 md:h-5" />
               </button>
               <button
                 onClick={() => sliderRef.current?.slickNext()}
-                className="bg-white text-gray-700 p-2 rounded-full shadow-md hover:bg-gray-100 transition-colors"
+                className="bg-white text-[#241d1f] p-2 rounded-full shadow-md hover:bg-gray-100 transition-colors"
                 aria-label="Next advisor"
               >
                 <ChevronRight className="md:w-5 w-4 h-4 md:h-5" />

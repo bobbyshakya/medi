@@ -321,7 +321,7 @@ export default function ContactModal({ isOpen, onClose }: ContactModalProps) {
                 rows={3}
                 className="description-1 border-gray-300 focus:border-gray-200 focus:ring-gray-200 rounded-xs resize-none"
               />
-              <div className="flex justify-between text-xs text-gray-600 mt-1">
+              <div className="flex justify-between text-xs text-[#241d1f] mt-1">
                 <span>Min 10 chars</span>
                 <span className={cn(form.message.length > 500 ? "text-red-500" : "")}>
                   {form.message.length || 0}/500
@@ -364,7 +364,7 @@ export default function ContactModal({ isOpen, onClose }: ContactModalProps) {
 
             {/* Compact Footer */}
             <div className="text-center pt-2">
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-[#241d1f]">
                 Response within 24 hours • Secure & Private
               </p>
             </div>

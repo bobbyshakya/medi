@@ -23,7 +23,7 @@ export default function Overview() {
             Medical Director
           </h2>
           
-          <p className="text-base md:text-lg text-gray-700 leading-relaxed mb-5">
+          <p className="text-base md:text-lg text-[#241d1f] leading-relaxed mb-5">
             We understand that traveling for medical care is a life-changing
             decision. Our Medical Director is committed
             to providing compassionate guidance and premium medical
@@ -31,7 +31,7 @@ export default function Overview() {
             from Mauritius.
           </p>
           
-          <ul className="space-y-3 text-base md:text-lg text-gray-700">
+          <ul className="space-y-3 text-base md:text-lg text-[#241d1f]">
             <li className="flex items-center gap-2">
               <CheckCircle className="w-5 h-5 text-green-500  flex-shrink-0" />
               Dedicated medical concierge from arrival to departure

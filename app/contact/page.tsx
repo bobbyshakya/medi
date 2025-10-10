@@ -152,14 +152,14 @@ export default function ContactPage() {
                 key={i}
                 className="bg-gray-50 rounded-xs border border-gray-100 shadow-xs bg-white p-8 text-center"
               >
-                <div className="w-16 h-16 rounded-full bg-white border border-gray-200 flex items-center justify-center mx-auto mb-6 text-gray-700 transition-all duration-300">
+                <div className="w-16 h-16 rounded-full bg-white border border-gray-200 flex items-center justify-center mx-auto mb-6 text-[#241d1f] transition-all duration-300">
                   {icon}
                 </div>
                 <h3 className="text-xl font-bold text-gray-900 mb-3">{title}</h3>
-                <p className="text-gray-600 mb-6 leading-relaxed">{description}</p>
+                <p className="text-[#241d1f] mb-6 leading-relaxed">{description}</p>
                 <a
                   href={link}
-                  className="inline-flex items-center justify-center bg-gray-100 text-gray-700 px-6 py-2 rounded-xs hover:bg-gray-300 transition-all duration-300 font-semibold shadow-sm hover:shadow-md"
+                  className="inline-flex items-center justify-center bg-gray-100 text-[#241d1f] px-6 py-2 rounded-xs hover:bg-gray-300 transition-all duration-300 font-semibold shadow-sm hover:shadow-md"
                 >
                   {action}
                 </a>
@@ -184,7 +184,7 @@ export default function ContactPage() {
             <h2 className="text-3xl md:text-4xl mb-3 font-bold text-gray-900 tracking-tight">
               Connect with Our Global Offices
             </h2>
-            <p className="text-lg text-gray-600 max-w-3xl mx-auto">
+            <p className="text-lg text-[#241d1f] max-w-3xl mx-auto">
               We have a dedicated team ready to assist you in multiple locations around the world.
             </p>
           </div>
@@ -214,7 +214,7 @@ export default function ContactPage() {
 
                   {/* New Info Section */}
                   <div className="mb-6">
-                    <p className="text-gray-600 leading-relaxed text-sm">{info}</p>
+                    <p className="text-[#241d1f] leading-relaxed text-sm">{info}</p>
                   </div>
 
                   <div className="space-y-6">
@@ -223,7 +223,7 @@ export default function ContactPage() {
                       <div className="flex-shrink-0 w-10 h-10 rounded-full bg-white border border-gray-200 flex items-center justify-center mr-4 group-hover:bg-gray-100 transition-all duration-300">
                         <MapPin className="w-5 h-5 text-gray-500" />
                       </div>
-                      <p className="text-gray-700 leading-relaxed font-medium mt-1">
+                      <p className="text-[#241d1f] leading-relaxed font-medium mt-1">
                         {address}
                       </p>
                     </div>
@@ -241,7 +241,7 @@ export default function ContactPage() {
                               <a
                                 key={idx}
                                 href={`tel:${p.trim().split(" ")[0]}`}
-                                className="block text-gray-700 hover:text-gray-800 transition-colors duration-300 font-medium"
+                                className="block text-[#241d1f] hover:text-gray-800 transition-colors duration-300 font-medium"
                               >
                                 {p.trim()}
                               </a>
@@ -249,7 +249,7 @@ export default function ContactPage() {
                           : (
                             <a
                               href={`tel:${phone}`}
-                              className="block text-gray-700 hover:text-gray-800 transition-colors duration-300 font-medium"
+                              className="block text-[#241d1f] hover:text-gray-800 transition-colors duration-300 font-medium"
                             >
                               {phone}
                             </a>
@@ -264,7 +264,7 @@ export default function ContactPage() {
                       </div>
                       <a
                         href={`mailto:${email}`}
-                        className="text-gray-700 hover:text-gray-800 transition-colors duration-300 font-medium mt-1"
+                        className="text-[#241d1f] hover:text-gray-800 transition-colors duration-300 font-medium mt-1"
                       >
                         {email}
                       </a>
@@ -275,7 +275,7 @@ export default function ContactPage() {
                       <div className="flex-shrink-0 w-10 h-10 rounded-full bg-white border border-gray-200 flex items-center justify-center mr-4 group-hover:bg-gray-100 transition-all duration-300">
                         <Clock className="w-5 h-5 text-gray-500" />
                       </div>
-                      <p className={`font-semibold mt-1 ${isHeadOffice ? "text-gray-800" : "text-gray-700"}`}>
+                      <p className={`font-semibold mt-1 ${isHeadOffice ? "text-gray-800" : "text-[#241d1f]"}`}>
                         {hours}
                       </p>
                     </div>

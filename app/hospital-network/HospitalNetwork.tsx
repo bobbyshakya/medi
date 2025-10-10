@@ -188,7 +188,7 @@ const SectionHeader = ({ title, subtitle }: { title: string; subtitle: string })
     <h2 className="text-4xl font-bold text-gray-900 mb-4  ">
       {title}
     </h2>
-    <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">{subtitle}</p>
+    <p className="text-xl text-[#241d1f] max-w-3xl mx-auto leading-relaxed">{subtitle}</p>
   </div>
 )
 
@@ -237,7 +237,7 @@ const HospitalCard = ({ hospital, openModal }: { hospital: Hospital, openModal: 
       <div className="flex items-center space-x-3 mb-2">
         <CardTitle className="title-text">{hospital.name}</CardTitle>
       </div>
-      <CardDescription className="flex description-1 items-center text-gray-600">
+      <CardDescription className="flex description-1 items-center text-[#241d1f]">
         <MapPin className="h-4 w-4 mr-1 text-[#E22026]" />
         {hospital.location}
       </CardDescription>
@@ -245,7 +245,7 @@ const HospitalCard = ({ hospital, openModal }: { hospital: Hospital, openModal: 
 
     <CardContent className="pt-0 x-3 md:px-4">
       <p className="description">{hospital.description}</p>
-      <Button onClick={openModal} className="w-full inline-flex items-center justify-center whitespace-nowrap rounded-xs mt-4 md:text-base text-lg font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 cursor-pointer border bg-background w-auto hover:text-accent-foreground h-10 px-4 py-2 border-gray-200 text-gray-600 hover:bg-gray-50  mb-3">
+      <Button onClick={openModal} className="w-full inline-flex items-center justify-center whitespace-nowrap rounded-xs mt-4 md:text-base text-lg font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 cursor-pointer border bg-background w-auto hover:text-accent-foreground h-10 px-4 py-2 border-gray-200 text-[#241d1f] hover:bg-gray-50  mb-3">
       Enquire Now
     </Button>
     </CardContent>
@@ -263,7 +263,7 @@ const BenefitCard = ({ benefit, index }: { benefit: PartnershipBenefit; index: n
           <IconComponent className="h-8 w-8 text-blue-600" />
         </div>
         <h3 className="text-xl font-semibold mb-3 text-gray-900">{benefit.title}</h3>
-        <p className="text-gray-600 leading-relaxed">{benefit.description}</p>
+        <p className="text-[#241d1f] leading-relaxed">{benefit.description}</p>
       </CardContent>
     </Card>
   )
@@ -312,7 +312,7 @@ export default function MediviosHospitalPartners() {
               <div className="text-gray-400 mb-4">
                 <Building2 className="h-16 w-16 mx-auto" />
               </div>
-              <h3 className="text-xl font-semibold text-gray-600 mb-2">No hospitals found</h3>
+              <h3 className="text-xl font-semibold text-[#241d1f] mb-2">No hospitals found</h3>
               <p className="text-gray-500">Try adjusting your search criteria or category filter</p>
             </div>
           )}

@@ -208,7 +208,7 @@ export default async function DoctorDetailPage({ params }: PageProps) {
                       <Clock className="h-4 w-4 text-blue-600" />
                       <div>
                         <p className="description-1 font-medium">Experience</p>
-                        <p className="description text-gray-600">{doctor.experience} Years</p>
+                        <p className="description text-[#241d1f]">{doctor.experience} Years</p>
                       </div>
                     </div>
                   )}
@@ -218,7 +218,7 @@ export default async function DoctorDetailPage({ params }: PageProps) {
                       <Languages className="h-4 w-4 text-blue-600" />
                       <div>
                         <p className="description-1 font-medium">Languages</p>
-                        <p className="description text-gray-600">{doctor.languages}</p>
+                        <p className="description text-[#241d1f]">{doctor.languages}</p>
                       </div>
                     </div>
                   )}
@@ -228,7 +228,7 @@ export default async function DoctorDetailPage({ params }: PageProps) {
                       <MapPin className="h-4 w-4 text-blue-600" />
                       <div>
                         <p className="description-1 font-medium">Hospitals</p>
-                        <p className="description text-gray-600">{doctor.hospitals}</p>
+                        <p className="description text-[#241d1f]">{doctor.hospitals}</p>
                       </div>
                     </div>
                   )}
@@ -247,7 +247,7 @@ export default async function DoctorDetailPage({ params }: PageProps) {
                   <CardContent className="px-5 pb-5">
                     <div className="flex flex-wrap gap-2">
                       {specialtyInterests1yy.map((interest, index) => (
-                        <Badge key={index} variant="outline" className="border-gray-200 text-gray-700 hover:bg-gray-50">
+                        <Badge key={index} variant="outline" className="border-gray-200 text-[#241d1f] hover:bg-gray-50">
                           {interest.trim()}
                         </Badge>
                       ))}
@@ -403,7 +403,7 @@ export default async function DoctorDetailPage({ params }: PageProps) {
                     <CardContent className="px-5 pb-5">
                       <div className="flex flex-wrap gap-2">
                         {specialtyInterests1yy.map((interest, index) => (
-                          <Badge key={index} variant="outline" className="border-gray-200 text-gray-700 hover:bg-gray-50">
+                          <Badge key={index} variant="outline" className="border-gray-200 text-[#241d1f] hover:bg-gray-50">
                             {interest.trim()}
                           </Badge>
                         ))}
@@ -453,7 +453,7 @@ export default async function DoctorDetailPage({ params }: PageProps) {
               asChild
               variant="outline"
               size="lg"
-              className="border-gray-300 text-gray-700 hover:bg-gray-50 font-semibold bg-transparent"
+              className="border-gray-300 text-[#241d1f] hover:bg-gray-50 font-semibold bg-transparent"
             >
               <Link href="/medical-advisors">← Back to All Medical Advisors</Link>
             </Button>

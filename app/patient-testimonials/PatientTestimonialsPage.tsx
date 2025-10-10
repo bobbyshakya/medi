@@ -365,20 +365,20 @@ export default function EnhancedTestimonialsPage() {
                 <div className="p-4 pb-2 space-y-2">
 
 
-                  <h3 className="font-medium text-xl text-gray-700 line-clamp-2 group-hover:text-gray-800 transition-colors duration-300 leading-tight min-h-[50px]">
+                  <h3 className="font-medium text-xl text-[#241d1f] line-clamp-2 group-hover:text-gray-800 transition-colors duration-300 leading-tight min-h-[50px]">
                     {video.title}
                   </h3>
 
                   <p className="text-slate-600 line-clamp-3 leading-relaxed text-sm">{video.description}</p>
 
                   <div className="flex items-center justify-between pt-2 border-t border-gray-200">
-                    <div className="flex items-center gap-1 text-xs text-gray-700">
+                    <div className="flex items-center gap-1 text-xs text-[#241d1f]">
                       <Calendar className="h-3 w-3" />
                       <span className="font-medium">{formatDate(video.publishedAt)}</span>
                     </div>
 
                     {video.viewCount && (
-                      <div className="flex items-center gap-1 text-xs text-gray-700">
+                      <div className="flex items-center gap-1 text-xs text-[#241d1f]">
                         <Eye className="h-3 w-3" />
                         <span className="font-medium">{formatViewCount(video.viewCount)}</span>
                       </div>
@@ -450,7 +450,7 @@ export default function EnhancedTestimonialsPage() {
                 </div>
                 <div>
                   <h3 className="font-medium text-xl text-slate-900">Patient Success Story</h3>
-                  <p className="text-gray-700 flex items-center gap-2 mt-1">
+                  <p className="text-[#241d1f] flex items-center gap-2 mt-1">
                     <Stethoscope className="h-4 w-4" />
                     Medivisor India • Verified Patient Story
                   </p>

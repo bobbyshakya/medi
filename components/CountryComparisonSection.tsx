@@ -400,11 +400,11 @@ const CountryComparisonSection = () => {
                     <div className="text-center mb-6">
 
 
-                        <h2 className="text-2xl md:text-4xl font-bold text-gray-700 mb-2 leading-snug">
+                        <h2 className="text-2xl md:text-4xl font-bold text-[#241d1f] mb-2 leading-snug">
                             India vs World: <span className="text-gray-900">Healthcare Excellence</span>
                         </h2>
 
-                        <p className="text-xl text-gray-600 max-w-4xl mx-auto mb-4 leading-relaxed">
+                        <p className="text-xl text-[#241d1f] max-w-4xl mx-auto mb-4 leading-relaxed">
                             Discover why India has become the world's leading medical tourism destination, offering world-class healthcare
                             with unmatched expertise, advanced technology, and comprehensive patient care.
                         </p>
@@ -422,7 +422,7 @@ const CountryComparisonSection = () => {
                                     onClick={() => setSelectedTreatment(key)}
                                     className={`group flex items-center space-x-3 px-8 py-2 rounded-xs font-medium  hover:shadow-sm ${selectedTreatment === key
                                         ? 'bg-[#e3232a] text-white shadow-gray-50 '
-                                        : 'bg-white text-gray-700 hover:bg-white border-1 border-gray-50'
+                                        : 'bg-white text-[#241d1f] hover:bg-white border-1 border-gray-50'
                                         }`}
                                 >
                                     <IconComp className="h-6 w-6" />
@@ -435,13 +435,13 @@ const CountryComparisonSection = () => {
                     {/* Main Comparison Section */}
                     <div className="grid relative grid-cols-1 lg:grid-cols-2 gap-5 mb-10">
                         {/* India Section */}
-                        <div className="bg-red-50 rounded-xs p-8 text-gray-700 shadow-xs transform  transition-all duration-300">
+                        <div className="bg-red-50 rounded-xs p-8 text-[#241d1f] shadow-xs transform  transition-all duration-300">
                             <div className="flex items-center justify-between mb-8">
                                 <div className="flex items-center space-x-4">
                                     <div className="text-6xl">🇮🇳</div>
                                     <div>
                                         <h3 className="text-3xl font-bold">India</h3>
-                                        <p className="text-gray-700:">Global Healthcare Leader</p>
+                                        <p className="text-[#241d1f]:">Global Healthcare Leader</p>
                                     </div>
                                 </div>
                                 <div className="bg-yellow-400 text-white mb-10 px-4 py-2 rounded-xs text-sm font-bold">
@@ -459,7 +459,7 @@ const CountryComparisonSection = () => {
                                     {currentComparison.india.advantages.map((advantage, idx) => (
                                         <div key={idx} className="flex items-start space-x-3">
                                             <CheckCircle className="h-5 w-5 mt-0.5 text-[#76c147] flex-shrink-0" />
-                                            <span className="text-gray-700:">{advantage}</span>
+                                            <span className="text-[#241d1f]:">{advantage}</span>
                                         </div>
                                     ))}
                                 </div>
@@ -474,7 +474,7 @@ const CountryComparisonSection = () => {
                                 <div className="grid grid-cols-1 gap-3">
                                     {currentComparison.india.facilities.map((facility, idx) => (
                                         <div key={idx} className="bg-white bg-opacity-20 rounded-xl p-3 backdrop-blur-sm">
-                                            <span className="text-gray-700 font-medium">{facility}</span>
+                                            <span className="text-[#241d1f] font-medium">{facility}</span>
                                         </div>
                                     ))}
                                 </div>
@@ -505,7 +505,7 @@ const CountryComparisonSection = () => {
                                         <div className="text-4xl">{country.flag}</div>
                                         <div>
                                             <h3 className="text-2xl font-bold text-gray-900">{country.country}</h3>
-                                            <p className="text-gray-600">Alternative Destination</p>
+                                            <p className="text-[#241d1f]">Alternative Destination</p>
                                         </div>
                                     </div>
 
@@ -520,7 +520,7 @@ const CountryComparisonSection = () => {
                                                 {country.advantages.map((advantage, advIdx) => (
                                                     <div key={advIdx} className="flex items-start space-x-2">
                                                         <div className="w-2 h-2 bg-[#76c147] rounded-full mt-2 flex-shrink-0"></div>
-                                                        <span className="text-sm text-gray-600">{advantage}</span>
+                                                        <span className="text-sm text-[#241d1f]">{advantage}</span>
                                                     </div>
                                                 ))}
                                             </div>
@@ -536,7 +536,7 @@ const CountryComparisonSection = () => {
                                                 {country.limitations.map((limitation, limIdx) => (
                                                     <div key={limIdx} className="flex items-start space-x-2">
                                                         <div className="w-2 h-2 bg-[#e32128] rounded-full mt-2 flex-shrink-0"></div>
-                                                        <span className="text-sm text-gray-600">{limitation}</span>
+                                                        <span className="text-sm text-[#241d1f]">{limitation}</span>
                                                     </div>
                                                 ))}
                                             </div>
@@ -558,9 +558,9 @@ const CountryComparisonSection = () => {
                 <div className=" container mx-auto">
                     <div className="text-center mb-12">
                         <h3 className="text-4xl font-bold text-gray-900 mb-4">
-                            Why India is the <span className="text-gray-700">Smart Choice</span>
+                            Why India is the <span className="text-[#241d1f]">Smart Choice</span>
                         </h3>
-                        <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+                        <p className="text-xl text-[#241d1f] max-w-3xl mx-auto">
                             Beyond medical excellence, India offers comprehensive advantages that make it the preferred destination for international patients
                         </p>
                     </div>
@@ -576,10 +576,10 @@ const CountryComparisonSection = () => {
                                     <div className="bg-gradient-to-r from-red-500 to-red-600 w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-6  transition-transform shadow-lg">
                                         <IconComp className="h-10 w-10 text-white" />
                                     </div>
-                                    <h4 className="text-xl font-bold text-gray-700 mb-3 text-center ">
+                                    <h4 className="text-xl font-bold text-[#241d1f] mb-3 text-center ">
                                         {advantage.title}
                                     </h4>
-                                    <p className="text-gray-600 text-center leading-relaxed mb-4">
+                                    <p className="text-[#241d1f] text-center leading-relaxed mb-4">
                                         {advantage.description}
                                     </p>
                                     <div className="bg-gradient-to-r from-red-50 to-red-100 rounded-xl p-3 text-center">

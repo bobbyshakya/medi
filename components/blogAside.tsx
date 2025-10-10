@@ -44,7 +44,7 @@ export default function QuickLinks() {
                 className={`flex items-center justify-between py-3 px-2 group transition-colors duration-200 ${
                   isActive
                     ? 'text-[#E22026] font-medium'
-                    : 'text-gray-700 hover:text-[#E22026]'
+                    : 'text-[#241d1f] hover:text-[#E22026]'
                 }`}
               >
                 <span className="flex items-center gap-3">

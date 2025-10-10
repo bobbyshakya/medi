@@ -34,7 +34,7 @@ export function RicosRenderer({ content, className = "" }: RicosRendererProps) {
 
         switch (decoration.type) {
           case "BOLD":
-            element = <span className="font-medium text-gray-700">{element}</span>;
+            element = <span className="font-medium text-[#241d1f]">{element}</span>;
             break;
           case "ITALIC":
             element = <em className="italic">{element}</em>;
@@ -149,7 +149,7 @@ export function RicosRenderer({ content, className = "" }: RicosRendererProps) {
           />
         </div>
         {caption && (
-          <figcaption className="text-[19px] text-gray-600 mt-3 text-center italic bg-gray-50 px-4 py-2 rounded-xs">
+          <figcaption className="text-[19px] text-[#241d1f] mt-3 text-center italic bg-gray-50 px-4 py-2 rounded-xs">
             {caption}
           </figcaption>
         )}
@@ -190,7 +190,7 @@ export function RicosRenderer({ content, className = "" }: RicosRendererProps) {
           unoptimized
         />
         {caption && (
-          <figcaption className="text-sm text-gray-700 text-center italic bg-gray-50 py-2 px-3">
+          <figcaption className="text-sm text-[#241d1f] text-center italic bg-gray-50 py-2 px-3">
             {caption}
           </figcaption>
         )}
@@ -215,7 +215,7 @@ export function RicosRenderer({ content, className = "" }: RicosRendererProps) {
         return (
           <p
             key={index}
-            className={`mb-5 text-[19px] text-gray-700 leading-relaxed ${getTextAlignment(node.textStyle?.textAlignment)}`}
+            className={`mb-5 text-[19px] text-[#241d1f] leading-relaxed ${getTextAlignment(node.textStyle?.textAlignment)}`}
           >
             {node.nodes?.map((childNode, childIndex) => renderNode(childNode, childIndex))}
           </p>
@@ -285,7 +285,7 @@ export function RicosRenderer({ content, className = "" }: RicosRendererProps) {
 
       case "BULLETED_LIST":
         return (
-          <ul key={index} className="list-none mb-5 space-y-0 text-[19px] text-gray-700 ">
+          <ul key={index} className="list-none mb-5 space-y-0 text-[19px] text-[#241d1f] ">
             {node.nodes?.map((childNode, childIndex) => (
               <li key={childIndex} className="flex items-start gap-3">
                 <FaCheckCircle className="text-[#74BF44] mt-1 flex-shrink-0 w-5 h-5" />
@@ -299,7 +299,7 @@ export function RicosRenderer({ content, className = "" }: RicosRendererProps) {
 
       case "ORDERED_LIST":
         return (
-          <ol key={index} className="list-decimal mb-4 space-y-` text-[19px] text-gray-700 md:ml-6  ">
+          <ol key={index} className="list-decimal mb-4 space-y-` text-[19px] text-[#241d1f] md:ml-6  ">
             {node.nodes?.map((childNode, childIndex) => (
               <li key={childIndex} className="leading-relaxed">
                 {childNode.nodes?.map((textNode, textIndex) => renderNode(textNode, textIndex))}
@@ -440,11 +440,11 @@ export function RicosRenderer({ content, className = "" }: RicosRendererProps) {
                       </div>
                       <CardHeader className="pb-2">
                         {item.title && <CardTitle className="text-xl">{item.title}</CardTitle>}
-                        {item.description && <CardDescription className="text-gray-600">{item.description}</CardDescription>}
+                        {item.description && <CardDescription className="text-[#241d1f]">{item.description}</CardDescription>}
                       </CardHeader>
                       <CardContent className="flex-grow pt-0">
                         {item.description && (
-                          <p className="text-[19px] text-gray-600 line-clamp-3">
+                          <p className="text-[19px] text-[#241d1f] line-clamp-3">
                             {item.description}
                           </p>
                         )}
@@ -472,7 +472,7 @@ export function RicosRenderer({ content, className = "" }: RicosRendererProps) {
               </div>
               <div className="flex-1">
                 {audioName && <h4 className="font-semibold text-gray-900 text-lg">{audioName}</h4>}
-                {authorName && <p className="text-[19px] text-gray-600">{authorName}</p>}
+                {authorName && <p className="text-[19px] text-[#241d1f]">{authorName}</p>}
               </div>
             </div>
             <audio controls className="w-full">
@@ -498,7 +498,7 @@ export function RicosRenderer({ content, className = "" }: RicosRendererProps) {
               </div>
               <div className="flex-1">
                 <h4 className="font-semibold text-gray-900 text-lg">{fileName || "Download File"}</h4>
-                <div className="text-[19px] text-gray-600">
+                <div className="text-[19px] text-[#241d1f]">
                   {fileType && <span className="mr-2">{fileType.toUpperCase()}</span>}
                   {fileSize && <span>({formatFileSize(fileSize)})</span>}
                 </div>

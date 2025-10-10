@@ -19,7 +19,7 @@ export default function NotFound() {
         <div className="mb-8">
           <h1 className="text-6xl lg:text-7xl font-bold text-gray-900 mb-4">404</h1>
           <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4 text-balance">Page Not Found</h2>
-          <p className="text-xl text-gray-600 leading-relaxed mb-2">
+          <p className="text-xl text-[#241d1f] leading-relaxed mb-2">
             Oops! The page you're looking for seems to have wandered off.
           </p>
           <p className="text-lg text-gray-500">Don't worry, our medical team is here to help you find what you need.</p>
@@ -35,7 +35,7 @@ export default function NotFound() {
               <Home className="w-6 h-6 text-[#74BF44]" />
             </div>
             <h3 className="text-xl font-semibold text-gray-900 mb-2">Go Home</h3>
-            <p className="text-gray-600">Return to our homepage and explore our medical services</p>
+            <p className="text-[#241d1f]">Return to our homepage and explore our medical services</p>
           </Link>
 
         

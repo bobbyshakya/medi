@@ -18,3 +18,5 @@ export const wixClient = createClient({
     submissions,
   },
 })
+
+export { createClient } from "@wix/sdk"

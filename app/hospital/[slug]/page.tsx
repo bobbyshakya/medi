@@ -199,7 +199,7 @@ const renderHospitalCard = (hospital: Hospital, viewMode: "grid" | "list") => {
                                 <h3 className="font-bold text-gray-800 text-xl line-clamp-2 mb-2 leading-snug">{hospital.Name}</h3>
                             )}
                             {hospital.Description && (
-                                <p className="text-sm text-gray-600 line-clamp-2 leading-relaxed">
+                                <p className="text-sm text-[#241d1f] line-clamp-2 leading-relaxed">
                                     {hospital.Description}
                                 </p>
                             )}

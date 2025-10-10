@@ -377,7 +377,7 @@ export default function Services() {
                 <div className="mt-auto pt-0 md:pt-2 pl-8 w-full md:pl-7 text-left">
                     {/* Updated onClick to use the correct function */}
                     <Button
-                        className="inline-flex items-center w-full justify-center whitespace-nowrap rounded-xs md:text-base text-sm md:text-base font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 cursor-pointer border bg-background w-auto hover:text-accent-foreground h-10 px-4 py-2 border-gray-200 text-gray-600 hover:bg-gray-50 left-4 right-4 mb-3"
+                        className="inline-flex items-center w-full justify-center whitespace-nowrap rounded-xs md:text-base text-sm md:text-base font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 cursor-pointer border bg-background w-auto hover:text-accent-foreground h-10 px-4 py-2 border-gray-200 text-[#241d1f] hover:bg-gray-50 left-4 right-4 mb-3"
                         onClick={() => openModal(service)}
                     >
                         {service.ctaText || 'Enquire Now'}
@@ -403,7 +403,7 @@ export default function Services() {
                         <h2 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent mb-6">
                             Our Services
                         </h2>
-                        <p className="text-lg text-gray-600">
+                        <p className="text-lg text-[#241d1f]">
                             Our services information is currently being updated. Check back soon!
                         </p>
                     </div>

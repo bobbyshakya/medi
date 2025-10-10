@@ -159,12 +159,12 @@ export default function WhyChooseUsPage() {
                     <CardContent className="p-6 h-full flex flex-col justify-between">
                       <div>
                         <div className="w-10 h-10 flex items-center justify-center bg-gray-50 border border-gray-200 rounded-xs mb-3">
-                          <Icon className="w-6 h-6 text-gray-700" />
+                          <Icon className="w-6 h-6 text-[#241d1f]" />
                         </div>
                         <h3 className="title-text mb-1">
                           {reason.title}
                         </h3>
-                        <p className="description text-gray-600">
+                        <p className="description text-[#241d1f]">
                           {reason.description}
                         </p>
                       </div>

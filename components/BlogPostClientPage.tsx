@@ -339,7 +339,7 @@ export default function BlogPost({ slug }: BlogPostProps) {
                 <span className="text-2xl">⚠️</span>
               </div>
               <h1 className="text-2xl font-bold text-gray-900 mb-4">Oops! Something went wrong</h1>
-              <p className="text-gray-600 mb-6">{error}</p>
+              <p className="text-[#241d1f] mb-6">{error}</p>
               <button
                 onClick={() => window.history.back()}
                 className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200"
@@ -364,7 +364,7 @@ export default function BlogPost({ slug }: BlogPostProps) {
                 <span className="text-2xl">📄</span>
               </div>
               <h1 className="text-2xl font-bold text-gray-900 mb-4">Post Not Found</h1>
-              <p className="text-gray-600 mb-6">The blog post you&apos;re looking for doesn&apos;t exist.</p>
+              <p className="text-[#241d1f] mb-6">The blog post you&apos;re looking for doesn&apos;t exist.</p>
               <button
                 onClick={() => window.history.back()}
                 className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200"
@@ -391,7 +391,7 @@ export default function BlogPost({ slug }: BlogPostProps) {
           <nav className="md:my-3">
             <button
               onClick={() => window.history.back()}
-              className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border bg-background hover:text-accent-foreground h-10 px-4 py-2 border-gray-200 text-gray-600 hover:bg-gray-50"
+              className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border bg-background hover:text-accent-foreground h-10 px-4 py-2 border-gray-200 text-[#241d1f] hover:bg-gray-50"
             >
               <ChevronLeft className="w-4 h-4 mr-2" />
               Back
@@ -403,7 +403,7 @@ export default function BlogPost({ slug }: BlogPostProps) {
                 <article className="md:bg-white md:rounded-xs md:shadow-xs overflow-hidden">
                   <div className="p-0 md:p-4">
                     <header className="mt-5">
-                      <h1 className="text-2xl md:text-3xl font-medium text-gray-700 mb-6 leading-tight">
+                      <h1 className="text-2xl md:text-3xl font-medium text-[#241d1f] mb-6 leading-tight">
                         {post.title}
                       </h1>
                       
@@ -448,13 +448,13 @@ export default function BlogPost({ slug }: BlogPostProps) {
                       ) : post.content ? (
                         <div dangerouslySetInnerHTML={{ __html: post.content }} />
                       ) : post.contentText ? (
-                        <div className="whitespace-pre-wrap text-lg text-gray-700 leading-relaxed">{post.contentText}</div>
+                        <div className="whitespace-pre-wrap text-lg text-[#241d1f] leading-relaxed">{post.contentText}</div>
                       ) : (
                         <div className="text-center py-12">
                           <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                             <span className="text-2xl">📝</span>
                           </div>
-                          <p className="text-gray-600 italic text-lg">No content available for this post.</p>
+                          <p className="text-[#241d1f] italic text-lg">No content available for this post.</p>
                         </div>
                       )}
                     </div>
@@ -462,46 +462,46 @@ export default function BlogPost({ slug }: BlogPostProps) {
                     <div className="mt-8 pt-6 border-t border-gray-200">
                       <div className="flex flex-wrap items-center justify-between gap-4">
                         <div className="flex items-center gap-2">
-                          <span className="text-sm text-gray-600">Share this post:</span>
+                          <span className="text-sm text-[#241d1f]">Share this post:</span>
                           <div className="flex gap-2">
                             <button
                               onClick={() => handleShare()}
-                              className="p-2 text-gray-600 hover:text-blue-600 transition-colors"
+                              className="p-2 text-[#241d1f] hover:text-blue-600 transition-colors"
                               aria-label="Share"
                             >
                               <Share2 className="w-5 h-5" />
                             </button>
                             <button
                               onClick={() => handleShare('facebook')}
-                              className="p-2 text-gray-600 hover:text-blue-600 transition-colors"
+                              className="p-2 text-[#241d1f] hover:text-blue-600 transition-colors"
                               aria-label="Share on Facebook"
                             >
                               <Facebook className="w-5 h-5" />
                             </button>
                             <button
                               onClick={() => handleShare('twitter')}
-                              className="p-2 text-gray-600 hover:text-blue-400 transition-colors"
+                              className="p-2 text-[#241d1f] hover:text-blue-400 transition-colors"
                               aria-label="Share on Twitter"
                             >
                               <Twitter className="w-5 h-5" />
                             </button>
                             <button
                               onClick={() => handleShare('linkedin')}
-                              className="p-2 text-gray-600 hover:text-blue-700 transition-colors"
+                              className="p-2 text-[#241d1f] hover:text-blue-700 transition-colors"
                               aria-label="Share on LinkedIn"
                             >
                               <Linkedin className="w-5 h-5" />
                             </button>
                             <button
                               onClick={() => handleShare('whatsapp')}
-                              className="p-2 text-gray-600 hover:text-green-600 transition-colors"
+                              className="p-2 text-[#241d1f] hover:text-green-600 transition-colors"
                               aria-label="Share on WhatsApp"
                             >
                               <MessageCircle className="w-5 h-5" />
                             </button>
                             <button
                               onClick={handleCopyLink}
-                              className="p-2 text-gray-600 hover:text-gray-800 transition-colors"
+                              className="p-2 text-[#241d1f] hover:text-gray-800 transition-colors"
                               aria-label="Copy link"
                             >
                               <Copy className="w-5 h-5" />
@@ -513,7 +513,7 @@ export default function BlogPost({ slug }: BlogPostProps) {
                           <button
                             onClick={() => setIsBookmarked(!isBookmarked)}
                             className={`p-2 transition-colors ${
-                              isBookmarked ? 'text-blue-600' : 'text-gray-600 hover:text-blue-600'
+                              isBookmarked ? 'text-blue-600' : 'text-[#241d1f] hover:text-blue-600'
                             }`}
                             aria-label={isBookmarked ? "Remove bookmark" : "Bookmark"}
                           >
@@ -523,7 +523,7 @@ export default function BlogPost({ slug }: BlogPostProps) {
                           <button
                             onClick={() => setIsLiked(!isLiked)}
                             className={`p-2 transition-colors ${
-                              isLiked ? 'text-red-600' : 'text-gray-600 hover:text-red-600'
+                              isLiked ? 'text-red-600' : 'text-[#241d1f] hover:text-red-600'
                             }`}
                             aria-label={isLiked ? "Unlike" : "Like"}
                           >
@@ -538,7 +538,7 @@ export default function BlogPost({ slug }: BlogPostProps) {
               <div className='col-span-1 bg-white md:p-4'>
                 {relatedPosts.length > 0 && (
                   <section className="mt-5">
-                    <h2 className="text-xl md:text-3xl font-medium text-gray-700 mb-3 leading-tight">Related Articles</h2>
+                    <h2 className="text-xl md:text-3xl font-medium text-[#241d1f] mb-3 leading-tight">Related Articles</h2>
                     <div className="space-y-4">
                       {relatedPosts.map((relatedPost) => {
                         const relatedImageUrl = getWixImageUrl(
@@ -563,7 +563,7 @@ export default function BlogPost({ slug }: BlogPostProps) {
                                 />
                               </div>
                             )}
-                            <h3 className="ml-3 text-base font-medium text-gray-600 hover:text-gray-800 transition-colors duration-200 line-clamp-2">
+                            <h3 className="ml-3 text-base font-medium text-[#241d1f] hover:text-gray-800 transition-colors duration-200 line-clamp-2">
                               {relatedPost.title}
                             </h3>
                           </a>
@@ -582,7 +582,7 @@ export default function BlogPost({ slug }: BlogPostProps) {
                     </p>
                     <button
                       onClick={() => (window.location.href = "/contact")}
-                      className="inline-flex items-center px-6 font-medium py-2 bg-white text-red-600 rounded-xs hover:bg-red-50 hover:text-gray-700 transition-all duration-200 shadow-xs hover:shadow-md"
+                      className="inline-flex items-center px-6 font-medium py-2 bg-white text-red-600 rounded-xs hover:bg-red-50 hover:text-[#241d1f] transition-all duration-200 shadow-xs hover:shadow-md"
                     >
                       Book Now
                     </button>

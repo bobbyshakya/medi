@@ -141,10 +141,10 @@ export default function ServiceSection() {
           <div className="inline-flex items-center justify-center w-20 h-20 bg-blue-50 rounded-full mb-6">
             <BriefcaseMedical className="h-10 w-10 text-blue-600" />
           </div>
-          <h2 className="md:text-4xl text-3xl font-bold text-gray-700 mb-4">
+          <h2 className="md:text-4xl text-3xl font-bold text-[#241d1f] mb-4">
             Our Treatments
           </h2>
-          <p className="text-lg text-gray-600">
+          <p className="text-lg text-[#241d1f]">
             Services information is currently being updated. Please check back soon!
           </p>
         </div>
@@ -171,14 +171,14 @@ export default function ServiceSection() {
             <div className="flex gap-2">
               <button
                 onClick={() => emblaApi?.scrollPrev()}
-                className="bg-white text-gray-700 p-1.5 rounded-full shadow-md hover:bg-gray-100 transition-colors duration-200"
+                className="bg-white text-[#241d1f] p-1.5 rounded-full shadow-md hover:bg-gray-100 transition-colors duration-200"
                 aria-label="Previous slide"
               >
                 <ChevronLeft className="w-5 h-5" />
               </button>
               <button
                 onClick={() => emblaApi?.scrollNext()}
-                className="bg-white text-gray-700 p-1.5 rounded-full shadow-md hover:bg-gray-100 transition-colors duration-200"
+                className="bg-white text-[#241d1f] p-1.5 rounded-full shadow-md hover:bg-gray-100 transition-colors duration-200"
                 aria-label="Next slide"
               >
                 <ChevronRight className="w-5 h-5" />

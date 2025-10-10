@@ -153,7 +153,7 @@ const ServiceCard = ({ service, onOpenModal }: { service: Service; onOpenModal: 
           </div>
           <div className="mt-auto pt-0 md:pt-4 text-left">
             <Button
-              className="inline-flex items-center w-full justify-center whitespace-nowrap rounded-md md:text-base text-lg font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border bg-background hover:text-accent-foreground h-10 px-4 py-2 border-gray-200 text-gray-600 hover:bg-gray-50  left-4 right-4 mb-3"
+              className="inline-flex items-center w-full justify-center whitespace-nowrap rounded-md md:text-base text-lg font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border bg-background hover:text-accent-foreground h-10 px-4 py-2 border-gray-200 text-[#241d1f] hover:bg-gray-50  left-4 right-4 mb-3"
               onClick={onOpenModal}
             >
               {service.ctaText || 'Enquire Now'}
@@ -386,14 +386,14 @@ export default function Services() {
             <div className="flex gap-2">
               <button
                 onClick={() => instanceRef.current?.prev()}
-                className="bg-white text-gray-700 p-2 rounded-full  cursor-pointer transition-colors shadow-lg hover:shadow-xl"
+                className="bg-white text-[#241d1f] p-2 rounded-full  cursor-pointer transition-colors shadow-lg hover:shadow-xl"
                 aria-label="Previous service"
               >
                 <ChevronLeft className="w-4 md:h-5 md:w-5 h-4" />
               </button>
               <button
                 onClick={() => instanceRef.current?.next()}
-                className="bg-white text-gray-700 p-2 rounded-full  cursor-pointer transition-colors shadow-lg hover:shadow-xl"
+                className="bg-white text-[#241d1f] p-2 rounded-full  cursor-pointer transition-colors shadow-lg hover:shadow-xl"
                 aria-label="Next service"
               >
                 <ChevronRight className="w-4 md:h-5 md:w-5 h-4" />

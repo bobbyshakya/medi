@@ -224,7 +224,7 @@ export default function SocialActivityCarousel() {
            <h2 className="text-2xl md:text-4xl font-bold text-gray-900 mb-2 leading-snug">
               Social Activities & Recovery Stories
             </h2>
-            <p className="text-lg text-gray-600">
+            <p className="text-lg text-[#241d1f]">
               No moments to display at the moment. Check back soon for inspiring stories!
             </p>
           </div>
@@ -324,7 +324,7 @@ export default function SocialActivityCarousel() {
                     className="pointer-events-auto w-8 h-8 rounded-full bg-white/90 hover:bg-white border-white/50 shadow-xl backdrop-blur-sm hover:scale-110 transition-all duration-300"
                     onClick={prevSlide}
                   >
-                    <ChevronLeft className="h-6 w-6 text-gray-700" />
+                    <ChevronLeft className="h-6 w-6 text-[#241d1f]" />
                   </Button>
                   <Button
                     variant="outline"
@@ -332,7 +332,7 @@ export default function SocialActivityCarousel() {
                     className="pointer-events-auto w-8 h-8 rounded-full bg-white/90 hover:bg-white border-white/50 shadow-xl backdrop-blur-sm hover:scale-110 transition-all duration-300"
                     onClick={nextSlide}
                   >
-                    <ChevronRight className="h-6 w-6 text-gray-700" />
+                    <ChevronRight className="h-6 w-6 text-[#241d1f]" />
                   </Button>
                 </div>
               )}

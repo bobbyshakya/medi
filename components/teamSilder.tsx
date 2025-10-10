@@ -206,7 +206,7 @@ export default function TeamSlider() {
             <h2 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent mb-6">
               Our Team
             </h2>
-            <p className="text-lg text-gray-600">Our team information is currently being updated. Check back soon!</p>
+            <p className="text-lg text-[#241d1f]">Our team information is currently being updated. Check back soon!</p>
           </div>
         </div>
       </section>
@@ -223,14 +223,14 @@ export default function TeamSlider() {
           <div className="flex gap-2">
             <button
               onClick={() => emblaApi?.scrollPrev()}
-              className="bg-white text-gray-700 p-2 rounded-full shadow-md hover:bg-gray-100 transition-colors duration-300"
+              className="bg-white text-[#241d1f] p-2 rounded-full shadow-md hover:bg-gray-100 transition-colors duration-300"
               aria-label="Previous slide"
             >
               <ChevronLeft className="md:w-5 w-4 h-4 md:h-5" />
             </button>
             <button
               onClick={() => emblaApi?.scrollNext()}
-              className="bg-white text-gray-700 p-2 rounded-full shadow-md hover:bg-gray-100 transition-colors duration-300"
+              className="bg-white text-[#241d1f] p-2 rounded-full shadow-md hover:bg-gray-100 transition-colors duration-300"
               aria-label="Next slide"
             >
               <ChevronRight className="md:w-5 w-4 h-4 md:h-5" />

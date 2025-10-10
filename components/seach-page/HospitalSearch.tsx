@@ -39,7 +39,7 @@ export default function HospitalSearch({
             Showing {hospitals.length} of {totalHospitals} hospitals
           </h2>
           {searchQuery && (
-            <p className="text-sm text-gray-600 mt-1">
+            <p className="text-sm text-[#241d1f] mt-1">
               Results for "{searchQuery}"
             </p>
           )}

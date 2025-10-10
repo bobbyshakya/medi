@@ -161,7 +161,7 @@ export default function MedicalAdvisorsPage() {
           {/* Specialty */}
           {advisor.specialty && (
             <div className="flex items-center border-b border-gray-100 mb-1 pb-1">
-              <span className="description-1 text-gray-600">
+              <span className="description-1 text-[#241d1f]">
                 {advisor.specialty}
               </span>
             </div>
@@ -169,7 +169,7 @@ export default function MedicalAdvisorsPage() {
 
           {/* Experience / Bio */}
           {advisor.experience && (
-            <p className="description text-gray-700 line-clamp-2">
+            <p className="description text-[#241d1f] line-clamp-2">
               {advisor.experience}
             </p>
           )}
@@ -243,7 +243,7 @@ At Medivisor India Treatment, our esteemed medical advisors combine global exper
                 <Card className="text-center py-12">
                   <CardContent>
                     <Stethoscope className="h-16 w-16 text-gray-300 mx-auto mb-4" /> {/* Updated icon */}
-                    <h3 className="text-xl font-semibold text-gray-700 mb-2">No Medical Advisors Found</h3>
+                    <h3 className="text-xl font-semibold text-[#241d1f] mb-2">No Medical Advisors Found</h3>
                     <p className="text-gray-500 mb-4">
                       Your MedicalAdvisors collection appears to be empty or inaccessible.
                     </p>

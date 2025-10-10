@@ -8,7 +8,7 @@ interface Props {
 export function ImageSkeleton({ width = "10", height = "10" }: Props) {
   return (
     <svg
-      className={`w-${width} h-${height} text-gray-200 dark:text-gray-600`}
+      className={`w-${width} h-${height} text-gray-200 dark:text-[#241d1f]`}
       aria-hidden="true"
       xmlns="http://www.w3.org/2000/svg"
       fill="currentColor"

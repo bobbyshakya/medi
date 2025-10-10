@@ -100,7 +100,7 @@ export default function TravelGuidePage() {
           <div className="text-center mb-10">
             <div className="flex justify-center mb-4">
               <div className="p-4 bg-white  rounded-xs shadow-xs border border-gray-100">
-                <MapPin className="w-10 h-10 text-gray-700" />
+                <MapPin className="w-10 h-10 text-[#241d1f]" />
               </div>
             </div>
             <h2 className="heading-lg">At the Transit Airport</h2>

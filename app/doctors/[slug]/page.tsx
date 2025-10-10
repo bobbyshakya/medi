@@ -288,7 +288,7 @@ function RatingStars({ rating }: { rating: number }) {
           className={star <= rating ? "text-yellow-400 fill-yellow-400" : "text-gray-300"}
         />
       ))}
-      <span className="ml-2 text-sm text-gray-600">({rating.toFixed(1)})</span>
+      <span className="ml-2 text-sm text-[#241d1f]">({rating.toFixed(1)})</span>
     </div>
   )
 }
@@ -461,7 +461,7 @@ export default async function DoctorPage({ params }: Props) {
             {/* About Doctor */}
             <section className="bg-white rounded-xs shadow-xs border border-gray-100 p-8">
               <h2 className="text-2xl font-bold text-gray-900 mb-4">About Dr. {doctor.name.split(' ').pop()}</h2>
-              <p className="text-gray-700 leading-relaxed">
+              <p className="text-[#241d1f] leading-relaxed">
                 {doctor.about || "No description available."}
               </p>
             </section>
@@ -491,7 +491,7 @@ export default async function DoctorPage({ params }: Props) {
                   {doctor.education.map((edu, index) => (
                     <div key={index} className="border-l-4 border-blue-500 pl-4 py-1">
                       <h3 className="font-semibold text-gray-900">{edu.degree}</h3>
-                      <p className="text-gray-700">{edu.institution}</p>
+                      <p className="text-[#241d1f]">{edu.institution}</p>
                       {edu.year && <p className="text-gray-500 text-sm">{edu.year}</p>}
                     </div>
                   ))}
@@ -507,9 +507,9 @@ export default async function DoctorPage({ params }: Props) {
                   {doctor.experienceHistory.map((exp, index) => (
                     <div key={index} className="border-l-4 border-green-500 pl-4 py-2">
                       <h3 className="font-semibold text-gray-900">{exp.position}</h3>
-                      <p className="text-gray-700 font-medium">{exp.hospital}</p>
+                      <p className="text-[#241d1f] font-medium">{exp.hospital}</p>
                       <p className="text-gray-500 text-sm">{exp.duration}</p>
-                      {exp.description && <p className="text-gray-700 mt-2">{exp.description}</p>}
+                      {exp.description && <p className="text-[#241d1f] mt-2">{exp.description}</p>}
                     </div>
                   ))}
                 </div>
@@ -527,7 +527,7 @@ export default async function DoctorPage({ params }: Props) {
                   <div className="flex items-start gap-3">
                     <MapPin size={20} className="text-gray-400 mt-0.5 flex-shrink-0" />
                     <div>
-                      <p className="text-gray-700">
+                      <p className="text-[#241d1f]">
                         {[doctor.address, doctor.city, doctor.state, doctor.country]
                           .filter(Boolean)
                           .join(', ')}
@@ -595,7 +595,7 @@ export default async function DoctorPage({ params }: Props) {
                   {doctor.hospitalAffiliations.map((hospital, index) => (
                     <div key={index} className="flex items-center gap-2">
                       <Building size={16} className="text-gray-400" />
-                      <span className="text-gray-700">{hospital}</span>
+                      <span className="text-[#241d1f]">{hospital}</span>
                     </div>
                   ))}
                 </div>
@@ -610,7 +610,7 @@ export default async function DoctorPage({ params }: Props) {
                   {doctor.awards.map((award, index) => (
                     <div key={index} className="flex items-center gap-3">
                       <Award size={16} className="text-yellow-500 flex-shrink-0" />
-                      <span className="text-gray-700">{award}</span>
+                      <span className="text-[#241d1f]">{award}</span>
                     </div>
                   ))}
                 </div>

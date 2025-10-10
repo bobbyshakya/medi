@@ -172,7 +172,7 @@ const HospitalDetails: React.FC = () => {
             <div className="min-h-screen bg-gray-50 flex items-center justify-center">
                 <div className="text-center">
                     <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                    <p className="text-gray-600 text-lg">Loading hospital profile...</p>
+                    <p className="text-[#241d1f] text-lg">Loading hospital profile...</p>
                 </div>
             </div>
         )
@@ -192,7 +192,7 @@ const HospitalDetails: React.FC = () => {
                                     className="w-full h-80 rounded-xs object-cover shadow-xs border border-gray-100"
                                 />
                                 <div className="absolute top-4 right-4 bg-white px-3 py-1 rounded-full shadow-xs">
-                                    <span className="text-sm font-medium text-gray-700">Est. {hospital.establishedYear}</span>
+                                    <span className="text-sm font-medium text-[#241d1f]">Est. {hospital.establishedYear}</span>
                                 </div>
                             </div>
                         </div>
@@ -201,7 +201,7 @@ const HospitalDetails: React.FC = () => {
                         <div className="lg:col-span-2 space-y-6">
                             <div>
                                 <h1 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-3 text-balance">{hospital.name}</h1>
-                                <p className="text-xl text-gray-600 font-medium mb-4">
+                                <p className="text-xl text-[#241d1f] font-medium mb-4">
                                     {hospital.specializations.slice(0, 3).join(" • ")}
                                 </p>
 
@@ -212,23 +212,23 @@ const HospitalDetails: React.FC = () => {
                                                 <Star key={i} className={`w-5 h-5 ${i < Math.floor(hospital.rating) ? "fill-current" : ""}`} />
                                             ))}
                                         </div>
-                                        <span className="text-gray-700 font-semibold text-lg">{hospital.rating}</span>
+                                        <span className="text-[#241d1f] font-semibold text-lg">{hospital.rating}</span>
                                         <span className="text-gray-500 ml-1">({hospital.reviewsCount} reviews)</span>
                                     </div>
 
-                                    <div className="flex items-center text-gray-600 bg-gray-50 px-4 py-2 rounded-xs shadow-xs">
-                                        <MapPin className="w-5 h-5 mr-2 text-gray-600" />
+                                    <div className="flex items-center text-[#241d1f] bg-gray-50 px-4 py-2 rounded-xs shadow-xs">
+                                        <MapPin className="w-5 h-5 mr-2 text-[#241d1f]" />
                                         <span className="font-medium">{hospital.location}</span>
                                     </div>
 
-                                    <div className="flex items-center text-gray-600 bg-gray-50 px-4 py-2 rounded-xs shadow-xs">
-                                        <Hospital className="w-5 h-5 mr-2 text-gray-600" />
+                                    <div className="flex items-center text-[#241d1f] bg-gray-50 px-4 py-2 rounded-xs shadow-xs">
+                                        <Hospital className="w-5 h-5 mr-2 text-[#241d1f]" />
                                         <span className="font-medium">{hospital.bedCount} Beds</span>
                                     </div>
                                 </div>
                             </div>
 
-                            <p className="text-gray-700 text-lg leading-relaxed mb-8">{hospital.description}</p>
+                            <p className="text-[#241d1f] text-lg leading-relaxed mb-8">{hospital.description}</p>
 
 
                         </div>
@@ -246,13 +246,13 @@ const HospitalDetails: React.FC = () => {
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                     <div>
                                         <h3 className="text-xl font-semibold text-gray-900 mb-6 flex items-center">
-                                            <Stethoscope className="w-6 h-6 mr-3 text-gray-600" />
+                                            <Stethoscope className="w-6 h-6 mr-3 text-[#241d1f]" />
                                             Core Specializations
                                         </h3>
                                         <div className="space-y-4">
                                             {hospital.specializations.map((spec, index) => (
                                                 <div key={index} className="flex items-center p-3 bg-gray-50 rounded-lg">
-                                                    <CheckCircle className="w-5 h-5 text-gray-600 mr-3 flex-shrink-0" />
+                                                    <CheckCircle className="w-5 h-5 text-[#241d1f] mr-3 flex-shrink-0" />
                                                     <span className="text-gray-800 font-medium">{spec}</span>
                                                 </div>
                                             ))}
@@ -279,7 +279,7 @@ const HospitalDetails: React.FC = () => {
 
                             <div className="bg-white rounded-xs p-8 shadow-xs border border-gray-100">
                                 <h2 className="text-3xl font-bold text-gray-900 mb-4">International Patient Services</h2>
-                                <p className="text-gray-600 text-lg mb-8 leading-relaxed">
+                                <p className="text-[#241d1f] text-lg mb-8 leading-relaxed">
                                     Comprehensive support for international patients seeking world-class medical care with personalized
                                     assistance throughout your journey.
                                 </p>
@@ -287,11 +287,11 @@ const HospitalDetails: React.FC = () => {
                                     <div className="bg-gray-50 rounded-xs p-6 border border-gray-200">
                                         <div className="flex items-center mb-4">
                                             <div className="w-12 h-12 bg-white rounded-xs flex items-center justify-center mr-4">
-                                                <FileText className="w-6 h-6 text-gray-700" />
+                                                <FileText className="w-6 h-6 text-[#241d1f]" />
                                             </div>
                                             <h3 className="text-xl font-bold text-gray-900">Visa & Documentation</h3>
                                         </div>
-                                        <p className="text-gray-700 leading-relaxed">
+                                        <p className="text-[#241d1f] leading-relaxed">
                                             Complete assistance with medical visa applications, invitation letters, and all required
                                             documentation for seamless travel.
                                         </p>
@@ -300,11 +300,11 @@ const HospitalDetails: React.FC = () => {
                                     <div className="bg-gray-50 rounded-xs p-6 border border-gray-200">
                                         <div className="flex items-center mb-4">
                                             <div className="w-12 h-12 bg-white rounded-xs flex items-center justify-center mr-4">
-                                                <Plane className="w-6 h-6 text-gray-700" />
+                                                <Plane className="w-6 h-6 text-[#241d1f]" />
                                             </div>
                                             <h3 className="text-xl font-bold text-gray-900">Travel Concierge</h3>
                                         </div>
-                                        <p className="text-gray-700 leading-relaxed">
+                                        <p className="text-[#241d1f] leading-relaxed">
                                             Airport transfers, accommodation booking, local transportation, and 24/7 support during your stay.
                                         </p>
                                     </div>
@@ -312,11 +312,11 @@ const HospitalDetails: React.FC = () => {
                                     <div className="bg-gray-50 rounded-xs p-6 border border-gray-200">
                                         <div className="flex items-center mb-4">
                                             <div className="w-12 h-12 bg-white rounded-xs flex items-center justify-center mr-4">
-                                                <Languages className="w-6 h-6 text-gray-700" />
+                                                <Languages className="w-6 h-6 text-[#241d1f]" />
                                             </div>
                                             <h3 className="text-xl font-bold text-gray-900">Language Support</h3>
                                         </div>
-                                        <p className="text-gray-700 leading-relaxed">
+                                        <p className="text-[#241d1f] leading-relaxed">
                                             Professional medical interpreters fluent in{" "}
                                             {hospital.internationalServices.languageInterpreter.join(", ")} and more.
                                         </p>
@@ -325,11 +325,11 @@ const HospitalDetails: React.FC = () => {
                                     <div className="bg-gray-50 rounded-xs p-6 border border-gray-200">
                                         <div className="flex items-center mb-4">
                                             <div className="w-12 h-12 bg-white rounded-xs flex items-center justify-center mr-4">
-                                                <CreditCard className="w-6 h-6 text-gray-700" />
+                                                <CreditCard className="w-6 h-6 text-[#241d1f]" />
                                             </div>
                                             <h3 className="text-xl font-bold text-gray-900">Insurance & Billing</h3>
                                         </div>
-                                        <p className="text-gray-700 leading-relaxed">
+                                        <p className="text-[#241d1f] leading-relaxed">
                                             Insurance verification, transparent pricing, flexible payment options, and direct billing
                                             assistance.
                                         </p>
@@ -356,7 +356,7 @@ const HospitalDetails: React.FC = () => {
                                             </button>
                                             {expandedFaq === index && (
                                                 <div className="px-6 py-4 bg-white border-t border-gray-200">
-                                                    <p className="text-gray-700 leading-relaxed">{faq.a}</p>
+                                                    <p className="text-[#241d1f] leading-relaxed">{faq.a}</p>
                                                 </div>
                                             )}
                                         </div>
@@ -387,23 +387,23 @@ const HospitalDetails: React.FC = () => {
                                 <h3 className="text-2xl font-bold text-gray-900 mb-6">Quick Information</h3>
                                 <div className="space-y-4">
                                     <div className="flex items-center p-3 bg-gray-50 rounded-lg">
-                                        <MapPin className="w-5 h-5 text-gray-600 mr-3" />
+                                        <MapPin className="w-5 h-5 text-[#241d1f] mr-3" />
                                         <div>
-                                            <span className="text-sm text-gray-600 block">Location</span>
+                                            <span className="text-sm text-[#241d1f] block">Location</span>
                                             <span className="text-gray-900 font-medium">{hospital.location}</span>
                                         </div>
                                     </div>
                                     <div className="flex items-center p-3 bg-gray-50 rounded-lg">
-                                        <Hospital className="w-5 h-5 text-gray-600 mr-3" />
+                                        <Hospital className="w-5 h-5 text-[#241d1f] mr-3" />
                                         <div>
-                                            <span className="text-sm text-gray-600 block">Bed Capacity</span>
+                                            <span className="text-sm text-[#241d1f] block">Bed Capacity</span>
                                             <span className="text-gray-900 font-medium">{hospital.bedCount} Beds</span>
                                         </div>
                                     </div>
                                     <div className="flex items-center p-3 bg-gray-50 rounded-lg">
-                                        <Clock className="w-5 h-5 text-gray-600 mr-3" />
+                                        <Clock className="w-5 h-5 text-[#241d1f] mr-3" />
                                         <div>
-                                            <span className="text-sm text-gray-600 block">Established</span>
+                                            <span className="text-sm text-[#241d1f] block">Established</span>
                                             <span className="text-gray-900 font-medium">{hospital.establishedYear}</span>
                                         </div>
                                     </div>
@@ -412,17 +412,17 @@ const HospitalDetails: React.FC = () => {
 
                             <Card className="bg-white border-gray-100 shadow-xs">
                                 <CardContent className="p-4 text-center">
-                                    <Heart className="w-8 h-8 text-gray-700 mx-auto mb-3" />
-                                    <h3 className="text-2xl font-bold text-gray-700 mb-2">Need Medical Consultation?</h3>
-                                    <p className="text-gray-600 mb-4 text-lg text-pretty">
+                                    <Heart className="w-8 h-8 text-[#241d1f] mx-auto mb-3" />
+                                    <h3 className="text-2xl font-bold text-[#241d1f] mb-2">Need Medical Consultation?</h3>
+                                    <p className="text-[#241d1f] mb-4 text-lg text-pretty">
                                         Book an appointment with Dr. Mithal for expert endocrinology care.
                                     </p>
-                                    <button className="w-full flex justify-center bg-primary text-lg text-gray-700 hover:bg-primary/90">
+                                    <button className="w-full flex justify-center bg-primary text-lg text-[#241d1f] hover:bg-primary/90">
                                         <Calendar className="w-6 h-6 mr-2" />
                                         Schedule Appointment
                                     </button>
                                     <div className="mt-4 pt-4 border-t border-gray-300">
-                                        <div className="flex items-center justify-center text-gray-600 text-lg">
+                                        <div className="flex items-center justify-center text-[#241d1f] text-lg">
                                             <Phone className="w-5 h-5 mr-1" />
                                             {/* <span>{doctor.contactPhone}</span> */}
                                         </div>

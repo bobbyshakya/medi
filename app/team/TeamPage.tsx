@@ -256,7 +256,7 @@ export default function TeamPage() {
                     <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold bg-gradient-to-r from-gray-900 via-red-700 to-gray-600 bg-clip-text text-transparent mb-6">
                         Our Amazing Team
                     </h1>
-                    <p className="text-base sm:text-lg text-gray-600 leading-relaxed">
+                    <p className="text-base sm:text-lg text-[#241d1f] leading-relaxed">
                         Our team information is currently being updated. Check back soon to meet our incredible professionals!
                     </p>
                 </div>

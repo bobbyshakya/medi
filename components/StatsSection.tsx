@@ -119,10 +119,10 @@ export default function WhyChooseUsSection() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
         >
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-            Why Choose <span className="text-gray-700">Medivisor?</span>
+          <h2 className="text-3xl md:text-4xl font-bold text-[#241d1f] mb-4">
+            Why Choose <span className="text-[#241d1f]">Medivisor?</span>
           </h2>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+          <p className="text-lg text-[#241d1f] max-w-2xl mx-auto">
             Discover why patients across the globe trust us for international medical care.
           </p>
         </motion.div>

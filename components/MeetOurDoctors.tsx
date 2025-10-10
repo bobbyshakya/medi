@@ -192,7 +192,7 @@ export default function MeetOurDoctors() {
             <h2 className="heading-base">
               Our Medical Advisors
             </h2>
-            <p className="text-lg text-gray-600">
+            <p className="text-lg text-[#241d1f]">
               Our medical advisor information is currently being updated. Check back soon!
             </p>
           </div>
@@ -218,14 +218,14 @@ export default function MeetOurDoctors() {
           <div className="flex gap-2">
             <button
               onClick={() => instanceRef.current?.prev()}
-              className="bg-white text-gray-700 p-2 rounded-full shadow-md hover:bg-gray-100 transition-colors"
+              className="bg-white text-[#241d1f] p-2 rounded-full shadow-md hover:bg-gray-100 transition-colors"
               aria-label="Previous advisor"
             >
               <ChevronLeft className="w-4 md:w-5 h-4  md:h-5" />
             </button>
             <button
               onClick={() => instanceRef.current?.next()}
-              className="bg-white text-gray-700 p-2 rounded-full shadow-md hover:bg-gray-100 transition-colors"
+              className="bg-white text-[#241d1f] p-2 rounded-full shadow-md hover:bg-gray-100 transition-colors"
               aria-label="Next advisor"
             >
               <ChevronRight className="w-4 md:w-5 h-4  md:h-5" />

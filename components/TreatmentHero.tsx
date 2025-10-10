@@ -22,7 +22,7 @@ export default function TreatmentCost() {
               World-Class Treatment
             </span>
           </h2>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
+          <p className="text-xl text-[#241d1f] max-w-3xl mx-auto leading-relaxed">
             Choose from our comprehensive treatment packages designed to meet your specific 
             medical needs and budget requirements.
           </p>
@@ -35,7 +35,7 @@ export default function TreatmentCost() {
             <h3 className="text-3xl font-bold text-gray-900 mb-6">
               Understanding Treatment Costs
             </h3>
-            <div className="space-y-6 text-gray-700 leading-relaxed">
+            <div className="space-y-6 text-[#241d1f] leading-relaxed">
               <p>
                 Treatment costs can vary significantly based on several factors, such as the type of medical procedure required, the complexity of the condition, and the choice of healthcare facility.
               </p>
@@ -104,7 +104,7 @@ export default function TreatmentCost() {
             <div className="absolute bottom-6 left-6 right-6 bg-white rounded-2xl p-6 shadow-xl">
               <div className="text-center">
                 <h4 className="text-xl font-semibold text-gray-900 mb-2">Get Personalized Quote</h4>
-                <p className="text-gray-600 text-sm mb-4">Receive detailed cost estimate within 24 hours</p>
+                <p className="text-[#241d1f] text-sm mb-4">Receive detailed cost estimate within 24 hours</p>
                 <Button className="w-full bg-gradient-to-r from-blue-600 to-teal-600 text-white rounded-full font-semibold">
                   Get Quote Now
                 </Button>

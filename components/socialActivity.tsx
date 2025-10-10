@@ -234,7 +234,7 @@ export default function SocialActivityCarousel() {
             <h2 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent mb-6">
               Social Activities & Recovery Stories
             </h2>
-            <p className="text-lg text-gray-600">
+            <p className="text-lg text-[#241d1f]">
               No moments to display at the moment. Check back soon for inspiring stories!
             </p>
           </div>
@@ -253,7 +253,7 @@ export default function SocialActivityCarousel() {
                 Our commitment extends beyond medical care
               </h2>
 
-              <p className="text-lg text-gray-700 leading-relaxed">
+              <p className="text-lg text-[#241d1f] leading-relaxed">
                 We place importance on not just the medical needs of our patients, but also prioritize their emotional
                 well-being. To this end, we visit our patients daily at hospitals and hotels. Furthermore, we ensure
                 that significant milestones and special occasions are celebrated, including birthdays and anniversaries.
@@ -342,7 +342,7 @@ export default function SocialActivityCarousel() {
                     className="pointer-events-auto w-12 h-12 bg-white/90 hover:bg-white border-white/50 shadow-xl backdrop-blur-sm hover:scale-110 transition-all duration-300"
                     onClick={prevSlide}
                   >
-                    <ChevronLeft className="h-6 w-6 text-gray-700" />
+                    <ChevronLeft className="h-6 w-6 text-[#241d1f]" />
                   </Button>
 
                   <Button
@@ -351,7 +351,7 @@ export default function SocialActivityCarousel() {
                     className="pointer-events-auto w-12 h-12 bg-white/90 hover:bg-white border-white/50 shadow-xl backdrop-blur-sm hover:scale-110 transition-all duration-300"
                     onClick={nextSlide}
                   >
-                    <ChevronRight className="h-6 w-6 text-gray-700" />
+                    <ChevronRight className="h-6 w-6 text-[#241d1f]" />
                   </Button>
                 </div>
               )}

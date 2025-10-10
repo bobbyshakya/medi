@@ -56,7 +56,7 @@ export default function ProcessSteps() {
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-3 leading-tight">
             How it Works - Treatment Process
           </h2>
-          <p className="text-gray-700  text-base md:text-lg  max-w-2xl mx-auto">
+          <p className="text-[#241d1f]  text-base md:text-lg  max-w-2xl mx-auto">
             Embarking on your medical journey in India with Medivisor India Treatment is a streamlined and supportive
             process. We guide you through each step, ensuring clarity and ease.
           </p>
@@ -74,14 +74,14 @@ export default function ProcessSteps() {
                   className={`flex items-center gap-2 w-full px-0 py-3 min-h-12 text-base md:text-lg text-center justify-center  font-medium transition ${
                     activeStep === step.id
                       ? "bg-[#E22026]/10 text-[#E22026] border-[#E22026]"
-                      : "hover:bg-[#E22026]/10 text-gray-700 border-gray-100"
+                      : "hover:bg-[#E22026]/10 text-[#241d1f] border-gray-100"
                   }`}
                   onClick={() => setActiveStep(step.id)}
                 >
                   <span className={`textgray-900 ${
                     activeStep === step.id
                       ? " text-[#E22026] "
-                      : " text-gray-700 "
+                      : " text-[#241d1f] "
                   }`}
                   onClick={() => setActiveStep(step.id)}>{step.icon}</span>
                   {step.title}
@@ -103,13 +103,13 @@ export default function ProcessSteps() {
                   </span>
                 </div>
 
-                <p className="text-gray-700  text-base md:text-lg  mb-3">{currentStep.description}</p>
+                <p className="text-[#241d1f]  text-base md:text-lg  mb-3">{currentStep.description}</p>
 
                 {currentStep.isVisa ? (
                   <div className="grid gap-3 md:grid-cols-2">
                     <div className="bg-gray-50 p-3 border border-gray-100 rounded-md">
                       <h5 className="font-semibold text-gray-800 text-base mb-1">Required Documents</h5>
-                      <ul className="text-base text-gray-600 space-y-1">
+                      <ul className="text-base text-[#241d1f] space-y-1">
                         <li className="flex items-center gap-2">
                           <span className="text-[#4CAF50] font-bold">✓</span>
                           Passport copy
@@ -134,7 +134,7 @@ export default function ProcessSteps() {
 
                     <div className="bg-gray-50 p-3 border border-gray-100 rounded-md">
                       <h5 className="font-semibold text-gray-800 text-base mb-1">Our Assistance</h5>
-                      <ul className="text-base text-gray-600 space-y-1">
+                      <ul className="text-base text-[#241d1f] space-y-1">
                         <li className="flex items-center gap-2">
                           <span className="text-[#4CAF50] font-bold">✓</span>
                           Visa within 24-72 Hours
@@ -156,11 +156,11 @@ export default function ProcessSteps() {
                     <div className="grid gap-3 md:grid-cols-2">
                       <div className="bg-gray-50 p-3 border border-gray-100 rounded-md">
                         <h5 className="font-semibold text-gray-800 text-lg mb-1">Benefit</h5>
-                        <p className="text-base md:text-lg text-gray-600">{currentStep.benefit}</p>
+                        <p className="text-base md:text-lg text-[#241d1f]">{currentStep.benefit}</p>
                       </div>
                       <div className="bg-gray-50 p-3 border border-gray-100 rounded-md">
                         <h5 className="font-semibold text-gray-800 text-lg mb-1">Outcome</h5>
-                        <p className="text-base md:text-lg text-gray-600">{currentStep.outcome}</p>
+                        <p className="text-base md:text-lg text-[#241d1f]">{currentStep.outcome}</p>
                       </div>
                     </div>
                   )

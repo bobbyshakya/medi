@@ -341,15 +341,15 @@ export default function Searchpage() {
             )}
             <div className="flex-1">
               <CardTitle className="text-lg font-semibold">{doctor.title}</CardTitle>
-              <p className="text-sm text-gray-600">{doctor.specialty}</p>
+              <p className="text-sm text-[#241d1f]">{doctor.specialty}</p>
             </div>
           </CardHeader>
           <CardContent className="p-4 pt-0 text-sm space-y-2">
-            <p className="flex items-center gap-2 text-gray-700">
+            <p className="flex items-center gap-2 text-[#241d1f]">
               <Clock size={14} className="text-gray-500" />
               <span className="font-medium">{doctor.experience}</span> years experience
             </p>
-            <p className="flex items-center gap-2 text-gray-700">
+            <p className="flex items-center gap-2 text-[#241d1f]">
               <ShieldCheck size={14} className="text-gray-500" />
               <span className="font-medium">Languages:</span> {doctor.languages?.join(", ")}
             </p>
@@ -386,15 +386,15 @@ export default function Searchpage() {
             )}
             <div className="flex-1">
               <CardTitle className="text-lg font-semibold">{hospital.Name}</CardTitle>
-              <p className="text-sm text-gray-600">{hospital.Tagline}</p>
+              <p className="text-sm text-[#241d1f]">{hospital.Tagline}</p>
             </div>
           </CardHeader>
           <CardContent className="p-4 pt-0 text-sm space-y-2">
-            <p className="flex items-center gap-2 text-gray-700">
+            <p className="flex items-center gap-2 text-[#241d1f]">
               <HeartPulse size={14} className="text-gray-500" />
               <span className="font-medium">Departments:</span> {hospital.Departments.join(", ")}
             </p>
-            <p className="flex items-center gap-2 text-gray-700">
+            <p className="flex items-center gap-2 text-[#241d1f]">
               <ShieldCheck size={14} className="text-gray-500" />
               <span className="font-medium">Insurance Partners:</span> {hospital["Insurance Partners"]?.join(", ")}
             </p>
@@ -422,12 +422,12 @@ export default function Searchpage() {
             <Stethoscope size={48} className="text-gray-500" />
             <div className="flex-1">
               <CardTitle className="text-lg font-semibold">{treatment.name}</CardTitle>
-              <p className="text-sm text-gray-600">{treatment.department}</p>
+              <p className="text-sm text-[#241d1f]">{treatment.department}</p>
             </div>
           </CardHeader>
           <CardContent className="p-4 pt-0 text-sm space-y-2">
-            <p className="text-gray-700">{treatment.description}</p>
-            <p className="flex items-center gap-2 text-gray-700">
+            <p className="text-[#241d1f]">{treatment.description}</p>
+            <p className="flex items-center gap-2 text-[#241d1f]">
               <DollarSign size={14} className="text-gray-500" />
               <span className="font-medium">Price:</span> ${treatment.priceRangeMin} - ${treatment.priceRangeMax}
             </p>
@@ -465,7 +465,7 @@ export default function Searchpage() {
               <CardContent className="p-0 space-y-6">
                 {/* Search input */}
                 <div>
-                  <Label htmlFor="search" className="text-sm font-medium text-gray-700">
+                  <Label htmlFor="search" className="text-sm font-medium text-[#241d1f]">
                     Search by Name
                   </Label>
                   <Input
@@ -480,7 +480,7 @@ export default function Searchpage() {
 
                 {/* Type filter */}
                 <div>
-                  <Label className="text-sm font-medium text-gray-700">Resource Type</Label>
+                  <Label className="text-sm font-medium text-[#241d1f]">Resource Type</Label>
                   <Select
                     value={filters.type}
                     onValueChange={(value: "all" | "doctor" | "hospital" | "treatment") => handleTypeChange(value)}
@@ -502,7 +502,7 @@ export default function Searchpage() {
                 {/* Specialties */}
                 {uniqueSpecialties.length > 0 && (
                   <div>
-                    <Label className="text-sm font-medium text-gray-700">Specialty / Department</Label>
+                    <Label className="text-sm font-medium text-[#241d1f]">Specialty / Department</Label>
                     <ScrollArea className="h-40 border rounded-md p-2 mt-1 bg-gray-50 border-gray-200">
                       {uniqueSpecialties.map((specialty) => (
                         <div key={specialty} className="flex items-center space-x-2 py-1">
@@ -514,7 +514,7 @@ export default function Searchpage() {
                             }
                             className="border-gray-300"
                           />
-                          <Label htmlFor={`specialty-${specialty}`} className="cursor-pointer text-sm text-gray-700">
+                          <Label htmlFor={`specialty-${specialty}`} className="cursor-pointer text-sm text-[#241d1f]">
                             {specialty}
                           </Label>
                         </div>
@@ -526,7 +526,7 @@ export default function Searchpage() {
                 {/* Languages */}
                 {uniqueLanguages.length > 0 && filters.type !== "hospital" && filters.type !== "treatment" && (
                   <div>
-                    <Label className="text-sm font-medium text-gray-700">Languages</Label>
+                    <Label className="text-sm font-medium text-[#241d1f]">Languages</Label>
                     <ScrollArea className="h-40 border rounded-md p-2 mt-1 bg-gray-50 border-gray-200">
                       {uniqueLanguages.map((language) => (
                         <div key={language} className="flex items-center space-x-2 py-1">
@@ -536,7 +536,7 @@ export default function Searchpage() {
                             onCheckedChange={(checked: boolean) => handleFilterToggle("languages", language, checked)}
                             className="border-gray-300"
                           />
-                          <Label htmlFor={`language-${language}`} className="cursor-pointer text-sm text-gray-700">
+                          <Label htmlFor={`language-${language}`} className="cursor-pointer text-sm text-[#241d1f]">
                             {language}
                           </Label>
                         </div>

@@ -67,7 +67,7 @@ const NavButton = ({ direction, className }: { direction: 'prev' | 'next', class
     className={`absolute top-1/2 -translate-y-1/2 z-10 w-10 h-10 flex items-center justify-center rounded-full bg-white/70 shadow-md border border-gray-200 transition-all duration-300 hover:bg-gray-100 cursor-pointer ${className}`}
     aria-label={`${direction} slide`}
   >
-    {direction === 'prev' ? <ChevronLeft size={20} className="text-gray-700" /> : <ChevronRight size={20} className="text-gray-700" />}
+    {direction === 'prev' ? <ChevronLeft size={20} className="text-[#241d1f]" /> : <ChevronRight size={20} className="text-[#241d1f]" />}
   </div>
 );
 
@@ -96,13 +96,13 @@ const HospitalCard: React.FC<{ item: Hospital }> = ({ item }) => (
       )}
       <div className="ml-4 min-w-0">
         <h3 className="text-lg font-semibold text-gray-900 truncate">{item.Title || item.name || 'Hospital Name N/A'}</h3>
-        <p className="text-sm text-gray-600 truncate">
+        <p className="text-sm text-[#241d1f] truncate">
           {(item.city && item.state) ? `${item.city}, ${item.state}` : 'Location N/A'}
         </p>
       </div>
     </div>
     {/* FIX: Added robust description display with fallback */}
-    <p className="text-gray-700 text-sm line-clamp-2 mb-4">
+    <p className="text-[#241d1f] text-sm line-clamp-2 mb-4">
       {item.description 
         ? `${item.description.substring(0, 100)}${item.description.length > 100 ? '...' : ''}` 
         : 'No description provided.'}
@@ -151,7 +151,7 @@ const DoctorCard: React.FC<{ item: Doctor }> = ({ item }) => (
       <div className="ml-4 min-w-0">
         <h3 className="text-lg font-semibold text-gray-900 truncate">{item.name || 'Doctor Name N/A'}</h3>
         {/* FIX: Added robust specialization display with fallback */}
-        <p className="text-sm text-gray-600 truncate">
+        <p className="text-sm text-[#241d1f] truncate">
           {item.specializations?.length > 0 ? item.specializations.slice(0, 2).join(', ') : 'Specialist / N/A'}
         </p>
       </div>
@@ -159,7 +159,7 @@ const DoctorCard: React.FC<{ item: Doctor }> = ({ item }) => (
     <div className="flex items-center justify-between mt-auto">
       <div className="flex items-center">
         <span className="text-yellow-500 text-sm">★</span>
-        <span className="ml-1 text-gray-700 text-sm font-medium">
+        <span className="ml-1 text-[#241d1f] text-sm font-medium">
           {item.rating && item.rating > 0 ? item.rating.toFixed(1) : 'N/A'}
         </span>
       </div>
@@ -196,11 +196,11 @@ const TreatmentCard: React.FC<{ item: Treatment }> = ({ item }) => (
       )}
       <div className="ml-4 min-w-0">
         <h3 className="text-lg font-semibold text-gray-900 truncate">{item.name || 'Treatment Name N/A'}</h3>
-        <p className="text-sm text-gray-600 truncate">{item.category || 'Medical Treatment'}</p>
+        <p className="text-sm text-[#241d1f] truncate">{item.category || 'Medical Treatment'}</p>
       </div>
     </div>
     <div className="flex items-center justify-between mt-auto">
-      <span className="text-gray-700 text-sm">Success Rate:</span>
+      <span className="text-[#241d1f] text-sm">Success Rate:</span>
       <span className="text-green-600 text-sm font-semibold">
         {item.successRate && item.successRate > 0 ? `${item.successRate}%` : 'N/A'}
       </span>

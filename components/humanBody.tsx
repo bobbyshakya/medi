@@ -245,7 +245,7 @@ export default function HumanAnatomyInteractive() {
                     <h2 className="text-4xl font-extrabold text-gray-900 mb-6 leading-tight">
                         Explore Our Key Medical Treatments for a Healthier Tomorrow
                     </h2>
-                    <p className="text-lg md:text-xl text-gray-700 max-w-3xl">
+                    <p className="text-lg md:text-xl text-[#241d1f] max-w-3xl">
                         At our advanced care centers, we offer a comprehensive range of specialized treatments designed to meet the unique health needs of each individual.
                     </p>
 
@@ -332,7 +332,7 @@ export default function HumanAnatomyInteractive() {
                                     </button>
                                 )}
                             </CardHeader>
-                            <CardContent className="p-3 pt-0 text-lg text-gray-600">
+                            <CardContent className="p-3 pt-0 text-lg text-[#241d1f]">
                                 {currentTreatment.image && (
                                     <div className="relative w-full h-60 mb-2 rounded-md overflow-hidden">
                                         <Image
@@ -365,7 +365,7 @@ export default function HumanAnatomyInteractive() {
                             <CardHeader className="p-3 pb-1">
                                 <CardTitle className="text-lg text-black">Discover Our Treatments</CardTitle>
                             </CardHeader>
-                            <CardContent className="p-3 pt-0 text-lg text-gray-600">
+                            <CardContent className="p-3 pt-0 text-lg text-[#241d1f]">
                                 Hover over different parts of the human body to explore our specialized medical treatments. Click to keep the information visible.
                             </CardContent>
                         </Card>

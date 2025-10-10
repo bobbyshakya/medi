@@ -65,7 +65,7 @@ const renderBlock = (block: ContentBlock, index: number): JSX.Element | null => 
       return (
         <blockquote
           key={index}
-          className="border-l-4 border-gray-300 pl-4 italic text-gray-700 dark:border-gray-600 dark:text-gray-300 my-4"
+          className="border-l-4 border-gray-300 pl-4 italic text-[#241d1f] dark:border-gray-600 dark:text-gray-300 my-4"
         >
           {block.nodes?.map((node, i) => renderBlock(node, i))}
         </blockquote>

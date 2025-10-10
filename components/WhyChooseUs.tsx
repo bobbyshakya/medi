@@ -31,7 +31,7 @@ export default function WhyChooseUs() {
       title: 'Safe & Transparent',
       description: 'Clear guidance with no hidden charges and complete reliability.',
       icon: <Shield className="w-6 h-6" />,
-      color: 'bg-gray-50 text-gray-600'
+      color: 'bg-gray-50 text-[#241d1f]'
     },
     {
       title: '24/7 Support',
@@ -48,7 +48,7 @@ export default function WhyChooseUs() {
           <h2 className="text-2xl md:text-4xl font-bold text-gray-900 mb-2 leading-snug">
             Why Choose Us
           </h2>
-          <p className="text-gray-700 mt-4 max-w-2xl mx-auto md:text-lg text-base">
+          <p className="text-[#241d1f] mt-4 max-w-2xl mx-auto md:text-lg text-base">
             We're not just another healthcare company. Here's what makes us
             stand out.
           </p>
@@ -69,7 +69,7 @@ export default function WhyChooseUs() {
                 <h3 className="text-lg font-semibold text-gray-800">
                   {feature.title}
                 </h3>
-                <p className="md:text-lg text-base text-gray-700 mt-2">
+                <p className="md:text-lg text-base text-[#241d1f] mt-2">
                   {feature.description}
                 </p>
                 <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-0 group-hover:w-full h-[3px] bg-gradient-to-r from-[#E22026] to-[#FF6A6A] transition-all duration-300 rounded-full">

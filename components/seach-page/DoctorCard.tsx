@@ -60,7 +60,7 @@ export function DoctorCard({ doctor }: { doctor: Doctor }) {
         </div>
 
         {/* Description */}
-        <p className="mt-4 text-sm text-gray-600 line-clamp-2 leading-relaxed">
+        <p className="mt-4 text-sm text-[#241d1f] line-clamp-2 leading-relaxed">
           {doctor.description || "Experienced and patient-centered physician."}
         </p>
 
@@ -76,7 +76,7 @@ export function DoctorCard({ doctor }: { doctor: Doctor }) {
                 <Badge
                   key={i}
                   variant="secondary"
-                  className="text-xs bg-gray-100 text-gray-700 border border-gray-200"
+                  className="text-xs bg-gray-100 text-[#241d1f] border border-gray-200"
                 >
                   {s}
                 </Badge>
@@ -96,7 +96,7 @@ export function DoctorCard({ doctor }: { doctor: Doctor }) {
             <div className="text-xs text-gray-500 mb-2">Hospitals</div>
             <div className="flex flex-wrap gap-2">
               {doctor.hospitals.slice(0, 3).map((h, i) => (
-                <Badge key={i} variant="outline" className="text-xs border-gray-300 text-gray-600">
+                <Badge key={i} variant="outline" className="text-xs border-gray-300 text-[#241d1f]">
                   {h}
                 </Badge>
               ))}
@@ -110,7 +110,7 @@ export function DoctorCard({ doctor }: { doctor: Doctor }) {
             <Link href={`/doctors/${doctor.slug}`} passHref>
               <Button
                 variant="outline"
-                className="w-full border-gray-300 text-gray-700 hover:bg-gray-50 transition"
+                className="w-full border-gray-300 text-[#241d1f] hover:bg-gray-50 transition"
               >
                 Profile <ExternalLink size={14} className="ml-2" />
               </Button>

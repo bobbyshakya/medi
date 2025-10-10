@@ -155,24 +155,24 @@ export default async function TreatmentPage({ params }: { params: { slug: string
                 </Badge>
               </div>
 
-              <p className="text-xl text-gray-600 mb-6 text-pretty">{treatment.description}</p>
+              <p className="text-xl text-[#241d1f] mb-6 text-pretty">{treatment.description}</p>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                <div className="flex items-center gap-2 text-gray-700">
+                <div className="flex items-center gap-2 text-[#241d1f]">
                   <DollarSign className="h-5 w-5 text-green-500" />
                   <span className="font-semibold">
                     ${treatment.priceRangeMin.toLocaleString()} - ${treatment.priceRangeMax.toLocaleString()}
                   </span>
                 </div>
 
-                <div className="flex items-center gap-2 text-gray-700">
+                <div className="flex items-center gap-2 text-[#241d1f]">
                   <Clock className="h-5 w-5 text-blue-500" />
                   <span>
                     {Math.floor(treatment.durationMinutes / 60)}h {treatment.durationMinutes % 60}m duration
                   </span>
                 </div>
 
-                <div className="flex items-center gap-2 text-gray-700">
+                <div className="flex items-center gap-2 text-[#241d1f]">
                   <Users className="h-5 w-5 text-purple-500" />
                   <span>{relatedDoctors.length} specialists available</span>
                 </div>
@@ -227,7 +227,7 @@ export default async function TreatmentPage({ params }: { params: { slug: string
                           {index + 1}
                         </div>
                         <div className="flex-1">
-                          <p className="text-gray-700 leading-relaxed">{step}</p>
+                          <p className="text-[#241d1f] leading-relaxed">{step}</p>
                         </div>
                       </div>
                     ))}
@@ -251,7 +251,7 @@ export default async function TreatmentPage({ params }: { params: { slug: string
                       {treatment.benefits.map((benefit, index) => (
                         <div key={index} className="flex items-start gap-2">
                           <CheckCircle className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
-                          <span className="text-gray-700 text-sm">{benefit}</span>
+                          <span className="text-[#241d1f] text-sm">{benefit}</span>
                         </div>
                       ))}
                     </div>
@@ -272,7 +272,7 @@ export default async function TreatmentPage({ params }: { params: { slug: string
                       {treatment.risks.map((risk, index) => (
                         <div key={index} className="flex items-start gap-2">
                           <AlertTriangle className="h-4 w-4 text-orange-500 mt-0.5 flex-shrink-0" />
-                          <span className="text-gray-700 text-sm">{risk}</span>
+                          <span className="text-[#241d1f] text-sm">{risk}</span>
                         </div>
                       ))}
                     </div>
@@ -326,7 +326,7 @@ export default async function TreatmentPage({ params }: { params: { slug: string
                     {treatment.faqs.map((faq, index) => (
                       <AccordionItem key={index} value={`item-${index}`}>
                         <AccordionTrigger className="text-left text-gray-900">{faq.question}</AccordionTrigger>
-                        <AccordionContent className="text-gray-700">{faq.answer}</AccordionContent>
+                        <AccordionContent className="text-[#241d1f]">{faq.answer}</AccordionContent>
                       </AccordionItem>
                     ))}
                   </Accordion>
@@ -362,10 +362,10 @@ export default async function TreatmentPage({ params }: { params: { slug: string
                                   />
                                 )}
                                 <CardTitle className="text-lg text-gray-900">{doctor.title}</CardTitle>
-                                <p className="text-sm text-gray-600">{doctor.specialty}</p>
+                                <p className="text-sm text-[#241d1f]">{doctor.specialty}</p>
                               </CardHeader>
                               <CardContent className="pt-0 text-center">
-                                <p className="text-sm text-gray-700 mb-3">{doctor.experience} years experience</p>
+                                <p className="text-sm text-[#241d1f] mb-3">{doctor.experience} years experience</p>
                                 <Link href={`/medical-advisor/${doctor.slug}`}>
                                   <Button size="sm" variant="outline" className="w-full bg-transparent">
                                     View Profile
@@ -423,19 +423,19 @@ export default async function TreatmentPage({ params }: { params: { slug: string
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                  <span className="text-gray-600">Duration</span>
+                  <span className="text-[#241d1f]">Duration</span>
                   <span className="font-semibold text-gray-900">
                     {Math.floor(treatment.durationMinutes / 60)}h {treatment.durationMinutes % 60}m
                   </span>
                 </div>
 
                 <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                  <span className="text-gray-600">Department</span>
+                  <span className="text-[#241d1f]">Department</span>
                   <span className="font-semibold text-gray-900">{treatment.department}</span>
                 </div>
 
                 <div className="flex justify-between items-center py-2">
-                  <span className="text-gray-600">Specialists</span>
+                  <span className="text-[#241d1f]">Specialists</span>
                   <span className="font-semibold text-gray-900">{relatedDoctors.length} available</span>
                 </div>
               </CardContent>

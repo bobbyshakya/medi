@@ -41,7 +41,7 @@ export default function LiveChat() {
           </div>
 
           {/* Messages */}
-          <div className="flex-1 p-4 overflow-y-auto text-sm text-gray-700 space-y-3 max-h-72 custom-scroll">
+          <div className="flex-1 p-4 overflow-y-auto text-sm text-[#241d1f] space-y-3 max-h-72 custom-scroll">
             {messages.map((msg, i) => (
               <div
                 key={i}

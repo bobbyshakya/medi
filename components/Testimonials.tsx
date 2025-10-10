@@ -133,7 +133,7 @@ export default function Testimonials() {
                       className="w-24 h-16 object-cover rounded-md border"
                     />
                     <div className="ml-4">
-                      <p className="font-semibold text-gray-700 group-hover:text-black">{testimonial.name}</p>
+                      <p className="font-semibold text-[#241d1f] group-hover:text-black">{testimonial.name}</p>
                       <p className="text-sm text-gray-500">{testimonial.treatment}</p>
                     </div>
                   </div>
@@ -142,7 +142,7 @@ export default function Testimonials() {
 
              
                 <div className="md:px-4 py-3 pt-5 md:border-t border-gray-100">
-                  <button className="w-full px-4 py-2 bg-gray-100 text-gray-700 border border-gray-200 rounded-md  text-base font-medium">
+                  <button className="w-full px-4 py-2 bg-gray-100 text-[#241d1f] border border-gray-200 rounded-md  text-base font-medium">
                     <a href="/patient-testimonials" className="flex items-center justify-center gap-2">
                        More Videos
                     

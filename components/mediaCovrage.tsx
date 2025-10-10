@@ -168,7 +168,7 @@ export default function MediaCoverageCarousel({
 
           {mediaType === "text" && (
             <div className="w-full h-full flex items-center justify-center bg-gray-100">
-              <FileText className="h-10 w-10 text-gray-600" />
+              <FileText className="h-10 w-10 text-[#241d1f]" />
             </div>
           )}
 
@@ -178,7 +178,7 @@ export default function MediaCoverageCarousel({
         </div>
 
         <CardContent className="md:p-6 p-3 min-h-[115px] h-[115px] border-t-2 mt-2 border-gray-200 space-y-4">
-          <h3 className="md:text-xl hover:text-primary text-gray-700 text-2xl font-medium leading-tight overflow-hidden mt-2 mb-2 line-clamp-2">{item.title || "Untitled Media"}</h3>
+          <h3 className="md:text-xl hover:text-primary text-[#241d1f] text-2xl font-medium leading-tight overflow-hidden mt-2 mb-2 line-clamp-2">{item.title || "Untitled Media"}</h3>
         </CardContent>
       </Card>
     )
@@ -205,7 +205,7 @@ export default function MediaCoverageCarousel({
             <h2 className="heading-lg">{title}</h2>
           </div>
           {showViewAll && (
-            <Button asChild variant="link" className="text-gray-600 px-0">
+            <Button asChild variant="link" className="text-[#241d1f] px-0">
               <a href="/media-coverage" className="inline-flex items-center gap-1 font-semibold">
                 View All
                 <ExternalLink className="h-4 w-4" />

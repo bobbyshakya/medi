@@ -81,7 +81,7 @@ export default function TreatmentProcessPage() {
                         className="w-full h-[220px] sm:h-[280px] md:h-[380px] lg:h-[420px] object-cover"
                       />
                       {/* Step Number Overlay */}
-                      <div className="absolute top-4 left-4 md:top-6 md:left-6 w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-white/80 backdrop-blur-md flex items-center justify-center text-gray-700 font-bold text-lg sm:text-xl z-20 shadow-lg">
+                      <div className="absolute top-4 left-4 md:top-6 md:left-6 w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-white/80 backdrop-blur-md flex items-center justify-center text-[#241d1f] font-bold text-lg sm:text-xl z-20 shadow-lg">
                           <IconComponent className="w-7 h-7 sm:w-8 sm:h-8" />
                       </div>
                       {/* Icon Overlay */}
@@ -93,7 +93,7 @@ export default function TreatmentProcessPage() {
                   <div className="flex-1 w-full px-1 sm:px-3 md:px-0 space-y-3 md:space-y-5 relative z-10">
                     {/* Heading with Step Number */}
                     <h2 className="heading-sm flex items-center gap-3 ">
-                      <span className="text-gray-700 bg-white rounded-full w-9 h-9 flex items-center justify-center text-sm sm:text-xl font-bold shadow-md">
+                      <span className="text-[#241d1f] bg-white rounded-full w-9 h-9 flex items-center justify-center text-sm sm:text-xl font-bold shadow-md">
                         {step.id}
                       </span>
                       {step.title}

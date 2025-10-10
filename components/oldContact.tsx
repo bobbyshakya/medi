@@ -73,7 +73,7 @@ export default function Contact() {
           <h2 className="text-2xl md:text-4xl font-bold text-gray-900 mb-2 leading-snug">
             Contact Medivisor India Treatment
           </h2>
-          <p className="text-gray-600 my-3 max-w-2xl mx-auto text-base">
+          <p className="text-[#241d1f] my-3 max-w-2xl mx-auto text-base">
             We're here to assist international patients from around the world in accessing high-quality
             medical care in India.
           </p>
@@ -88,7 +88,7 @@ export default function Contact() {
                   <h3 className="text-2xl font-bold text-gray-800 cursor-pointer mb-1">
                     Medivisor India Treatment
                   </h3>
-                  <p className="text-gray-600">
+                  <p className="text-[#241d1f]">
                     Medivisor House 359, Sector 1, Vaishali, Ghaziabad, (Delhi/NCR) India
                   </p>
                 </div>
@@ -102,7 +102,7 @@ export default function Contact() {
                 </h3>
               </div>
               <div className="md:p-6 p-3">
-                <ul className="text-gray-700 grid grid-cols-1 md:grid-cols-2 md:gap-x-8 gap-y-3 md:gap-y-6">
+                <ul className="text-[#241d1f] grid grid-cols-1 md:grid-cols-2 md:gap-x-8 gap-y-3 md:gap-y-6">
                   {offices.map((office, index) => (
                     <li key={index} className="flex items-start">
                       <Phone className="text-[#E22026] mr-3 mt-0.5 w-5 h-5 transform rotate-90" />

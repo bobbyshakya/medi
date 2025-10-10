@@ -139,7 +139,7 @@ export function HospitalDetail({ hospital }: HospitalDetailProps) {
             <Link href="/">
               <Button
                 variant="ghost"
-                className="gap-2 bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-xs px-4 py-1"
+                className="gap-2 bg-gray-100 text-[#241d1f] hover:bg-gray-200 rounded-xs px-4 py-1"
               >
                 <ArrowLeft className="w-4 h-4" />
                 Back
@@ -153,7 +153,7 @@ export function HospitalDetail({ hospital }: HospitalDetailProps) {
               {/* Header */}
               <div className="flex items-center gap-4 mb-6">
                 <div className="p-3 bg-gray-100 rounded-xs">
-                  <GiHospital className="w-8 h-8 text-gray-700" />
+                  <GiHospital className="w-8 h-8 text-[#241d1f]" />
                 </div>
                 <div>
                   <h1 className="title-heading">{hospital.name}</h1>
@@ -188,8 +188,8 @@ export function HospitalDetail({ hospital }: HospitalDetailProps) {
                   const IconComponent = departmentIcons[dept] || Stethoscope;
                   return (
                     <div key={dept} className="flex items-center gap-2 px-3 py-1 rounded-xs bg-gray-50/60 hover:bg-gray-100 transition">
-                      {/* <IconComponent className="w-4 h-4 text-gray-700" /> */}
-                      <span className="text-gray-700 font-medium">
+                      {/* <IconComponent className="w-4 h-4 text-[#241d1f]" /> */}
+                      <span className="text-[#241d1f] font-medium">
                         {dept}
                       </span>
                     </div>
@@ -197,8 +197,8 @@ export function HospitalDetail({ hospital }: HospitalDetailProps) {
                 })}
                 {hospital.departments.length > 5 && (
                   <div className="flex items-center gap-2 px-3 py-1 rounded-xs bg-gray-50/60 hover:bg-gray-100 transition">
-                    <Plus className="w-4 h-4 text-gray-700" />
-                    <span className="text-gray-700 font-medium">
+                    <Plus className="w-4 h-4 text-[#241d1f]" />
+                    <span className="text-[#241d1f] font-medium">
                       {hospital.departments.length - 5} Specialty
                     </span>
                   </div>

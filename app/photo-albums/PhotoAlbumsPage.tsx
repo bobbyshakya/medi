@@ -193,7 +193,7 @@ export default function GalleryPage() {
         >
           <ChevronLeft className="h-4 w-4" /> Prev
         </Button>
-        <span className="px-2 text-gray-600">
+        <span className="px-2 text-[#241d1f]">
           Page {currentPage} of {totalPages}
         </span>
         <Button
@@ -256,7 +256,7 @@ export default function GalleryPage() {
             <Card className="text-center py-12">
               <CardContent>
                 <Heart className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-                <h3 className="text-xl font-semibold text-gray-700 mb-2">No Happy Moments Found</h3>
+                <h3 className="text-xl font-semibold text-[#241d1f] mb-2">No Happy Moments Found</h3>
               </CardContent>
             </Card>
           ) : (

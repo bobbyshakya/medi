@@ -313,7 +313,7 @@ export default function TeamMemberPage() {
           <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent mb-6">
             Team Member Not Found
           </h1>
-          <p className="text-lg text-gray-600 mb-8">
+          <p className="text-lg text-[#241d1f] mb-8">
             The team member you're looking for doesn't exist or may have been removed.
           </p>
           <Button asChild className="bg-red-600 mt-5 hover:bg-red-700 text-white">
@@ -368,7 +368,7 @@ export default function TeamMemberPage() {
                       href={`mailto:${teamMember.email}`}
                       className="p-3 bg-gray-100 hover:bg-red-100 rounded-full transition-colors group"
                     >
-                      <Mail className="w-5 h-5 text-gray-600 group-hover:text-red-600" />
+                      <Mail className="w-5 h-5 text-[#241d1f] group-hover:text-red-600" />
                     </a>
                   )}
                   {teamMember.linkedin && (
@@ -378,7 +378,7 @@ export default function TeamMemberPage() {
                       rel="noopener noreferrer"
                       className="p-3 bg-gray-100 hover:bg-red-100 rounded-full transition-colors group"
                     >
-                      <Linkedin className="w-5 h-5 text-gray-600 group-hover:text-red-600" />
+                      <Linkedin className="w-5 h-5 text-[#241d1f] group-hover:text-red-600" />
                     </a>
                   )}
                   {teamMember.twitter && (
@@ -388,7 +388,7 @@ export default function TeamMemberPage() {
                       rel="noopener noreferrer"
                       className="p-3 bg-gray-100 hover:bg-red-100 rounded-full transition-colors group"
                     >
-                      <Twitter className="w-5 h-5 text-gray-600 group-hover:text-red-600" />
+                      <Twitter className="w-5 h-5 text-[#241d1f] group-hover:text-red-600" />
                     </a>
                   )}
                   {teamMember.website && (
@@ -398,7 +398,7 @@ export default function TeamMemberPage() {
                       rel="noopener noreferrer"
                       className="p-3 bg-gray-100 hover:bg-red-100 rounded-full transition-colors group"
                     >
-                      <Globe className="w-5 h-5 text-gray-600 group-hover:text-red-600" />
+                      <Globe className="w-5 h-5 text-[#241d1f] group-hover:text-red-600" />
                     </a>
                   )}
                 </div>

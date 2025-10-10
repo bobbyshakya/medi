@@ -612,7 +612,7 @@ Our organization and its work have garnered widespread appreciation and media co
                           <div className="flex flex-col h-full">
                             <div className="flex-grow  pt-2">
                               {item.title && (
-                                <h3 className="font-medium text-gray-700 text-lg line-clamp-2 mb-1 leading-snug">{item.title}</h3>
+                                <h3 className="font-medium text-[#241d1f] text-lg line-clamp-2 mb-1 leading-snug">{item.title}</h3>
                               )}
                               {/* {item.description && (
                                 <p className="text-sm tex-gray-700 line-clamp-2 leading-relaxed">

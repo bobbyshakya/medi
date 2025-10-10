@@ -123,7 +123,7 @@ const ModernTabs: React.FC = () => {
             {/* Larger, bolder heading */}
             Who We Are
           </h2>
-          <p className="text-lg md:text-xl text-gray-700 max-w-3xl mx-auto leading-relaxed">
+          <p className="text-lg md:text-xl text-[#241d1f] max-w-3xl mx-auto leading-relaxed">
             {" "}
             {/* Adjusted font size and max-width */}
             Discover our unwavering commitment to transforming healthcare experiences through excellence, continuous
@@ -144,7 +144,7 @@ const ModernTabs: React.FC = () => {
                 ${
                   activeTab === tab.id
                     ? "bg-[#e12428] text-white shadow-lg" // Stronger shadow for active tab
-                    : "bg-white text-gray-600 hover:text-white hover:bg-[#e12428] border border-gray-200 shadow-sm" // Darker text for inactive tabs, subtle shadow
+                    : "bg-white text-[#241d1f] hover:text-white hover:bg-[#e12428] border border-gray-200 shadow-sm" // Darker text for inactive tabs, subtle shadow
                 }
               `}
             >

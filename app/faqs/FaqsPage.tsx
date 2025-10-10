@@ -272,21 +272,21 @@ export default function FAQPage() {
                   <button
                     onClick={() => handleCategoryChange('All')}
                     className={`w-full flex items-center text-lg justify-between px-4 py-3 rounded-lg text-left transition-all duration-200 ${selectedCategory === 'All'
-                        ? 'bg-gray-50 text-gray-700 border border-gray-100'
-                        : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
+                        ? 'bg-gray-50 text-[#241d1f] border border-gray-100'
+                        : 'text-[#241d1f] hover:bg-gray-50 hover:text-gray-900'
                       }`}
                   >
                     <div className="flex items-center gap-3">
                       <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${selectedCategory === 'All' ? 'bg-white' : 'bg-white'
                         }`}>
-                        <HelpCircle className={`w-5 h-5 ${selectedCategory === 'All' ? 'text-gray-600' : 'text-gray-600'
+                        <HelpCircle className={`w-5 h-5 ${selectedCategory === 'All' ? 'text-[#241d1f]' : 'text-[#241d1f]'
                           }`} />
                       </div>
                       <span className="description">All Questions</span>
                     </div>
                     <Badge variant="secondary" className={`${selectedCategory === 'All'
-                        ? 'bg-text-100 text-gray-700'
-                        : 'bg-gray-100 text-gray-600'
+                        ? 'bg-text-100 text-[#241d1f]'
+                        : 'bg-gray-100 text-[#241d1f]'
                       }`}>
                       {getCategoryCount('All')}
                     </Badge>
@@ -301,21 +301,21 @@ export default function FAQPage() {
                         key={category}
                         onClick={() => handleCategoryChange(category)}
                         className={`w-full flex items-center justify-between border-b px-4 py-3 border-gray-100 text-left transition-all duration-200 ${selectedCategory === category
-                            ? 'bg-gray-50 text-gray-700 border border-gray-200'
-                            : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
+                            ? 'bg-gray-50 text-[#241d1f] border border-gray-200'
+                            : 'text-[#241d1f] hover:bg-gray-50 hover:text-gray-900'
                           }`}
                       >
                         <div className="flex items-center gap-3">
                           <div className={`w-8 h-8 rounded-xs flex items-center justify-center ${selectedCategory === category ? 'bg-gray-100' : 'bg-gray-100'
                             }`}>
-                            <Icon className={`w-5 h-5 ${selectedCategory === category ? 'text-gray-600' : 'text-gray-600'
+                            <Icon className={`w-5 h-5 ${selectedCategory === category ? 'text-[#241d1f]' : 'text-[#241d1f]'
                               }`} />
                           </div>
                           <span className="description">{category}</span>
                         </div>
                         <Badge variant="secondary" className={`${selectedCategory === category
-                            ? 'bg-gray-100 text-gray-700'
-                            : 'bg-gray-100 text-gray-600'
+                            ? 'bg-gray-100 text-[#241d1f]'
+                            : 'bg-gray-100 text-[#241d1f]'
                           }`}>
                           {getCategoryCount(category)}
                         </Badge>
@@ -360,7 +360,7 @@ export default function FAQPage() {
                       <div className="flex items-center gap-4 flex-1">
                         <div className="flex-shrink-0 md:block hidden mt-1">
                           <div className="w-10 h-10 bg-gray-100 rounded-xs flex items-center justify-center">
-                            <Icon className="w-5 h-5 text-gray-600" />
+                            <Icon className="w-5 h-5 text-[#241d1f]" />
                           </div>
                         </div>
                         <div className="flex-1 min-w-0">
@@ -381,9 +381,9 @@ export default function FAQPage() {
                         <div className={`w-8 h-8 rounded-xs flex items-center justify-center transition-colors duration-200 ${isOpen ? 'bg-gray-100' : 'bg-gray-100'
                           }`}>
                           {isOpen ? (
-                            <ChevronUp className="w-4 h-4 text-gray-600" />
+                            <ChevronUp className="w-4 h-4 text-[#241d1f]" />
                           ) : (
-                            <ChevronDown className="w-4 h-4 text-gray-600" />
+                            <ChevronDown className="w-4 h-4 text-[#241d1f]" />
                           )}
                         </div>
                       </div>

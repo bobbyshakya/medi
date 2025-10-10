@@ -218,12 +218,12 @@ export default async function HospitalPage({ params }: Props) {
                   <h1 className="text-3xl font-bold text-gray-900 mb-2">
                     {hospital.Name}
                   </h1>
-                  <p className="text-lg text-gray-600 mb-4">{hospital.Type}</p>
+                  <p className="text-lg text-[#241d1f] mb-4">{hospital.Type}</p>
                   
                   <div className="flex items-center mb-4">
                     <div className="flex items-center">
                       <span className="text-yellow-400 text-xl">★</span>
-                      <span className="ml-1 text-gray-700 font-medium">
+                      <span className="ml-1 text-[#241d1f] font-medium">
                         {hospital.Rating.toFixed(1)}
                       </span>
                       <span className="mx-2 text-gray-300">•</span>
@@ -274,7 +274,7 @@ export default async function HospitalPage({ params }: Props) {
 
               {/* Location Info */}
               <div className="mb-4 mt-4">
-                <p className="text-gray-700">
+                <p className="text-[#241d1f]">
                   📍 {hospital.address}, {hospital.city}, {hospital.state}, {hospital.country}
                 </p>
               </div>
@@ -319,7 +319,7 @@ export default async function HospitalPage({ params }: Props) {
             {/* Description */}
             <section className="bg-white rounded-lg shadow-md p-6">
               <h2 className="text-xl font-semibold mb-4">About</h2>
-              <p className="text-gray-700 leading-relaxed">
+              <p className="text-[#241d1f] leading-relaxed">
                 {hospital.description || 'No description available.'}
               </p>
             </section>
@@ -349,7 +349,7 @@ export default async function HospitalPage({ params }: Props) {
                   {hospital.Services.map((service, index) => (
                     <div key={index} className="flex items-center">
                       <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
-                      <span className="text-gray-700">{service}</span>
+                      <span className="text-[#241d1f]">{service}</span>
                     </div>
                   ))}
                 </div>
@@ -367,7 +367,7 @@ export default async function HospitalPage({ params }: Props) {
                   {hospital.Facilities.map((facility, index) => (
                     <div key={index} className="flex items-center">
                       <span className="w-2 h-2 bg-purple-500 rounded-full mr-2"></span>
-                      <span className="text-gray-700">{facility}</span>
+                      <span className="text-[#241d1f]">{facility}</span>
                     </div>
                   ))}
                 </div>
@@ -382,7 +382,7 @@ export default async function HospitalPage({ params }: Props) {
                   {hospital.accreditations.map((accreditation, index) => (
                     <div key={index} className="flex items-center">
                       <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
-                      <span className="text-gray-700">{accreditation}</span>
+                      <span className="text-[#241d1f]">{accreditation}</span>
                     </div>
                   ))}
                 </div>
@@ -397,7 +397,7 @@ export default async function HospitalPage({ params }: Props) {
                   {hospital.InsurancePartners.map((insurance, index) => (
                     <div key={index} className="flex items-center">
                       <span className="w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
-                      <span className="text-gray-700">{insurance}</span>
+                      <span className="text-[#241d1f]">{insurance}</span>
                     </div>
                   ))}
                 </div>
@@ -430,10 +430,10 @@ export default async function HospitalPage({ params }: Props) {
                       )}
                       <div className="ml-4">
                         <h3 className="text-lg font-semibold text-gray-900">{item.Name}</h3>
-                        <p className="text-sm text-gray-600">{item.city}, {item.state}</p>
+                        <p className="text-sm text-[#241d1f]">{item.city}, {item.state}</p>
                       </div>
                     </div>
-                    <p className="text-gray-700 text-sm line-clamp-2">{item.description}</p>
+                    <p className="text-[#241d1f] text-sm line-clamp-2">{item.description}</p>
                   </Link>
                 ))}
               </div>
@@ -462,10 +462,10 @@ export default async function HospitalPage({ params }: Props) {
                       )}
                       <div className="ml-4">
                         <h3 className="text-lg font-semibold text-gray-900">{item.name}</h3>
-                        <p className="text-sm text-gray-600">{item.specializations.join(', ')}</p>
+                        <p className="text-sm text-[#241d1f]">{item.specializations.join(', ')}</p>
                       </div>
                     </div>
-                    <p className="text-gray-700 text-sm">Rating: {item.rating.toFixed(1)}</p>
+                    <p className="text-[#241d1f] text-sm">Rating: {item.rating.toFixed(1)}</p>
                   </Link>
                 ))}
               </div>
@@ -494,10 +494,10 @@ export default async function HospitalPage({ params }: Props) {
                       )}
                       <div className="ml-4">
                         <h3 className="text-lg font-semibold text-gray-900">{item.name}</h3>
-                        <p className="text-sm text-gray-600">{item.category}</p>
+                        <p className="text-sm text-[#241d1f]">{item.category}</p>
                       </div>
                     </div>
-                    <p className="text-gray-700 text-sm">Success Rate: {item.successRate}%</p>
+                    <p className="text-[#241d1f] text-sm">Success Rate: {item.successRate}%</p>
                   </Link>
                 ))}
               </div>

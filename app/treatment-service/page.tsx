@@ -34,13 +34,13 @@ export default function CancerTreatmentPage() {
               <h1 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-6 leading-snug">
                 Cancer Treatment in India – Medivisor India Treatment
               </h1>
-              <p className="text-lg md:text-xl text-gray-700 mb-4 leading-relaxed">
+              <p className="text-lg md:text-xl text-[#241d1f] mb-4 leading-relaxed">
                 Cancer remains one of the leading health challenges worldwide, with millions of new cases diagnosed each year. For many patients, access to advanced treatment options can be limited or prohibitively expensive in their home countries. As a result, more patients are seeking treatment abroad, where they can find world-class care at a fraction of the cost.
               </p>
-              <p className="text-lg md:text-xl text-gray-700 mb-4 leading-relaxed">
+              <p className="text-lg md:text-xl text-[#241d1f] mb-4 leading-relaxed">
                 India has emerged as a global hub for affordable and high-quality cancer treatment. With state-of-the-art medical infrastructure, internationally trained oncologists, and cutting-edge technologies, India offers comprehensive cancer care comparable to top global standards — at significantly lower costs.
               </p>
-              <p className="text-lg md:text-xl text-gray-700 mb-6 leading-relaxed">
+              <p className="text-lg md:text-xl text-[#241d1f] mb-6 leading-relaxed">
                 At Medivisor India Treatment, we connect patients to some of the most trusted cancer care providers in India, including Max Healthcare, a leading name in oncology.
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
@@ -50,7 +50,7 @@ export default function CancerTreatmentPage() {
                 </Button>
                 <Button
                   variant="outline"
-                  className="border-gray-300 text-gray-700 hover:bg-gray-100 px-6"
+                  className="border-gray-300 text-[#241d1f] hover:bg-gray-100 px-6"
                 >
                   Get Second Opinion
                 </Button>
@@ -65,7 +65,7 @@ export default function CancerTreatmentPage() {
                 <h2 className="text-3xl font-bold text-gray-900 mb-3">
                   Why Choose India for Cancer Treatment?
                 </h2>
-                <p className="text-lg text-gray-600 max-w-3xl mx-auto">
+                <p className="text-lg text-[#241d1f] max-w-3xl mx-auto">
                   India has emerged as a global hub for affordable and high-quality cancer treatment, offering
                   comprehensive care comparable to top global standards.
                 </p>
@@ -79,11 +79,11 @@ export default function CancerTreatmentPage() {
                 ].map((item, index) => (
                   <Card key={index} className="text-center bg-gray-50 hover:bg-gray-100 border border-gray-100 shadow-xs hover:shadow-xs transition-all rounded-xs">
                     <CardHeader className="p-3">
-                      <item.icon className="h-14 w-14 text-gray-700 bg-white p-3 border border-gray-200 rounded-full mx-auto mb-3" />
-                      <CardTitle className="text-xl  text-gray-700">{item.title}</CardTitle>
+                      <item.icon className="h-14 w-14 text-[#241d1f] bg-white p-3 border border-gray-200 rounded-full mx-auto mb-3" />
+                      <CardTitle className="text-xl  text-[#241d1f]">{item.title}</CardTitle>
                     </CardHeader>
                     <CardContent className="text-lg p-3 pt-0 text-gray-900">
-                      <p className="text-lg text-gray-600">{item.desc}</p>
+                      <p className="text-lg text-[#241d1f]">{item.desc}</p>
                     </CardContent>
                   </Card>
                 ))}
@@ -99,7 +99,7 @@ export default function CancerTreatmentPage() {
                 <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3">
                   Types of Cancer We Treat
                 </h2>
-                <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+                <p className="text-lg text-[#241d1f] max-w-2xl mx-auto">
                   Comprehensive, multidisciplinary care across a wide spectrum of cancer types.
                 </p>
               </div>
@@ -128,7 +128,7 @@ export default function CancerTreatmentPage() {
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="p-5 pt-0">
-                      <p className="text-base text-gray-600 leading-relaxed">
+                      <p className="text-base text-[#241d1f] leading-relaxed">
                         {cancer.description}
                       </p>
                     </CardContent>
@@ -146,7 +146,7 @@ export default function CancerTreatmentPage() {
                 <h2 className="text-3xl font-bold text-gray-900 mb-3">
                   Advanced Treatment Services
                 </h2>
-                <p className="text-lg text-gray-600">
+                <p className="text-lg text-[#241d1f]">
                   Precision medicine combining advanced surgical techniques and comprehensive support
                 </p>
               </div>
@@ -161,7 +161,7 @@ export default function CancerTreatmentPage() {
                   ].map((service, index) => (
                     <div key={index} className="flex bg-gray-50 p-2 rounded-xs items-start space-x-3">
                       <CheckCircle className="h-5 w-5 text-[#74bf44] mt-0.5 flex-shrink-0" />
-                      <span className="text-gray-700 text-lg">{service}</span>
+                      <span className="text-[#241d1f] text-lg">{service}</span>
                     </div>
                   ))}
                 </div>
@@ -175,7 +175,7 @@ export default function CancerTreatmentPage() {
                   ].map((service, index) => (
                     <div key={index} className="flex bg-gray-50 p-2 rounded-xs items-start space-x-3">
                       <CheckCircle className="h-5 w-5 text-[#74bf44] mt-0.5 flex-shrink-0" />
-                      <span className="text-gray-700 text-lg">{service}</span>
+                      <span className="text-[#241d1f] text-lg">{service}</span>
                     </div>
                   ))}
                 </div>
@@ -190,7 +190,7 @@ export default function CancerTreatmentPage() {
                 <h2 className="text-3xl font-bold text-gray-900 mb-3">
                   International Patient Support
                 </h2>
-                <p className="text-lg text-gray-600">
+                <p className="text-lg text-[#241d1f]">
                   End-to-end care to make your treatment journey seamless and stress-free
                 </p>
               </div>
@@ -206,12 +206,12 @@ export default function CancerTreatmentPage() {
                   <Card key={index} className="text-center bg-white border border-gray-100 shadow-xs hover:shadow-xs rounded-xs">
                     <CardHeader className="p-0 pt-4">
                      <div className="rounded-full border-gray-200 bg-gray-100 p-2  inline-block w-14 h-14 mx-auto">
-                       <support.icon className="h-10 w-10 text-gray-700 mx-auto mb-3 p-1" />
+                       <support.icon className="h-10 w-10 text-[#241d1f] mx-auto mb-3 p-1" />
                      </div>
-                      <CardTitle className="text-xl mb-1 text-gray-700">{support.title}</CardTitle>
+                      <CardTitle className="text-xl mb-1 text-[#241d1f]">{support.title}</CardTitle>
                     </CardHeader>
                     <CardContent className="px-4 pb-4">
-                      <p className="text-lg text-gray-600">{support.desc}</p>
+                      <p className="text-lg text-[#241d1f]">{support.desc}</p>
                     </CardContent>
                   </Card>
                 ))}
@@ -232,7 +232,7 @@ export default function CancerTreatmentPage() {
               <h3 className="text-2xl font-semibold text-gray-900 mb-2">
                 Cancer Treatment in India
               </h3>
-              <p className="text-lg text-gray-600">
+              <p className="text-lg text-[#241d1f]">
                 Watch our comprehensive guide to cancer treatment options and patient success stories.
               </p>
             </div>
@@ -259,7 +259,7 @@ export default function CancerTreatmentPage() {
             <div className="mt-6 space-y-4">
               <div className="text-sm">
                 <h4 className="font-medium text-xl text-gray-900 mb-2">Key Benefits:</h4>
-                <ul className="space-y-1 text-gray-600">
+                <ul className="space-y-1 text-[#241d1f]">
                   {["Cost-effective treatment", "World-class facilities", "Expert oncologists", "Comprehensive support"].map((benefit, idx) => (
                     <li key={idx} className="flex text-lg items-center">
                       <CheckCircle className="h-5 w-5 text-[#74BF44] mr-2" />

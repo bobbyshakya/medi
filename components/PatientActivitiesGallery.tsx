@@ -179,7 +179,7 @@ export function PatientActivitiesGallery() {
         <h1 className="text-5xl md:text-6xl font-extrabold text-gray-900 mb-4 tracking-tight leading-tight">
           Moments of Joy & Healing
         </h1>
-        <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
+        <p className="text-xl text-[#241d1f] max-w-3xl mx-auto leading-relaxed">
           Discover our vibrant gallery of patient activities, designed to inspire well-being, foster connection, and
           enrich lives.
         </p>
@@ -251,7 +251,7 @@ export function PatientActivitiesGallery() {
               variant="ghost"
               size="icon"
               onClick={closeDetailsModal}
-              className="absolute top-4 right-4 text-gray-600 hover:text-gray-900 transition-colors duration-200 rounded-full bg-gray-100 hover:bg-gray-200 w-10 h-10 flex items-center justify-center z-20"
+              className="absolute top-4 right-4 text-[#241d1f] hover:text-gray-900 transition-colors duration-200 rounded-full bg-gray-100 hover:bg-gray-200 w-10 h-10 flex items-center justify-center z-20"
             >
               <X className="w-6 h-6" />
             </Button>
@@ -296,7 +296,7 @@ export function PatientActivitiesGallery() {
               </div>
             </div>
             {/* Content below the image */}
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">{currentActivity.title}</h2>
+            <h2 className="text-3xl md:text-4xl font-bold text-[#241d1f] mb-4">{currentActivity.title}</h2>
             <div className="flex items-center">
               <Button
                 variant="ghost"
@@ -308,7 +308,7 @@ export function PatientActivitiesGallery() {
                 className={`flex items-center space-x-2 p-3 rounded-md transition-colors ${
                   likedActivities.has(currentActivity.id)
                     ? "text-red-500 hover:text-red-600"
-                    : "text-gray-500 hover:text-gray-700"
+                    : "text-gray-500 hover:text-[#241d1f]"
                 }`}
               >
                 <Heart className={`w-7 h-7 ${likedActivities.has(currentActivity.id) ? "fill-red-500" : ""}`} />

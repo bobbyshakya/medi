@@ -59,7 +59,7 @@ export default function ExpertCard({ expert, onBookConsultation, onViewProfile }
           <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm rounded-full px-3 py-1 flex items-center gap-1">
             <Star className="h-4 w-4 text-yellow-500 fill-current" />
             <span className="font-semibold text-gray-900">{expert.rating}</span>
-            <span className="text-gray-600 text-sm">({expert.reviewCount})</span>
+            <span className="text-[#241d1f] text-sm">({expert.reviewCount})</span>
           </div>
 
           {/* Consultation Fee */}
@@ -75,16 +75,16 @@ export default function ExpertCard({ expert, onBookConsultation, onViewProfile }
           <div>
             <h3 className="text-xl font-bold text-gray-900 mb-1">{expert.name}</h3>
             <p className="text-blue-600 font-medium">{expert.specialty}</p>
-            <p className="text-gray-600 text-sm">{expert.education}</p>
+            <p className="text-[#241d1f] text-sm">{expert.education}</p>
           </div>
 
           {/* Hospital and Location */}
           <div className="space-y-2">
-            <div className="flex items-center gap-2 text-gray-600">
+            <div className="flex items-center gap-2 text-[#241d1f]">
               <MapPin className="h-4 w-4" />
               <span className="text-sm">{expert.hospital}, {expert.location}</span>
             </div>
-            <div className="flex items-center gap-2 text-gray-600">
+            <div className="flex items-center gap-2 text-[#241d1f]">
               <Clock className="h-4 w-4" />
               <span className="text-sm">{expert.experience} years experience</span>
             </div>
@@ -93,7 +93,7 @@ export default function ExpertCard({ expert, onBookConsultation, onViewProfile }
           {/* Languages */}
           <div className="flex flex-wrap gap-2">
             {expert.languages.map((language) => (
-              <Badge key={language} variant="secondary" className="text-xs bg-gray-100 text-gray-700">
+              <Badge key={language} variant="secondary" className="text-xs bg-gray-100 text-[#241d1f]">
                 {language}
               </Badge>
             ))}
@@ -109,7 +109,7 @@ export default function ExpertCard({ expert, onBookConsultation, onViewProfile }
                 </Badge>
               ))}
               {expert.availableSlots.length > 3 && (
-                <Badge variant="outline" className="text-gray-600">
+                <Badge variant="outline" className="text-[#241d1f]">
                   +{expert.availableSlots.length - 3} more
                 </Badge>
               )}

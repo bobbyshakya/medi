@@ -106,7 +106,7 @@ export default function PartnerSection() {
               whose lives you help transform.{" "}
               <a
                 onClick={openModal}
-                className="text-lg cursor-pointer inline-flex gap-x-1 items-center text-gray-600 hover:underline"
+                className="text-lg cursor-pointer inline-flex gap-x-1 items-center text-[#241d1f] hover:underline"
               >
                 Know More <ChevronsRight className="w-4 h-4" />
               </a>

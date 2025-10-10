@@ -177,7 +177,7 @@ export default function BlogCarousel() {
             ))}
           </div>
         ) : posts.length === 0 ? (
-          <p className="text-center text-gray-600 dark:text-gray-400 mt-10 text-lg">No featured posts available.</p>
+          <p className="text-center text-[#241d1f] dark:text-gray-400 mt-10 text-lg">No featured posts available.</p>
         ) : (
           <div className="relative p-2 md:p-0">
             <div className="overflow-hidden" ref={emblaRef} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
@@ -231,7 +231,7 @@ export default function BlogCarousel() {
                         <Link href={`/blog/${post.slug}`} className=" transition-colors duration-200">
                           <CardContent className="flex flex-col flex-grow p-3 bg-white rounded-b-xs">
                             <div className="line-clamp-2 md:h-15">
-                              <CardTitle className="md:text-xl hover:text-primary text-gray-700 text-2xl font-medium leading-tight  overflow-hidden mt-2">
+                              <CardTitle className="md:text-xl hover:text-primary text-[#241d1f] text-2xl font-medium leading-tight  overflow-hidden mt-2">
 
                                 {post.title}
 

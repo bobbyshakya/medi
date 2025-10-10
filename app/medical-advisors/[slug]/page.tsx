@@ -406,7 +406,7 @@ export default async function DoctorDetailPage({ params }: PageProps) {
                                                     <Badge
                                                         key={index}
                                                         variant="outline"
-                                                        className="border-gray-200 text-gray-700 bg-gray-50 hover:bg-gray-100"
+                                                        className="border-gray-200 text-[#241d1f] bg-gray-50 hover:bg-gray-100"
                                                     >
                                                         {interest.trim()}
                                                     </Badge>
@@ -441,7 +441,7 @@ export default async function DoctorDetailPage({ params }: PageProps) {
                                             {doctor.memberships.split("|").map((membership, index) => (
                                                 <div key={index} className="flex items-start gap-2">
                                                     <div className="w-1.5 h-1.5 bg-gray-400 rounded-full mt-2" />
-                                                    <p className="text-sm text-gray-700">{membership.trim()}</p>
+                                                    <p className="text-sm text-[#241d1f]">{membership.trim()}</p>
                                                 </div>
                                             ))}
                                         </CardContent>

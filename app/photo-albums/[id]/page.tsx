@@ -314,7 +314,7 @@ export default function ModernMomentPage({ params }: PageProps) {
                   <div className="flex items-center justify-between mb-6 md:mb-8">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 md:w-14 md:h-14 bg-gray-100 rounded-xs md:rounded-xs flex items-center justify-center shadow-xs">
-                        <Images className="h-8 w-8 md:h-6 md:w-6 text-gray-700" />
+                        <Images className="h-8 w-8 md:h-6 md:w-6 text-[#241d1f]" />
                       </div>
                       <div>
                         <h2 className="title-heading">Photo Gallery</h2>

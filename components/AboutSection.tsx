@@ -15,12 +15,12 @@ export default function AboutUsSection() {
         </div>
         <div className="lg:order-1">
           <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">Committed to Your Health and Well-being</h2>
-          <p className="text-gray-700 text-lg leading-relaxed mb-6">
+          <p className="text-[#241d1f] text-lg leading-relaxed mb-6">
             At our clinic, we are dedicated to providing the highest standard of medical care. With a team of
             experienced specialists and state-of-the-art facilities, we offer a comprehensive range of treatments
             designed to meet your unique health needs.
           </p>
-          <p className="text-gray-700 text-lg leading-relaxed">
+          <p className="text-[#241d1f] text-lg leading-relaxed">
             Our patient-centric approach ensures that you receive personalized attention and compassionate support
             throughout your healthcare journey. We believe in empowering our patients with knowledge and fostering a
             partnership for better health outcomes.

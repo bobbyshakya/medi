@@ -43,7 +43,7 @@ export default function TreatmentCard({ treatment }: { treatment: TreatmentItem 
       {/* Content */}
       <CardContent className="px-5 pb-5 space-y-3">
         {treatment.description && (
-          <p className="text-sm text-gray-600 leading-relaxed line-clamp-2">
+          <p className="text-sm text-[#241d1f] leading-relaxed line-clamp-2">
             {treatment.description}
           </p>
         )}
@@ -51,7 +51,7 @@ export default function TreatmentCard({ treatment }: { treatment: TreatmentItem 
         {/* Details Badges */}
         <div className="flex flex-wrap gap-2 text-xs">
           {treatment.duration && (
-            <span className="px-2 py-1 rounded-full bg-gray-50 border border-gray-200 text-gray-700">
+            <span className="px-2 py-1 rounded-full bg-gray-50 border border-gray-200 text-[#241d1f]">
               Duration: {treatment.duration}
             </span>
           )}
@@ -67,7 +67,7 @@ export default function TreatmentCard({ treatment }: { treatment: TreatmentItem 
             </span>
           )}
           {treatment.mode && (
-            <span className="px-2 py-1 rounded-full bg-gray-50 border border-gray-200 text-gray-700 capitalize">
+            <span className="px-2 py-1 rounded-full bg-gray-50 border border-gray-200 text-[#241d1f] capitalize">
               Mode: {treatment.mode}
             </span>
           )}

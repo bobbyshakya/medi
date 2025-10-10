@@ -113,7 +113,7 @@ export default function BlogPage() {
         <div className="py-10 bg-gray-100">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8 mb-8">
             {initialLoadComplete && posts.length === 0 && !isLoading && !error && (
-              <p className="text-center text-gray-600 dark:text-gray-400 mt-10 text-lg">
+              <p className="text-center text-[#241d1f] dark:text-gray-400 mt-10 text-lg">
                 No blog posts found. Please check your Wix blog settings or permissions.
               </p>
             )}
@@ -175,13 +175,13 @@ export default function BlogPage() {
                         <div className="text-xl font-medium leading-tight">
                           <Link
                             href={`/blog/${post.slug}`}
-                            className="hover:text-primary line-clamp-2 text-gray-700 transition-colors duration-200"
+                            className="hover:text-primary line-clamp-2 text-[#241d1f] transition-colors duration-200"
                           >
                             {post.title}
                           </Link>
                         </div>
                       </div>
-                      <span className="text-sm text-gray-600 dark:text-gray-400">
+                      <span className="text-sm text-[#241d1f] dark:text-gray-400">
                         {post.firstPublishedDate &&
                           new Date(post.firstPublishedDate).toLocaleDateString("en-US", {
                             year: "numeric",
@@ -191,14 +191,14 @@ export default function BlogPage() {
                       </span>
                       <div className="flex-grow pt-2">
                         {post.excerpt && (
-                          <p className="text-gray-600 dark:text-gray-700 text-base line-clamp-3">{post.excerpt}</p>
+                          <p className="text-[#241d1f] dark:text-[#241d1f] text-base line-clamp-3">{post.excerpt}</p>
                         )}
                       </div>
                       <div className="flex justify-between items-center pt-4">
-                        <span className="text-sm text-gray-600 dark:text-gray-400">{readTime}</span>
+                        <span className="text-sm text-[#241d1f] dark:text-gray-400">{readTime}</span>
 
                         <Link href={`/blog/${post.slug}`} passHref>
-                          <button className="border-gray-200 text-medium rounded-sm border px-3 py-1 text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors duration-200">
+                          <button className="border-gray-200 text-medium rounded-sm border px-3 py-1 text-sm font-medium text-[#241d1f] hover:bg-gray-100 transition-colors duration-200">
                             Read More
                           </button>
                         </Link>
@@ -210,7 +210,7 @@ export default function BlogPage() {
             </div>
 
             {isLoading && (
-              <p className="text-center text-gray-600 dark:text-gray-400 mt-10 text-lg">Loading posts...</p>
+              <p className="text-center text-[#241d1f] dark:text-gray-400 mt-10 text-lg">Loading posts...</p>
             )}
 
             {posts.length > 0 && !isLoading && (
@@ -222,7 +222,7 @@ export default function BlogPage() {
                 >
                   <ChevronLeft className="w-4 h-4 mr-2" />
                 </button>
-                <span className="text-gray-700 dark:text-gray-300">
+                <span className="text-[#241d1f] dark:text-gray-300">
                   {totalPages ? currentPage + 1 : 0} of {totalPages || "..."}
                 </span>
                 <button onClick={handleNextPage} disabled={!hasNextPage || isLoading} aria-label="Next page">
@@ -232,7 +232,7 @@ export default function BlogPage() {
             )}
 
             {!hasNextPage && !isLoading && posts.length > 0 && (
-              <p className="text-center text-gray-600 dark:text-gray-400 mt-10 text-lg">
+              <p className="text-center text-[#241d1f] dark:text-gray-400 mt-10 text-lg">
                 You've reached the end of the posts.
               </p>
             )}

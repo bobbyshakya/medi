@@ -41,10 +41,10 @@ export default function ProfessionalTreatmentCost() {
           <div className="flex flex-col gap-6 col-span-2 text-neutral-900">
             {/* Intro */}
             <div>
-              <h2 className="text-3xl font-semibold tracking-tight leading-tight text-gray-700">
+              <h2 className="text-3xl font-semibold tracking-tight leading-tight text-[#241d1f]">
                 Understand Your Treatment Investment
               </h2>
-              <p className="mt-2 text-lg leading-relaxed text-gray-600">
+              <p className="mt-2 text-lg leading-relaxed text-[#241d1f]">
                 At Medivisor India Treatment, we believe in absolute transparency. Our experienced advisors help
                 you understand what drives your treatment cost and how to make confident, informed decisions.
               </p>
@@ -54,10 +54,10 @@ export default function ProfessionalTreatmentCost() {
               <CardHeader>
                 <div className="flex items-start gap-5">
                   <div className="p-4 bg-gray-100">
-                    <Stethoscope className="text-gray-600 w-6 h-6" />
+                    <Stethoscope className="text-[#241d1f] w-6 h-6" />
                   </div>
                   <div>
-                    <CardTitle className="text-2xl font-medium text-gray-700">
+                    <CardTitle className="text-2xl font-medium text-[#241d1f]">
                       What Affects Your Treatment Cost?
                     </CardTitle>
                     <p className="text-sm text-gray-500 mt-1 leading-snug">
@@ -67,23 +67,23 @@ export default function ProfessionalTreatmentCost() {
                 </div>
               </CardHeader>
               <CardContent className="pt-0 space-y-2">
-                <ul className="space-y-3 text-gray-700 text-base leading-relaxed">
+                <ul className="space-y-3 text-[#241d1f] text-base leading-relaxed">
                   <li className="flex items-start gap-4">
-                    <FileText className="text-gray-600 w-6 h-6 mt-1" />
+                    <FileText className="text-[#241d1f] w-6 h-6 mt-1" />
                     <span className="text-sm">
-                      <strong className="text-gray-600 text-base">Procedure Type:</strong> Costs depend on the complexity and nature of your treatment.
+                      <strong className="text-[#241d1f] text-base">Procedure Type:</strong> Costs depend on the complexity and nature of your treatment.
                     </span> 
                   </li>
                   <li className="flex items-start gap-4">
-                    <Heart className="text-gray-600 w-6 h-6 mt-1" />
+                    <Heart className="text-[#241d1f] w-6 h-6 mt-1" />
                     <span className="text-sm">
-                      <strong className="text-gray-600 text-base">Condition Severity:</strong> Advanced or chronic conditions may require additional care.
+                      <strong className="text-[#241d1f] text-base">Condition Severity:</strong> Advanced or chronic conditions may require additional care.
                     </span>
                   </li>
                   <li className="flex items-start gap-4">
-                    <Building2 className="text-gray-600 w-6 h-6 mt-1" />
+                    <Building2 className="text-[#241d1f] w-6 h-6 mt-1" />
                     <span className="text-sm">
-                      <strong className="text-gray-600 text-base">Hospital & Location:</strong> Facility quality, location, and specialization affect the pricing.
+                      <strong className="text-[#241d1f] text-base">Hospital & Location:</strong> Facility quality, location, and specialization affect the pricing.
                     </span>
                   </li>
                 </ul>
@@ -95,10 +95,10 @@ export default function ProfessionalTreatmentCost() {
               <CardHeader>
                 <div className="flex items-start gap-5">
                   <div className="p-4 bg-gray-100">
-                    <Globe className="text-gray-600 w-6 h-6" />
+                    <Globe className="text-[#241d1f] w-6 h-6" />
                   </div>
                   <div>
-                    <CardTitle className="text-2xl font-medium text-gray-700">
+                    <CardTitle className="text-2xl font-medium text-[#241d1f]">
                       Why Choose Medivisor?
                     </CardTitle>
                     <p className="text-sm text-gray-500 mt-1 leading-snug">
@@ -107,12 +107,12 @@ export default function ProfessionalTreatmentCost() {
                   </div>
                 </div>
               </CardHeader>
-              <CardContent className="pt-0 text-sm text-gray-700 leading-relaxed">
+              <CardContent className="pt-0 text-sm text-[#241d1f] leading-relaxed">
                 From medical consultations and expert surgeon matching to hospital coordination and personalized travel support — Medivisor ensures you’re fully taken care of at every step.
                 <br />
                 <span className="mt-3 block">
                   Share your reports at <strong className="text-[#E22026]">info@medivisorhealth.com</strong> or WhatsApp us at{" "}
-                  <strong className="text-gray-700">+91-9643015697</strong>.
+                  <strong className="text-[#241d1f]">+91-9643015697</strong>.
                 </span>
               </CardContent>
             </Card>

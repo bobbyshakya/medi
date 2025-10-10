@@ -12,29 +12,29 @@ export default function SupportTrustSection() {
               <h2 className="text-2xl md:text-4xl font-bold text-gray-900 mb-2 leading-snug">
                 Your Trusted Partner in Global Healthcare
               </h2>
-              <p className=" md:text-lg text-base text-gray-600 leading-relaxed">
+              <p className=" md:text-lg text-base text-[#241d1f] leading-relaxed">
                 We are dedicated to building unwavering trust and providing comprehensive support for international
                 patients seeking world-class medical treatment in India. Your well-being is our priority.
               </p>
             </div>
-            <ul className="grid gap-3 text-gray-700 dark:text-gray-200 text-left mx-auto lg:mx-0">
+            <ul className="grid gap-3 text-[#241d1f] dark:text-gray-200 text-left mx-auto lg:mx-0">
               <li className="flex items-center gap-2">
                 <Check className="h-5 w-5 text-green-500 flex-shrink-0" />
-                <span className=" md:text-lg text-base text-gray-600 leading-relaxed">Personalized care coordination from arrival to departure</span>
+                <span className=" md:text-lg text-base text-[#241d1f] leading-relaxed">Personalized care coordination from arrival to departure</span>
               </li>
               <li className="flex items-center gap-2">
                 <Check className="h-5 w-5 text-green-500 flex-shrink-0" />
-                <span className=" md:text-lg text-base text-gray-600 leading-relaxed">Transparent communication and clear treatment plans</span>
+                <span className=" md:text-lg text-base text-[#241d1f] leading-relaxed">Transparent communication and clear treatment plans</span>
               </li>
               <li className="flex items-center gap-2">
                 <Check className="h-5 w-5 text-green-500 flex-shrink-0" />
-                <span className=" md:text-lg text-base text-gray-600 leading-relaxed">
+                <span className=" md:text-lg text-base text-[#241d1f] leading-relaxed">
                   Comprehensive assistance with travel, visa, and accommodation
                 </span>
               </li>
               <li className="flex items-center gap-2">
                 <Check className="h-5 w-5 text-green-500 flex-shrink-0" />
-                <span className=" md:text-lg text-base text-gray-600 leading-relaxed">Dedicated support for cultural and language needs</span>
+                <span className=" md:text-lg text-base text-[#241d1f] leading-relaxed">Dedicated support for cultural and language needs</span>
               </li>
             </ul>
           </div>

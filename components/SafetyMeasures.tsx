@@ -126,7 +126,7 @@ export default function SafetyMeasures() {
                 size="sm"
                 className={`flex items-center text-sm md:text-lg gap-2 px-4 py-2 whitespace-nowrap rounded-full border transition-all duration-200 ${activeTab === tab.id
                     ? 'bg-red-600 text-white border-red-600'
-                    : 'bg-white text-gray-600 border-gray-200 hover:bg-red-50'
+                    : 'bg-white text-[#241d1f] border-gray-200 hover:bg-red-50'
                   }`}
                 onClick={() => setActiveTab(tab.id)}
               >
@@ -144,7 +144,7 @@ export default function SafetyMeasures() {
                 variant="ghost"
                 className={`py-3 px-6 text-lg md:text-lg font-semibold border-b-4 rounded-none transition-all ${activeTab === tab.id
                     ? 'text-red-600 border-red-600'
-                    : 'text-gray-600 border-transparent hover:text-red-600'
+                    : 'text-[#241d1f] border-transparent hover:text-red-600'
                   }`}
                 onClick={() => setActiveTab(tab.id)}
               >

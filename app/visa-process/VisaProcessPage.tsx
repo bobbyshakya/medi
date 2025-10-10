@@ -118,7 +118,7 @@ export default function VisaPage() {
                               className="w-full h-[200px] sm:h-[250px] md:h-[400px] object-cover"
                             />
                           </div>
-                          <div className="absolute -top-4 -left-3 sm:-top-5 sm:-left-4 md:w-14 w-10 md:h-14 h-10 bg-white text-gray-700 rounded-full flex items-center justify-center shadow-md border border-gray-200">
+                          <div className="absolute -top-4 -left-3 sm:-top-5 sm:-left-4 md:w-14 w-10 md:h-14 h-10 bg-white text-[#241d1f] rounded-full flex items-center justify-center shadow-md border border-gray-200">
                             <IconComponent className="md:w-7 w-5 md:h-7 h-5" />
                           </div>
                         </div>
@@ -162,10 +162,10 @@ export default function VisaPage() {
                   <div>
                     <div className="text-center md:text-left bg-gray-50 rounded-xs p-6 sm:p-8 md:p-10 h-full flex flex-col justify-center shadow-xs">
                       <Download className="w-10 h-10 sm:w-12 sm:h-12 text-[#E22026] mb-4 mx-auto md:mx-0" />
-                      <h3 className="text-xl sm:text-xl md:text-2xl font-semibold text-gray-700 mb-2">
+                      <h3 className="text-xl sm:text-xl md:text-2xl font-semibold text-[#241d1f] mb-2">
                         Download e-Visa Application Form
                       </h3>
-                      <p className="text-[19px] md:text-lg text-gray-600 mb-6 leading-relaxed">
+                      <p className="text-[19px] md:text-lg text-[#241d1f] mb-6 leading-relaxed">
                         If you haven't received the e-Visa form, download it directly below.
                       </p>
                       <a href="/e-Visa Application Form.docx" className="w-full sm:w-auto">
@@ -237,7 +237,7 @@ export default function VisaPage() {
                     return (
                       <div key={index} className="bg-white rounded-xs p-6 border border-gray-100 shadow-xs text-center">
                         <div className="w-14 h-14 sm:w-16 sm:h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                          <IconComponent className="w-7 h-7 sm:w-8 sm:h-8 text-gray-700" />
+                          <IconComponent className="w-7 h-7 sm:w-8 sm:h-8 text-[#241d1f]" />
                         </div>
                         <h4 className="title-heading mb-2">{note.title}</h4>
                         <p className="description">{note.description}</p>

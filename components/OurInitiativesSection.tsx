@@ -92,10 +92,10 @@ export default function OurInitiativesSection() {
 
             </motion.div>
             <div className="sticky top-10 space-y-3">
-              <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+              <h2 className="text-3xl md:text-4xl font-bold text-[#241d1f] mb-4">
                 Our Initiatives
               </h2>
-              <p className="text-lg text-gray-600 max-w-2xl mb-16 mx-auto">
+              <p className="text-lg text-[#241d1f] max-w-2xl mb-16 mx-auto">
                 Going beyond treatment — our patient-first innovations ensure safety, comfort,
                 and unforgettable care journeys.
               </p>
@@ -164,7 +164,7 @@ export default function OurInitiativesSection() {
                   />
                 </div>
 
-                <div className="text-gray-700 text-lg space-y-4">
+                <div className="text-[#241d1f] text-lg space-y-4">
                   {initiatives[active].description
                     .split("\n\n")
                     .map((p, idx) => <p key={idx}>{p}</p>)}

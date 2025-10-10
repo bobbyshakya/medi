@@ -21,19 +21,19 @@ export default function About() {
             About Us
           </h2>
 
-          <p className="text-gray-700 text-lg leading-relaxed mb-4">
+          <p className="text-[#241d1f] text-lg leading-relaxed mb-4">
             <strong>Medivisor India Treatment</strong> is a trusted medical
             travel agency that assists international patients in accessing
             advanced, world-class medical care across India.
           </p>
 
-          <p className="text-gray-700 text-lg leading-relaxed mb-4">
+          <p className="text-[#241d1f] text-lg leading-relaxed mb-4">
             With over 10 years of experience, we’ve supported more than
              2,000 overseas patients and maintained an impressive
              95%+ success and satisfaction rate.
           </p>
 
-          <p className="text-gray-700 text-lg leading-relaxed mb-6">
+          <p className="text-[#241d1f] text-lg leading-relaxed mb-6">
             Our dedication to compassionate, professional service has been
             recognized by organizations such as the Indian Health Bureau and the
             Mitra Foundation.

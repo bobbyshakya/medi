@@ -91,7 +91,7 @@ export default function Page() {
 
         {/* ===================== SCHEDULE + STICKY REGISTRATION ===================== */}
        <section className="h-full">
-         <div className="grid grid-cols-1  lg:grid-cols-12 gap-x-4 gap-y-10 mt-20">
+         <div className="md:grid grid-cols-1  lg:grid-cols-12 md:gap-x-4 gap-y-10 mt-20">
           {/* Left - Schedule */}
           <div id="schedule" className="lg:col-span-6 space-y-6">
             <div className="text-center md:text-left">
@@ -103,13 +103,13 @@ export default function Page() {
               </p>
             </div>
 
-            <div className="grid gap-6">
+            <div className="md:grid md:gap-6">
               {schedule.map((loc) => {
                 const flag = flagForLabel(loc.label);
                 return (
                   <Card
                     key={loc.id}
-                    className="bg-white/90 border border-gray-100 shadow-sm hover:shadow-md hover:border-gray-200 transition-all duration-300 rounded-xl backdrop-blur-sm"
+                    className="bg-white/90 border w-full border-gray-100 shadow-sm hover:shadow-md hover:border-gray-200 transition-all duration-300 rounded-xl backdrop-blur-sm"
                   >
                     <CardHeader className="pb-2 px-6 pt-5">
                       <div className="flex items-center gap-4">

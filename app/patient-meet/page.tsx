@@ -13,7 +13,7 @@ function flagForLabel(label: string) {
     return { src: "/icon/flag/png.png", alt: "Flag of Papua New Guinea" };
   }
   if (L.includes("solomon")) {
-    return { src: "/icon/flag/Solomon.png", alt: "Flag of Solomon Islands" };
+    return { src: "/icon/flag/solomon.png", alt: "Flag of Solomon Islands" };
   }
   if (L.includes("vanuatu")) {
     return { src: "/icon/flag/vanuatu.png", alt: "Flag of Vanuatu" };

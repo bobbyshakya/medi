@@ -3,14 +3,20 @@ import { useMemo, useState } from "react"
 import type React from "react"
 import { cn } from "@/lib/utils"
 import { useRouter } from "next/navigation"
-
-type CountryKey = "PNG" | "SI" | "VU" | "FJ_L" | "FJ_S"
+import {
+  schedule,
+  type LocationId,
+  getFlagEmoji,
+  getLocationById,
+  getAllLocationIds,
+  formatDateFriendly
+} from "@/lib/schedule"
 
 type FormState = {
   name: string
   email: string
   phone: string
-  country: CountryKey
+  country: LocationId
   date: string
   notes: string
 }
@@ -23,41 +29,6 @@ type FormErrors = {
   date?: string
 }
 
-const scheduleData = {
-  PNG: {
-    label: "Papua New Guinea (Port Moresby)",
-    flag: "🇵🇬",
-    dates: ["2025-11-18", "2025-11-19"],
-    contact: "Shirley Waira: 74376546",
-  },
-  SI: {
-    label: "Solomon Islands (Honiara)",
-    flag: "🇸🇧",
-    dates: ["2025-11-20", "2025-11-21"],
-    contact: "Freda Sofu: 7618955",
-  },
-  VU: {
-    label: "Vanuatu (Port Vila)",
-    flag: "🇻🇺",
-    dates: ["2025-11-23", "2025-11-24"],
-    contact: "Mary Semeno: 7627430 / 5213197",
-  },
-  FJ_L: {
-    label: "Fiji (Lautoka)",
-    flag: "🇫🇯",
-    dates: ["2025-11-25"],
-    contact: "Ashlin Chandra (Lautoka): 9470527",
-  },
-  FJ_S: {
-    label: "Fiji (Suva)",
-    flag: "🇫🇯",
-    dates: ["2025-11-26"],
-    contact: "Reshmi Kumar (Suva): 9470588",
-  },
-}
-
-const MEETING_FEE = "25 USD / 100 PGK / 200 SBD / 2500 Vatu / 50 FJD"
-
 export default function ModernRegistrationForm({ className }: { className?: string }) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
@@ -68,13 +39,23 @@ export default function ModernRegistrationForm({ className }: { className?: stri
     name: "",
     email: "",
     phone: "",
-    country: "PNG",
+    country: "png", // Default to first location
     date: "",
     notes: "",
   })
 
-  const currentCountry = useMemo(() => scheduleData[form.country], [form.country])
-  const availableDates = useMemo(() => currentCountry.dates, [currentCountry])
+  const currentLocation = useMemo(() => getLocationById(form.country), [form.country])
+
+  // Get available dates with their times and venues
+  const availableDates = useMemo(() => {
+    if (!currentLocation) return []
+
+    return currentLocation.dates.map((date, index) => ({
+      date,
+      time: currentLocation.times[index] || "",
+      venue: currentLocation.venues[index] || ""
+    }))
+  }, [currentLocation])
 
   // Form validation
   const validateForm = (): boolean => {
@@ -109,7 +90,7 @@ export default function ModernRegistrationForm({ className }: { className?: stri
   const onChange = (key: keyof FormState, value: string) => {
     setForm((f) => {
       const next = { ...f, [key]: value }
-      if (key === "country") next.date = ""
+      if (key === "country") next.date = "" // Reset date when country changes
       return next
     })
 
@@ -131,13 +112,20 @@ export default function ModernRegistrationForm({ className }: { className?: stri
     setSubmitted(null)
 
     try {
+      const selectedDate = availableDates.find(d => d.date === form.date)
+      const selectedLocation = getLocationById(form.country)
+
+      if (!selectedLocation) {
+        throw new Error("Invalid location selected")
+      }
+
       const formData = {
         name: form.name.trim(),
         email: form.email.trim(),
-        countryName: scheduleData[form.country].label,
-        countryCode: "+61", // You might want to make this dynamic based on country
-        whatsapp: form.phone.replace(/\D/g, ""), // Remove non-digits for WhatsApp
-        message: `Appointment Request - ${scheduleData[form.country].label} on ${form.date}. ${form.notes ? `Notes: ${form.notes}` : ""}`,
+        countryName: selectedLocation.label,
+        countryCode: "+61",
+        whatsapp: form.phone.replace(/\D/g, ""),
+        message: `Appointment Request - ${selectedLocation.label} on ${form.date} (${selectedDate?.time}) at ${selectedDate?.venue}. ${form.notes ? `Notes: ${form.notes}` : ""}`,
       }
 
       const res = await fetch("/api/submit", {
@@ -150,14 +138,10 @@ export default function ModernRegistrationForm({ className }: { className?: stri
       let result: any = null
 
       if (contentType.includes("application/json")) {
-        // Safe to parse JSON
         result = await res.json()
       } else {
-        // Fallback to text; Next might return generic "Internal Server Error" text/html on framework errors
         const text = await res.text()
         if (res.ok) {
-          // Some environments may not return a JSON body on 200
-          // Treat 2xx without JSON as success
           router.push("/thank-you")
           return
         }
@@ -184,39 +168,42 @@ export default function ModernRegistrationForm({ className }: { className?: stri
     }
   }
 
-  // Format date for display
-  const formatDisplayDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
-      weekday: "long",
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    })
+  // Format date for display with time and venue
+  const formatDisplayDate = (dateObj: { date: string; time: string; venue: string }) => {
+    const formattedDate = formatDateFriendly(dateObj.date)
+    return `${formattedDate}, ${dateObj.time}, ${dateObj.venue}`
+  }
+
+  // Get display label for location
+  const getLocationDisplayLabel = (locationId: LocationId): string => {
+    const location = getLocationById(locationId)
+    return location?.label || locationId
   }
 
   return (
     <form
       onSubmit={onSubmit}
       className={cn(
-        "max-w-3xl mx-auto grid gap-8 rounded-xs border border-gray-100 bg-white shadow-xs p-4 md:p-5",
+        "max-w-3xl mx-auto grid gap-8 rounded-xs border border-gray-200 bg-white shadow-xs p-6 md:p-4",
         className,
       )}
+      id="registration-form"
       aria-labelledby="registration-title"
       noValidate
     >
       {/* Header */}
       <div className="text-center space-y-2">
-        <h2 id="registration-title" className="text-2xl font-semibold text-gray-800">
+        <h2 id="registration-title" className="text-2xl font-semibold text-gray-900">
           Secure Your Appointment
         </h2>
-        <p className="text-gray-500 text-sm">Fill out the form below to book your consultation slot.</p>
+        <p className="text-gray-600 text-sm">Fill out the form below to book your consultation slot.</p>
       </div>
 
       {/* Form Fields */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-50 rounded-xl p-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 bg-gray-50 p-5 py-6 rounded-xl">
         {/* Full Name */}
-        <div className="grid gap-1">
-          <label htmlFor="name" className="text-sm font-medium text-gray-700">
+        <div className="grid gap-2">
+          <label htmlFor="name" className="text-sm font-medium text-gray-900">
             Full Name *
           </label>
           <input
@@ -225,8 +212,8 @@ export default function ModernRegistrationForm({ className }: { className?: stri
             value={form.name}
             onChange={(e) => onChange("name", e.target.value)}
             className={cn(
-              "h-11 rounded-lg border text-sm bg-white px-3 outline-none focus:ring-2 focus:ring-gray-500 transition-colors",
-              errors.name ? "border-red-500 focus:ring-red-500" : "border-gray-300 focus:ring-gray-500",
+              "h-12 rounded-lg border text-sm bg-white px-2 outline-none focus:ring-2 focus:ring-blue-500 transition-colors",
+              errors.name ? "border-red-500 focus:ring-red-500" : "border-gray-300 focus:ring-blue-500",
             )}
             placeholder="Enter your full name"
             autoComplete="name"
@@ -240,8 +227,8 @@ export default function ModernRegistrationForm({ className }: { className?: stri
         </div>
 
         {/* Email */}
-        <div className="grid gap-1">
-          <label htmlFor="email" className="text-sm font-medium text-gray-700">
+        <div className="grid gap-2">
+          <label htmlFor="email" className="text-sm font-medium text-gray-900">
             Email *
           </label>
           <input
@@ -251,8 +238,8 @@ export default function ModernRegistrationForm({ className }: { className?: stri
             value={form.email}
             onChange={(e) => onChange("email", e.target.value)}
             className={cn(
-              "h-11 rounded-lg border text-sm bg-white px-3 outline-none focus:ring-2 focus:ring-gray-500 transition-colors",
-              errors.email ? "border-red-500 focus:ring-red-500" : "border-gray-300 focus:ring-gray-500",
+              "h-12 rounded-lg border text-sm bg-white px-2 outline-none focus:ring-2 focus:ring-blue-500 transition-colors",
+              errors.email ? "border-red-500 focus:ring-red-500" : "border-gray-300 focus:ring-blue-500",
             )}
             placeholder="you@example.com"
             autoComplete="email"
@@ -266,8 +253,8 @@ export default function ModernRegistrationForm({ className }: { className?: stri
         </div>
 
         {/* Phone */}
-        <div className="grid gap-1">
-          <label htmlFor="phone" className="text-sm font-medium text-gray-700">
+        <div className="grid gap-2">
+          <label htmlFor="phone" className="text-sm font-medium text-gray-900">
             Phone *
           </label>
           <input
@@ -276,8 +263,8 @@ export default function ModernRegistrationForm({ className }: { className?: stri
             value={form.phone}
             onChange={(e) => onChange("phone", e.target.value)}
             className={cn(
-              "h-11 rounded-lg border text-sm bg-white px-3 outline-none focus:ring-2 focus:ring-gray-500 transition-colors",
-              errors.phone ? "border-red-500 focus:ring-red-500" : "border-gray-300 focus:ring-gray-500",
+              "h-12 rounded-lg border text-sm bg-white px-2 outline-none focus:ring-2 focus:ring-blue-500 transition-colors",
+              errors.phone ? "border-red-500 focus:ring-red-500" : "border-gray-300 focus:ring-blue-500",
             )}
             placeholder="+61 400 000 000"
             autoComplete="tel"
@@ -290,29 +277,34 @@ export default function ModernRegistrationForm({ className }: { className?: stri
           )}
         </div>
 
-        {/* Country */}
-        <div className="grid gap-1">
-          <label htmlFor="country" className="text-sm font-medium text-gray-700">
-            Country *
+        {/* Location */}
+        <div className="grid gap-2">
+          <label htmlFor="country" className="text-sm font-medium text-gray-900">
+            Location *
           </label>
           <select
             id="country"
             value={form.country}
-            onChange={(e) => onChange("country", e.target.value as CountryKey)}
-            className="h-11 rounded-lg border border-gray-300 text-sm bg-white px-3 outline-none focus:ring-2 focus:ring-gray-500"
+            onChange={(e) => onChange("country", e.target.value as LocationId)}
+            className="h-12 rounded-lg border border-gray-300 text-sm bg-white px-4 outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
           >
-            {Object.entries(scheduleData).map(([key, c]) => (
-              <option key={key} value={key}>
-                {c.flag} {c.label}
-              </option>
-            ))}
+            {getAllLocationIds().map((locationId) => {
+              const location = getLocationById(locationId)
+              if (!location) return null
+
+              return (
+                <option key={locationId} value={locationId}>
+                  {getFlagEmoji(locationId)} {location.label}
+                </option>
+              )
+            })}
           </select>
         </div>
 
         {/* Date */}
-        <div className="grid gap-1">
-          <label htmlFor="date" className="text-sm font-medium text-gray-700">
-            Preferred Date *
+        <div className="grid gap-2">
+          <label htmlFor="date" className="text-sm font-medium text-gray-900">
+            Preferred Date & Time *
           </label>
           <select
             id="date"
@@ -321,18 +313,18 @@ export default function ModernRegistrationForm({ className }: { className?: stri
             value={form.date}
             onChange={(e) => onChange("date", e.target.value)}
             className={cn(
-              "h-11 rounded-lg border text-sm bg-white px-3 outline-none focus:ring-2 focus:ring-gray-500",
-              errors.date ? "border-red-500 focus:ring-red-500" : "border-gray-300 focus:ring-gray-500",
+              "h-12 rounded-lg border text-sm bg-white px-2 outline-none focus:ring-2 focus:ring-blue-500 transition-colors",
+              errors.date ? "border-red-500 focus:ring-red-500" : "border-gray-300 focus:ring-blue-500",
               !availableDates.length ? "opacity-50 cursor-not-allowed" : "",
             )}
             aria-describedby={errors.date ? "date-error" : undefined}
           >
             <option value="" disabled>
-              {availableDates.length ? "Select a date" : "No dates available"}
+              {availableDates.length ? "Select date & time" : "No dates available"}
             </option>
-            {availableDates.map((d) => (
-              <option key={d} value={d}>
-                {formatDisplayDate(d)}
+            {availableDates.map((dateObj, index) => (
+              <option key={`${dateObj.date}-${index}`} value={dateObj.date}>
+                {formatDisplayDate(dateObj)}
               </option>
             ))}
           </select>
@@ -343,32 +335,52 @@ export default function ModernRegistrationForm({ className }: { className?: stri
           )}
         </div>
 
-        {/* Country Contact Info */}
-        <div className="md:col-span-2 grid gap-1">
-          <div className="bg-white border border-gray-200 rounded-lg p-4">
-            <h3 className="font-medium text-gray-900 text-sm mb-2">
-              {currentCountry.flag} {currentCountry.label} - Contact Information
+        {/* Location Contact Info */}
+        <div className="md:col-span-2 grid gap-2">
+          <div className="bg-white border border-gray-100 rounded-lg p-4 shadow-xs">
+            <h3 className="font-semibold text-gray-800 text-sm mb-3 flex items-center gap-2">
+              <span className="text-lg">{currentLocation && getFlagEmoji(form.country)}</span>
+              {currentLocation?.label} - Contact Information
             </h3>
-            <p className="text-gray-700 text-sm">
-              <strong>Contact:</strong> {currentCountry.contact}
-            </p>
-            <p className="text-gray-700 text-sm mt-1">
-              <strong>Meeting Fee:</strong> {MEETING_FEE}
-            </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+              <div>
+                <p className="text-gray-800">
+                  <strong>Local Contact:</strong>
+                </p>
+                <p className="text-gray-600 mt-1">{currentLocation?.localContact || "Not specified"}</p>
+              </div>
+              <div className="text-right">
+                <p className="text-gray-800">
+                  <strong>Meeting Fee:</strong>
+                </p>
+                <p className="text-gray-600 mt-1">{currentLocation?.feeLabel || "Not specified"}</p>
+              </div>
+            </div>
+            <div className="mt-2 border-gray-200 border-t pt-2">
+              <p className="text-gray-800 font-medium text-sm mb-2">Available Slots:</p>
+              <div className="space-y-2">
+                {availableDates.map((dateObj, index) => (
+                  <div key={index} className="flex items-start gap-2 text-sm text-gray-600">
+                    <span className="text-gray-400 mt-0.5">•</span>
+                    <span>{formatDisplayDate(dateObj)}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
 
         {/* Notes */}
-        <div className="md:col-span-2 grid gap-1">
-          <label htmlFor="notes" className="text-sm font-medium text-gray-700">
+        <div className="md:col-span-2 grid gap-2">
+          <label htmlFor="notes" className="text-sm font-medium text-gray-900">
             Notes (optional)
           </label>
           <textarea
             id="notes"
             value={form.notes}
             onChange={(e) => onChange("notes", e.target.value)}
-            className="min-h-[100px] rounded-lg border border-gray-300 text-sm bg-white px-3 py-2 outline-none focus:ring-2 focus:ring-gray-500 transition-colors"
-            placeholder="Briefly describe your concern or any additional information"
+            className="min-h-[100px] rounded-lg border border-gray-300 text-sm bg-white px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500 transition-colors resize-vertical"
+            placeholder="Briefly describe your concern or any additional information..."
           />
         </div>
       </div>
@@ -379,7 +391,7 @@ export default function ModernRegistrationForm({ className }: { className?: stri
           role="status"
           aria-live="polite"
           className={cn(
-            "rounded-md px-4 py-3 text-sm font-medium",
+            "rounded-lg px-4 py-3 text-sm font-medium",
             submitted.ok
               ? "bg-green-50 text-green-700 border border-green-200"
               : "bg-red-50 text-red-700 border border-red-200",
@@ -394,10 +406,10 @@ export default function ModernRegistrationForm({ className }: { className?: stri
         type="submit"
         disabled={loading}
         className={cn(
-          "h-12 w-full rounded-lg font-medium transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed",
+          "h-12 w-full rounded-lg font-semibold transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-offset-2",
           loading
-            ? "bg-gray-400 text-gray-700"
-            : "bg-gray-200 text-gray-800 hover:bg-gray-300 focus:ring-2 focus:ring-gray-500 focus:ring-offset-2",
+            ? "bg-gray-400 text-white"
+            : "bg-gray-100 text-gray-700 hover:bg-gray-200 focus:ring-gray-500 focus:ring-offset-white",
         )}
       >
         {loading ? (

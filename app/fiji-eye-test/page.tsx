@@ -21,9 +21,9 @@ export default function Page() {
         <section className="w-full bg-white">
             <div className="relative overflow-hidden bg-white">
                 {/* Container */}
-                <div className="relative z-10 container mx-auto px-6 lg:px-16 py-20 grid md:grid-cols-2 items-center gap-12">
+                <div className="relative z-10 container mx-auto px-6 lg:px-16 py-20 grid md:grid-cols-2 items-center gap-4 md:gap-12">
                     <div className="relative flex justify-center md:justify-center">
-                        <div className="relative w-full h-[70vh] ">
+                        <div className="relative w-full md:h-[70vh] ">
                             <img
                                 src="/eye-banner.png"
                                 alt="Mr. Kumar Sushant - Director, Medivisor India Treatment"
@@ -32,12 +32,12 @@ export default function Page() {
                         </div>
                     </div>
                     {/* Left: Text Content */}
-                    <div className="space-y-8 text-center md:text-left">
+                    <div className="md:space-y-8 space-y-4 text-center md:text-left">
                         <div className="space-y-4">
 
-                            <h1 className="text-4xl text-[#E22026] mb-0 sm:text-8xl uppercase font-semibold leading-[0.9] ">
-                                <span className="text-3xl text-[#E22026] ml-1">Medivisor</span>
-                                <br />
+                            <h1 className="text-4xl text-[#E22026] md:my-0 my-4 sm:text-8xl uppercase font-semibold leading-[0.9] ">
+                                <span className="md:text-3xl text-[#E22026]  ml-1">Medivisor </span>
+                                <br className="md:block hidden"/>
                                 Eye Test
                             </h1>
                             <p className="text-xl font-medium text-gray-600 ml-1.5">
@@ -155,7 +155,7 @@ export default function Page() {
                                                     </div>
 
 
-                                                  
+
                                                 </div>
                                             </CardContent>
                                         </Card>

@@ -10,16 +10,6 @@ import Testimonials from "@/components/Testimonials";
 // Helper function to map schedule labels to flag placeholders
 function flagForLabel(label: string) {
   const L = label.toLowerCase();
-  if (L.includes("png") || L.includes("papua")) {
-    return { src: "/icon/flag/png.png", alt: "Flag of Papua New Guinea" };
-  }
-
-  if (L.includes("solomon")) {
-    return { src: "/icon/flag/solomon-flag.png", alt: "Flag of Solomon Islands" };
-  }
-  if (L.includes("vanuatu")) {
-    return { src: "/icon/flag/vanuatu.png", alt: "Flag of Vanuatu" };
-  }
   if (L.includes("fiji")) {
     return { src: "/icon/flag/fiji.png", alt: "Flag of Fiji" };
   }
@@ -45,7 +35,7 @@ export default function Page() {
           </div>
 
           {/* Right - Content */}
-          <div className="space-y-2 md:relative md:order-2 order-1  h-full">
+          <div className="space-y-2 relative md:order-2 order-1  h-full">
             {/* Badge */}
             {/* <span className="inline-block bg-red-100 text-red-600 font-semibold text-xs uppercase tracking-widest px-4 py-1 rounded-full shadow-sm">
               Meet Our Director
@@ -53,12 +43,12 @@ export default function Page() {
 
             {/* Heading */}
             <div>
-              <div className="md:pt-16 pt-10">
+              <div className="md:pt-16">
                 <h2 className="text-3xl sm:text-6xl text-center font-semibold tracking-tight text-gray-900">
-                  Pacific Patient Meet
+                  Medivisor Eye Test - Fiji
                 </h2>
                 <p className="heading-sm my-4 text-center font-medium">
-                  Nov 18 – 26, 2025
+                  October 27 – 30, 2025
                 </p>
               </div>
 
@@ -68,10 +58,10 @@ export default function Page() {
               {/* Schedule Section */}
               <div className="flex h-full flex-wrap justify-between gap-4 pt-4">
                 {[
-                  { flag: "/icon/flag/png.png", country: "PNG", city: "Port Moresby", date: "Nov 18–19" },
-                  { flag: "/icon/flag/solomon-flag.png", country: "Solomon Islands", city: "Honiara", date: "Nov 20–21" },
-                  { flag: "/icon/flag/vanuatu.png", country: "Vanuatu", city: "Port Vila", date: "Nov 23–24" },
-                  { flag: "/icon/flag/fiji.png", country: "Fiji", city: "Lautoka & Suva", date: "Nov 25–26" },
+                  { flag: "/icon/flag/fiji.png", country: "Fiji", city: "Suva", date: "Oct 27" },
+                  { flag: "/icon/flag/fiji.png", country: "Fiji", city: "Suva", date: "Oct 28" },
+                  { flag: "/icon/flag/fiji.png", country: "Fiji", city: "Lautoka", date: "Oct 29" },
+                  { flag: "/icon/flag/fiji.png", country: "Fiji", city: "Namaka", date: "Oct 30" },
                 ].map((item, i) => (
                   <div
                     key={i}
@@ -94,7 +84,7 @@ export default function Page() {
                 ))}
               </div>
             </div>
-            <div className="bg-[#74c044] z-[9] absolute bottom-0  md:-left-1/2 border border-white rounded-xs p-3 shadow-xs">
+            <div className="bg-[#74c044]  absolute bottom-0  -left-1/2 border border-white rounded-xs p-3 shadow-xs">
               <h3 className="text-xl font-bold text-gray-100">
                 Mr. Kumar Sushant
               </h3>
@@ -125,8 +115,8 @@ export default function Page() {
               <div className="   mb-5 space-y-6 ">
                 {/* Intro */}
                 <div className="text-gray-700 leading-relaxed text-base">
-                  For those suffering from infertility, cancer, heart disease, joint pain, spine problems, or kidney disease in
-                  Papua New Guinea, Solomon Islands, Vanuatu, or Fiji, here’s a valuable opportunity to meet the Medivisor Director and Doctors right in your country and receive expert medical guidance.
+                  <strong>Blurry Vision? Consult with an Indian Eye Specialist</strong><br/><br/>
+                  If you or your loved ones are experiencing vision-related problems such as retina, cornea, cataract, or glaucoma, here's an opportunity to meet an experienced Indian eye specialist visiting your country.
                 </div>
 
                
@@ -134,22 +124,32 @@ export default function Page() {
                 {/* Heading */}
                 <div className="bg-[#E22026] p-4">
                   <div className="text-2xl mb-3 font-bold text-gray-100 border-l-4 border-[#E22026] pl-3">
-                    What You’ll Learn
+                    During your consultation, you will learn about:
                   </div>
 
                   {/* Bullet List */}
                   <ul className="space-y-1 ml-4 text-gray-100">
-                    <li className="list-disc">Treatment options available for your medical condition</li>
-                    <li className="list-disc">Estimated treatment cost in India</li>
-                    <li className="list-disc">Travel, visa, and hospital arrangements</li>
-                    <li className="list-disc">How Medivisor supports you throughout your journey to recovery</li>
+                    <li className="list-disc">✅ Treatment options available for your condition</li>
+                    <li className="list-disc">✅ Estimated treatment cost in India</li>
+                    <li className="list-disc">✅ Travel assistance and requirements</li>
                   </ul>
                 </div>
 
                 {/* Register Box */}
+                <div className="bg-blue-50 border border-blue-200 rounded-xs p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-semibold text-gray-800">💰 Consultation Fee: 50 FJD</p>
+                      <p className="text-sm text-gray-600 mt-1">📝 Register Today – Limited Slots Available!</p>
+                    </div>
+                    <Button className="bg-[#E22026] hover:bg-[#c11b21] text-white">
+                      Register Now
+                    </Button>
+                  </div>
+                </div>
+
                 <h2 className="text-4xl md:text-2xl font-normal text-[#241d1f]">
                   𝗦𝗰𝗵𝗲𝗱𝘂𝗹𝗲
-
                 </h2>
               </div>
               <div className="space-y-4">
@@ -201,9 +201,9 @@ export default function Page() {
                         {/* Fee and Contact */}
                         <div className="flex items-center justify-between pt-4 border-t border-gray-100">
                           <div className="text-lg md:text-base">
-                            <p className="text-gray-500 text-sm">Meeting Fee</p>
+                            <p className="text-gray-500 text-sm">Consultation Fee</p>
                             <p className="font-semibold text-[#241d1f] mt-1">
-                              {loc.feeLabel}
+                              50 FJD
                             </p>
                           </div>
 

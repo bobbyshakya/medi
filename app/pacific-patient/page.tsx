@@ -7,6 +7,36 @@ import Partners from "@/components/Partners";
 import BlogCarousel from "@/components/BlogSection";
 import Testimonials from "@/components/Testimonials";
 
+export const metadata = {
+  title: 'Pacific Patient Meet | Consult Medivisor Director Nov 18-26, 2025 in PNG, Solomon Islands, Vanuatu, Fiji',
+  description: 'For those suffering from infertility, cancer, heart disease, joint pain, spine problems, or kidney disease in Papua New Guinea, Solomon Islands, Vanuatu, or Fiji, meet Mr. Kumar Sushant, Director of Medivisor India Treatment. Learn about treatment options, costs, travel, and support.',
+  openGraph: {
+    title: 'Pacific Patient Meet | Consult Medivisor Director Nov 18-26, 2025 in PNG, Solomon Islands, Vanuatu, Fiji',
+    description: 'For those suffering from infertility, cancer, heart disease, joint pain, spine problems, or kidney disease in Papua New Guinea, Solomon Islands, Vanuatu, or Fiji, meet Mr. Kumar Sushant, Director of Medivisor India Treatment. Learn about treatment options, costs, travel, and support.',
+    images: [
+      {
+        url: '/thumbnail/patient-meet.png',
+        width: 1200,
+        height: 630,
+        alt: 'Pacific Patient Meet Banner - Mr. Kumar Sushant, Director, Medivisor India Treatment',
+      },
+    ],
+    url: typeof window !== 'undefined' ? window.location.origin + '/pacific-patient-meet' : 'https://medivisor.com/pacific-patient-meet',
+    siteName: 'Medivisor',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Pacific Patient Meet | Consult Medivisor Director Nov 18-26, 2025 in PNG, Solomon Islands, Vanuatu, Fiji',
+    description: 'For those suffering from infertility, cancer, heart disease, joint pain, spine problems, or kidney disease in Papua New Guinea, Solomon Islands, Vanuatu, or Fiji, meet Mr. Kumar Sushant, Director of Medivisor India Treatment. Learn about treatment options, costs, travel, and support.',
+    images: ['/thumbnail/patient-meet.png'],
+  },
+  other: {
+    'whatsapp-title': 'Pacific Patient Meet | Medivisor Director in Pacific Islands Nov 18-26, 2025',
+    'whatsapp-description': 'Meet Mr. Kumar Sushant for expert medical guidance on your condition. Limited slots! Register now.',
+  },
+};
+
 // Helper function to map schedule labels to flag placeholders
 function flagForLabel(label: string) {
   const L = label.toLowerCase();

@@ -7,6 +7,36 @@ import Partners from "@/components/Partners";
 import BlogCarousel from "@/components/BlogSection";
 import Testimonials from "@/components/Testimonials";
 
+export const metadata = {
+  title: 'Medivisor Eye Test - Fiji | Consult Indian Eye Specialist October 27-30, 2025',
+  description: 'If you or your loved ones are facing vision problems related to retina, cornea, cataract, or glaucoma, consult an experienced Indian eye specialist from Sharp Sight Eye Hospitals in Fiji. Get expert advice, treatment options, and cost estimates.',
+  openGraph: {
+    title: 'Medivisor Eye Test - Fiji | Consult Indian Eye Specialist October 27-30, 2025',
+    description: 'If you or your loved ones are facing vision problems related to retina, cornea, cataract, or glaucoma, consult an experienced Indian eye specialist from Sharp Sight Eye Hospitals in Fiji. Get expert advice, treatment options, and cost estimates.',
+    images: [
+      {
+        url: '/thumbnail/eye-test.png',
+        width: 1200,
+        height: 630,
+        alt: 'Medivisor Eye Test Fiji Banner - Dr. Rahul Bhatia Consultation',
+      },
+    ],
+    url: typeof window !== 'undefined' ? window.location.origin + '/eye-test-fiji' : 'https://medivisor.com/eye-test-fiji',
+    siteName: 'Medivisor',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Medivisor Eye Test - Fiji | Consult Indian Eye Specialist October 27-30, 2025',
+    description: 'If you or your loved ones are facing vision problems related to retina, cornea, cataract, or glaucoma, consult an experienced Indian eye specialist from Sharp Sight Eye Hospitals in Fiji. Get expert advice, treatment options, and cost estimates.',
+    images: ['/thumbnail/eye-test.png'],
+  },
+  other: {
+    'whatsapp-title': 'Medivisor Eye Test - Fiji | Consult Indian Eye Specialist October 27-30, 2025',
+    'whatsapp-description': 'Consult Dr. Rahul Bhatia for eye conditions in Fiji. Limited slots! Book now.',
+  },
+};
+
 // Helper function to map schedule labels to flag placeholders
 function flagForLabel(label: string) {
     const L = label.toLowerCase();
@@ -18,10 +48,10 @@ function flagForLabel(label: string) {
 
 export default function Page() {
     return (
-        <section className="w-full px-2 md:px-0 bg-white">
+        <section className="w-full  md:px-0 bg-white">
             <div className="relative overflow-hidden bg-white">
                 {/* Container */}
-                <div className="relative z-10 container mx-auto px-6 lg:px-16 py-20 grid md:grid-cols-2 items-center gap-4 md:gap-12">
+                <div className="relative z-10 md:container mx-auto  lg:px-16 py-20 grid md:grid-cols-2 items-center md:gap-4 md:gap-12">
                     <div className="relative flex justify-center md:justify-center">
                         <div className="relative w-full md:h-[70vh] ">
                             <img
@@ -32,16 +62,16 @@ export default function Page() {
                         </div>
                     </div>
                     {/* Left: Text Content */}
-                    <div className="md:space-y-8 space-y-4 text-center md:text-left">
+                    <div className="md:space-y-8 px-4 md:px-0 space-y-4 text-center md:text-left">
                         <div className="space-y-4">
 
-                            <h1 className="text-4xl text-[#E22026] md:my-0 my-4 sm:text-8xl uppercase font-semibold leading-[1.3] md:leading-[0.9] ">
+                            <h1 className="text-4xl text-[#E22026] md:my-0 my-4 sm:text-7xl uppercase font-semibold leading-[1.3] md:leading-[0.9] ">
                                 <span className="md:text-3xl text-[#E22026]  ml-1">Medivisor </span>
                                 <br className=" " />
-                                Eye Test
+                                Eye Test - FIji
                             </h1>
                             <p className="text-xl font-medium text-gray-600 ml-1.5">
-                                FIJI- October 27 – 30, 2025
+                                October 27 – 30, 2025
                             </p>
                         </div>
 
@@ -60,7 +90,7 @@ export default function Page() {
                                     <div className="absolute inset-x-0 top-0 h-1.5 rounded-t-xs bg-[#74BF44]"></div>
                                     <div className="p-5 text-center">
                                         <p className="font-bold text-base text-[#E22026] mt-1">{item.date}</p>
-                                        <p className="font-semibold  text-gray-800  text-xl">{item.city}</p>
+                                        <p className="font-bold text-base  text-gray-800 ">{item.city}</p>
                                     </div>
                                 </div>
                             ))}
@@ -80,7 +110,7 @@ export default function Page() {
                                 <h2 className="text-2xl md:title-heading">𝗕𝗹𝘂𝗿𝗿𝘆 𝗩𝗶𝘀𝗶𝗼𝗻? 𝗠𝗲𝗲𝘁 𝗮𝗻 𝗜𝗻𝗱𝗶𝗮𝗻 𝗘𝘆𝗲 𝗦𝗽𝗲𝗰𝗶𝗮𝗹𝗶𝘀𝘁 𝗶𝗻 𝗙𝗶𝗷𝗶!
 
                                 </h2>
-                                <div className="text-gray-700 leading-relaxed text-base">
+                                <div className="text-gray-700 leading-relaxed text-lg md:text-base">
                                     If you or your loved ones are facing vision problems related with retina, cornea, cataract, or glaucoma, here’s your chance to consult an experienced Indian eye specialist from Sharp Sight Eye Hospitals visiting your country.
 
 
@@ -94,7 +124,7 @@ export default function Page() {
                                     </div>
 
                                     {/* Bullet List */}
-                                    <ul className="space-y-1 ml-8 text-gray-100">
+                                    <ul className="space-y-1 ml-8 text-lg md:text-base text-gray-100">
                                         <li className="list-disc"> Expert advice on your eye condition</li>
                                         <li className="list-disc"> Details on treatment options available in India</li>
                                         <li className="list-disc"> Estimated cost and travel assistance information</li>
@@ -140,7 +170,7 @@ export default function Page() {
                                                 <div className="space-y-3">
                                                     {scheduleDetails.map((detail, index) => (
                                                         <div key={index} className="flex justify-between items-start">
-                                                            <p className="text-base text-[#241d1f] flex-1 leading-relaxed">
+                                                            <p className="text-lg md:text-base text-[#241d1f] flex-1 leading-relaxed">
                                                                 {detail}
                                                             </p>
                                                         </div>
@@ -155,7 +185,7 @@ export default function Page() {
                                                             {loc.feeLabel}
                                                         </p>
                                                         <p className="text-gray-700 text-xs mt-0.5 italic">
-                                                            Any tests to cost extra.
+                                                            On-spot payment. Any tests to cost extra.
                                                         </p>
                                                     </div>
 
@@ -221,7 +251,7 @@ export default function Page() {
                                         </svg>
                                         Why Register Early?
                                     </h4>
-                                    <ul className="text-sm text-[#241d1f] ml-2 space-y-2">
+                                    <ul className="text-lg md:text-sm text-[#241d1f] ml-2 space-y-2">
                                         <li className="flex items-start gap-2">
                                             <span className="text-gray-600 mb-2">•</span>
                                             Limited slots available per day

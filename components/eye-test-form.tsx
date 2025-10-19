@@ -222,7 +222,7 @@ export default function ModernRegistrationForm({ className }: { className?: stri
       {/* Header */}
       <div className="text-center space-y-2">
         <h2 id="registration-title" className="text-2xl font-semibold text-gray-900">
-          Book Your Eye Consultation
+          Secure Your Appointment
         </h2>
         <p className="text-gray-600 text-sm">Fill out the form below to book your eye test consultation slot.</p>
       </div>
@@ -432,12 +432,7 @@ export default function ModernRegistrationForm({ className }: { className?: stri
       <button
         type="submit"
         disabled={loading}
-        className={cn(
-          "h-12 w-full rounded-xs font-semibold transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-offset-2",
-          loading
-            ? "bg-gray-400 text-white"
-            : "bg-[#74c044] text-white hover:bg-[#5da035] focus:ring-[#74c044]",
-        )}
+        className='h-12 w-full rounded-xs font-semibold transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-offset-2 bg-gray-100 text-gray-800 hover:bg-gray-200'
       >
         {loading ? (
           <span className="flex items-center justify-center">
@@ -457,7 +452,7 @@ export default function ModernRegistrationForm({ className }: { className?: stri
             Processing...
           </span>
         ) : (
-          "Book Eye  Consultation Now"
+          "Register Now"
         )}
       </button>
 

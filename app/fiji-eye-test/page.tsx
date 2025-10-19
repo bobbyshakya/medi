@@ -15,13 +15,13 @@ export const metadata = {
     description: 'If you or your loved ones are facing vision problems related to retina, cornea, cataract, or glaucoma, consult an experienced Indian eye specialist from Sharp Sight Eye Hospitals in Fiji. Get expert advice, treatment options, and cost estimates.',
     images: [
       {
-        url: 'https://medivisor.com/thumbnail/eye-test.png',
+        url: 'https://medivisor.com/images/eye-test.png',
         width: 1200,
         height: 630,
         alt: 'Medivisor Eye Test Fiji Banner - Dr. Rahul Bhatia Consultation',
       },
     ],
-    url: typeof window !== 'undefined' ? window.location.origin + '/eye-test-fiji' : 'https://medivisor.com/eye-test-fiji',
+    url: 'https://medivisor.com/eye-test-fiji',
     siteName: 'Medivisor',
     type: 'website',
   },
@@ -29,7 +29,7 @@ export const metadata = {
     card: 'summary_large_image',
     title: 'Medivisor Eye Test - Fiji | Consult Indian Eye Specialist October 27-30, 2025',
     description: 'If you or your loved ones are facing vision problems related to retina, cornea, cataract, or glaucoma, consult an experienced Indian eye specialist from Sharp Sight Eye Hospitals in Fiji. Get expert advice, treatment options, and cost estimates.',
-    images: ['https://medivisor.com/thumbnail/eye-test.png'],
+    images: ['https://medivisor.com/images/eye-test.png'],
   },
   other: {
     'whatsapp-title': 'Medivisor Eye Test - Fiji | Consult Indian Eye Specialist October 27-30, 2025',
@@ -48,27 +48,28 @@ function flagForLabel(label: string) {
 
 export default function Page() {
     return (
-        <section className="w-full  md:px-0 bg-white">
+        <section className="w-full md:px-0 bg-white">
             <div className="relative overflow-hidden bg-white">
                 {/* Container */}
-                <div className="relative z-10 md:container mx-auto  lg:px-16 py-20 grid md:grid-cols-2 items-center md:gap-4 md:gap-12">
+                <div className="relative z-10 md:container mx-auto lg:px-16 py-20 grid md:grid-cols-2 items-center md:gap-4 md:gap-12">
                     <div className="relative flex justify-center md:justify-center">
-                        <div className="relative w-full md:h-[70vh] ">
+                        <div className="relative w-full md:h-[70vh]">
                             <img
                                 src="/eye-banner.png"
                                 alt="Mr. Kumar Sushant - Director, Medivisor India Treatment"
                                 className="w-full h-full object-cover"
+                                width={800}
+                                height={600}
                             />
                         </div>
                     </div>
                     {/* Left: Text Content */}
                     <div className="md:space-y-8 px-4 md:px-0 space-y-4 text-center md:text-left">
                         <div className="space-y-4">
-
-                            <h1 className="text-4xl text-[#E22026] md:my-0 my-4 sm:text-7xl uppercase font-semibold leading-[1.3] md:leading-[0.9] ">
-                                <span className="md:text-3xl text-[#E22026]  ml-1">Medivisor </span>
+                            <h1 className="text-4xl text-[#E22026] md:my-0 my-4 sm:text-7xl uppercase font-semibold leading-[1.3] md:leading-[0.9]">
+                                <span className="md:text-3xl text-[#E22026] ml-1">Medivisor </span>
                                 <br className=" " />
-                                Eye Test - FIji
+                                Eye Test - Fiji
                             </h1>
                             <p className="text-xl font-medium text-gray-600 ml-1.5">
                                 October 27 – 30, 2025
@@ -85,12 +86,12 @@ export default function Page() {
                             ].map((item, i) => (
                                 <div
                                     key={i}
-                                    className="relative bg-white border border-gray-100 rounded-xs shadow-xs hover:shadow-xs "
+                                    className="relative bg-white border border-gray-100 rounded-xs shadow-xs hover:shadow-xs"
                                 >
                                     <div className="absolute inset-x-0 top-0 h-1.5 rounded-t-xs bg-[#74BF44]"></div>
                                     <div className="p-5 text-center">
                                         <p className="font-bold text-base text-[#E22026] mt-1">{item.date}</p>
-                                        <p className="font-bold text-base  text-gray-800 ">{item.city}</p>
+                                        <p className="font-bold text-base text-gray-800">{item.city}</p>
                                     </div>
                                 </div>
                             ))}
@@ -107,27 +108,22 @@ export default function Page() {
                         <div id="schedule" className="lg:col-span-6 space-y-4">
                             <div className="mb-5 space-y-3">
                                 {/* Intro */}
-                                <h2 className="text-2xl md:title-heading">𝗕𝗹𝘂𝗿𝗿𝘆 𝗩𝗶𝘀𝗶𝗼𝗻? 𝗠𝗲𝗲𝘁 𝗮𝗻 𝗜𝗻𝗱𝗶𝗮𝗻 𝗘𝘆𝗲 𝗦𝗽𝗲𝗰𝗶𝗮𝗹𝗶𝘀𝘁 𝗶𝗻 𝗙𝗶𝗷𝗶!
-
-                                </h2>
+                                <h2 className="text-2xl md:title-heading">𝗕𝗹𝘂𝗿𝗿𝘆 𝗩𝗶𝘀𝗶𝗼𝗻? 𝗠𝗲𝗲𝘁 𝗮𝗻 𝗜𝗻𝗱𝗶𝗮𝗻 𝗘𝘆𝗲 𝗦𝗽𝗲𝗰𝗶𝗮𝗹𝗶𝘀𝘁 𝗶𝗻 𝗙𝗶𝗷𝗶!</h2>
                                 <div className="text-gray-700 leading-relaxed text-lg md:text-base">
-                                    If you or your loved ones are facing vision problems related with retina, cornea, cataract, or glaucoma, here’s your chance to consult an experienced Indian eye specialist from Sharp Sight Eye Hospitals visiting your country.
-
-
+                                    If you or your loved ones are facing vision problems related with retina, cornea, cataract, or glaucoma, here's your chance to consult an experienced Indian eye specialist from Sharp Sight Eye Hospitals visiting your country.
                                 </div>
 
                                 {/* Heading */}
                                 <div className="bg-[#E22026] p-4">
                                     <div className="text-2xl mb-3 font-bold text-gray-100 border-l-4 border-[#E22026] pl-3">
-                                        During your consultation, you’ll get:
-
+                                        During your consultation, you'll get:
                                     </div>
 
                                     {/* Bullet List */}
                                     <ul className="space-y-1 ml-8 text-lg md:text-base text-gray-100">
-                                        <li className="list-disc"> Expert advice on your eye condition</li>
-                                        <li className="list-disc"> Details on treatment options available in India</li>
-                                        <li className="list-disc"> Estimated cost and travel assistance information</li>
+                                        <li className="list-disc">Expert advice on your eye condition</li>
+                                        <li className="list-disc">Details on treatment options available in India</li>
+                                        <li className="list-disc">Estimated cost and travel assistance information</li>
                                     </ul>
                                 </div>
                             </div>
@@ -149,6 +145,8 @@ export default function Page() {
                                                             alt={flag.alt}
                                                             className="h-16 w-28 rounded-md object-cover"
                                                             loading="lazy"
+                                                            width={112}
+                                                            height={64}
                                                         />
                                                         <span className="absolute inset-0 rounded-md bg-gradient-to-tr from-white/30 to-transparent" />
                                                     </div>
@@ -188,26 +186,23 @@ export default function Page() {
                                                             On-spot payment. Any tests to cost extra.
                                                         </p>
                                                     </div>
-
-
-
                                                 </div>
                                             </CardContent>
                                         </Card>
                                     );
                                 })}
                             </div>
-                            <div className="relative bg-gradient-to-br from-white to-gray-50 rounded-xs shadow-xs p-3 sm:p-8 md:p-10 border border-gray-100 ">
-
+                            <div className="relative bg-gradient-to-br from-white to-gray-50 rounded-xs shadow-xs p-3 sm:p-8 md:p-10 border border-gray-100">
                                 {/* Profile Header */}
                                 <div className="flex flex-col md:flex-row md:items-center md:justify-start gap-6 sm:gap-8 mb-8 md:mb-5 text-center md:text-left">
-
                                     {/* Profile Image */}
                                     <div className="relative mx-auto md:mx-0 w-full h-auto sm:w-40 sm:h-40 md:w-48 md:h-48 md:rounded-full md:border-4 border-[#74c044]/40 bg-white md:shadow-md overflow-hidden flex-shrink-0">
                                         <img
                                             src="/doctors/dr-rahul-bhatia.png"
                                             alt="Dr. Rahul Bhatia"
                                             className="object-cover w-full h-full hover:scale-110 transition-transform duration-500 ease-out"
+                                            width={192}
+                                            height={192}
                                         />
                                     </div>
 
@@ -219,17 +214,12 @@ export default function Page() {
                                         <p className="text-gray-800 font-semibold text-lg sm:text-lg tracking-wide">
                                             MBBS, MS, DNB
                                         </p>
-                                         <p className="text-gray-700 font-medium text-base sm:text-lg tracking-wide">
-                                           Sharp Sight Eye Hospitals, New Delhi
+                                        <p className="text-gray-700 font-medium text-base sm:text-lg tracking-wide">
+                                            Sharp Sight Eye Hospitals, New Delhi
                                         </p>
-                                       
                                     </div>
                                 </div>
-
-                             
                             </div>
-
-
                         </div>
 
                         {/* Right - Sticky Registration Form */}

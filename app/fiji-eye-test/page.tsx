@@ -15,13 +15,13 @@ export const metadata = {
     description: 'If you or your loved ones are facing vision problems related to retina, cornea, cataract, or glaucoma, consult an experienced Indian eye specialist from Sharp Sight Eye Hospitals in Fiji. Get expert advice, treatment options, and cost estimates.',
     images: [
       {
-        url: 'https://medivisor.com/images/eye-test.jpg',
+        url: 'https://medivisorindiatreatment.com/thumbnail/eye-test.jpg',
         width: 1200,
         height: 630,
         alt: 'Medivisor Eye Test Fiji Banner - Dr. Rahul Bhatia Consultation',
       },
     ],
-    url: 'https://medivisor.com/eye-test-fiji',
+    url: 'https://medivisorindiatreatment.com/eye-test-fiji',
     siteName: 'Medivisor',
     type: 'website',
   },
@@ -29,7 +29,7 @@ export const metadata = {
     card: 'summary_large_image',
     title: 'Medivisor Eye Test - Fiji | Consult Indian Eye Specialist October 27-30, 2025',
     description: 'If you or your loved ones are facing vision problems related to retina, cornea, cataract, or glaucoma, consult an experienced Indian eye specialist from Sharp Sight Eye Hospitals in Fiji. Get expert advice, treatment options, and cost estimates.',
-    images: ['https://medivisor.com/images/eye-test.jpg'],
+    images: ['https://medivisorindiatreatment.com/thumbnail/eye-test.jpg'],
   },
   other: {
     'whatsapp-title': 'Medivisor Eye Test - Fiji | Consult Indian Eye Specialist October 27-30, 2025',

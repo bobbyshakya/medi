@@ -1,4 +1,4 @@
-import { schedule, formatDateFriendly, formatScheduleDetails } from "@/lib/eye-test";
+ import { schedule, formatDateFriendly, formatScheduleDetails } from "@/lib/eye-test";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Registration from "@/components/eye-test-form";
@@ -127,7 +127,72 @@ export default function Page() {
                                     </ul>
                                 </div>
                             </div>
-                        
+                        <div className="space-y-4">
+                                {schedule.map((loc) => {
+                                    const flag = flagForLabel(loc.label);
+                                    const scheduleDetails = formatScheduleDetails(loc);
+
+                                    return (
+                                        <Card
+                                            key={loc.id}
+                                            className="bg-white border border-gray-200 shadow-xs hover:shadow-sm transition-all duration-300 rounded-xs overflow-hidden backdrop-blur-sm"
+                                        >
+                                            {/* <CardHeader className="pb-3 px-6 pt-6">
+                                                <div className="flex items-center gap-4">
+                                                    <div className="relative flex-shrink-0">
+                                                        <img
+                                                            src={flag.src}
+                                                            alt={flag.alt}
+                                                            className="h-16 w-28 rounded-md object-cover"
+                                                            loading="lazy"
+                                                            width={112}
+                                                            height={64}
+                                                        />
+                                                        <span className="absolute inset-0 rounded-md bg-gradient-to-tr from-white/30 to-transparent" />
+                                                    </div>
+                                                    <div className="flex-1">
+                                                        <CardTitle className="text-xl font-semibold text-[#241d1f] tracking-tight">
+                                                            {loc.label}
+                                                        </CardTitle>
+                                                        {loc.city && (
+                                                            <p className="text-lg md:text-base text-[#241d1f] mt-1">
+                                                                {loc.city}
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </CardHeader> */}
+
+                                            <CardContent className="px-6 pb-6 pt-4 space-y-4 border-t border-gray-100">
+                                                {/* Schedule Details */}
+                                                <div className="space-y-3">
+                                                    <h2 className="text-4xl md:text-2xl font-normal text-[#241d1f]">𝗦𝗰𝗵𝗲𝗱𝘂𝗹𝗲</h2>
+                                                    {scheduleDetails.map((detail, index) => (
+                                                        <div key={index} className="flex justify-between items-start">
+                                                            <p className="text-lg md:text-base text-[#241d1f] flex-1 leading-relaxed">
+                                                                {detail}
+                                                            </p>
+                                                        </div>
+                                                    ))}
+                                                </div>
+
+                                                {/* Fee and Contact */}
+                                                <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+                                                    <div className="text-lg md:text-base">
+                                                        <p className="text-gray-500 text-sm">Consultation Fee</p>
+                                                        <p className="font-semibold text-[#241d1f] mt-1">
+                                                            {loc.feeLabel}
+                                                        </p>
+                                                        <p className="text-gray-700 text-xs mt-0.5 italic">
+                                                            On-spot payment. Any tests to cost extra.
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </CardContent>
+                                        </Card>
+                                    );
+                                })}
+                            </div>
                             <div className="relative bg-gradient-to-br from-white to-gray-50 rounded-xs shadow-xs p-3 sm:p-8 md:p-10 border border-gray-100">
                                 {/* Profile Header */}
                                 <div className="flex flex-col md:flex-row md:items-center md:justify-start gap-6 sm:gap-8 mb-8 md:mb-5 text-center md:text-left">

@@ -145,7 +145,7 @@ export default function Page() {
 
       <main className="container mx-auto px-4 sm:px-6 lg:px-8">
         {/* ===================== SCHEDULE + STICKY REGISTRATION ===================== */}
-        <section className="h-full py-8">
+        <section className="h-full px-2 md:px-0 py-8">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
             {/* Left - Schedule */}
 

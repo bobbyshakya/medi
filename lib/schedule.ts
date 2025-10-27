@@ -28,7 +28,7 @@ export const schedule: ScheduleLocation[] = [
     city: "Port Moresby",
     dates: ["2025-11-18", "2025-11-19"],
     times: ["2 PM to 6 PM", "9 AM to 6 PM"],
-    venues: ["Hotel Crown", "Hotel Crown"],
+    venues: ["Hotel Holiday Inn", "Hotel Holiday Inn"],
     feeLabel: "100 PGK / 25 USD",
     localContact: "Shirley Waira: 74376546",
     availableSlots: [

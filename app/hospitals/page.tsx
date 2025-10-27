@@ -194,13 +194,13 @@ const HospitalCard = ({ hospital }: HospitalCardProps) => {
 
   return (
     <Link href={`/hospitals/${slug}`} className="block">
-      <article className="group bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-300 border border-gray-100 overflow-hidden cursor-pointer h-full flex flex-col">
+      <article className="group bg-white rounded-xs shadow-xs hover:shadow-xs transition-all duration-300 border border-gray-50 overflow-hidden cursor-pointer h-full flex flex-col">
         {/* Image Section */}
         <div className="relative h-48 overflow-hidden bg-gradient-to-br from-gray-50 to-gray-100">
           {/* Badges Overlay */}
-          <div className="absolute top-3 left-3 right-3 z-10 flex justify-end flex-wrap gap-2">
+          <div className="absolute top-2 left-2 right-3 z-10 flex justify-end flex-wrap gap-2">
             {hospital.accreditation && (
-              <span className="inline-flex items-center gap-1 bg-gray-50 text-gray-700 px-3 py-1 rounded shadow-sm">
+              <span className="inline-flex items-center gap-1 text-sm bg-gray-50 text-gray-700 px-3 py-1 rounded-xs shadow-xs">
                 <Award className="w-4 h-4" />
                 {hospital.accreditation}
               </span>
@@ -225,9 +225,9 @@ const HospitalCard = ({ hospital }: HospitalCardProps) => {
         </div>
 
         {/* Content Section */}
-        <div className="p-4 flex-1 flex flex-col">
+        <div className="p-2 flex-1 flex flex-col">
           {/* Hospital Name */}
-          <header className="mb-3">
+          <header className="mb-2">
             <h2 className="text-lg font-semibold line-clamp-2 group-hover:text-gray-900 transition-colors">
               {hospital.name}
             </h2>
@@ -235,7 +235,7 @@ const HospitalCard = ({ hospital }: HospitalCardProps) => {
 
           {/* Treatments Section */}
           {displayTreatments.length > 0 && (
-            <section className="mb-3">
+            <section className="mb-2">
               <div className="flex items-center justify-between border-t border-gray-100 pt-3">
                 <p className="text-xs font-semibold text-gray-900 uppercase">Treatments</p>
               </div>
@@ -510,13 +510,13 @@ const FilterSidebar = ({
   clearFilters,
 }: FilterSidebarProps) => (
   <aside
-    className={`fixed lg:static inset-y-0 left-0 z-20 w-full lg:w-80 bg-white border border-gray-100 rounded-lg shadow-sm transform transition-transform duration-300 ease-in-out ${showFilters ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+    className={`fixed lg:static inset-y-0 left-0 z-20 w-full lg:w-80 bg-white border border-gray-50 rounded-xs shadow-xs transform transition-transform duration-300 ease-in-out ${showFilters ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
       } overflow-y-auto lg:sticky lg:top-6 max-h-[calc(100vh-2rem)]`}
   >
     {/* Header */}
-    <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 bg-gray-50 sticky top-0 z-10">
-      <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-        <Filter className="w-5 h-5 text-gray-600" />
+    <div className="flex items-center justify-between px-5 pt-4 pb-2 border-b border-gray-100 bg-white sticky top-0 z-10">
+      <h2 className="title-text flex items-center gap-2">
+        <Filter className="w-5 h-5 text-gray-700" />
         Search & Filters
       </h2>
       <button
@@ -620,9 +620,9 @@ interface ResultsHeaderProps {
 const ResultsHeader = ({ hospitals, clearFilters }: ResultsHeaderProps) => (
   <>
     {!hospitals.length ? null : (
-      <div className="hidden lg:flex items-center justify-between mb-6">
-        <p className="text-lg font-semibold text-gray-900">
-          Found <span className="text-blue-600">{hospitals.length}</span> hospitals
+      <div className="hidden lg:flex items-center justify-between mb-4">
+        <p className="title-text mt-4">
+          Found <span className="text-gray-800">{hospitals.length}</span> hospitals
         </p>
         <button
           onClick={clearFilters}

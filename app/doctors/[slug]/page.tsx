@@ -8,10 +8,9 @@ import type { HospitalWithBranchPreview } from "@/types/hospital"
 import {
   Building2,
   Calendar,
-  Bed,
   Award,
   Stethoscope,
-  Scissors,
+  Bed,
   ChevronLeft,
   ChevronRight,
   Home,
@@ -19,8 +18,8 @@ import {
   Users,
   Phone,
   Mail,
-  Clock,
-  User
+  User,
+  MapPin
 } from "lucide-react"
 import Link from "next/link"
 import useEmblaCarousel from "embla-carousel-react"
@@ -39,8 +38,8 @@ const getHospitalImage = (richContent: any): string | null => {
   return null
 }
 
-// Helper function to extract doctor image URL from rich content
-const getDoctorImage = (richContent: any): string | null => {
+// Helper function to extract hospital logo URL from rich content
+const getHospitalLogo = (richContent: any): string | null => {
   if (typeof richContent === 'string') return richContent
   if (!richContent || !richContent.nodes) return null
   const imageNode = richContent.nodes.find((node: any) => node.type === 'IMAGE')
@@ -51,8 +50,8 @@ const getDoctorImage = (richContent: any): string | null => {
   return null
 }
 
-// Helper function to extract treatment image URL from rich content
-const getTreatmentImage = (richContent: any): string | null => {
+// Helper function to extract doctor image URL from rich content
+const getDoctorImage = (richContent: any): string | null => {
   if (typeof richContent === 'string') return richContent
   if (!richContent || !richContent.nodes) return null
   const imageNode = richContent.nodes.find((node: any) => node.type === 'IMAGE')
@@ -264,61 +263,228 @@ const Breadcrumb = ({ hospitalName, branchName, doctorName, hospitalSlug }: { ho
   </nav>
 )
 
-// Doctor Card Component for Similar Doctors
-const DoctorCard = ({ doctor, branchName }: { doctor: any, branchName: string }) => {
+// Hospital Card Component
+const HospitalCard = ({ hospital }: { hospital: any }) => {
+  const hospitalImage = getHospitalImage(hospital.image)
+  const hospitalLogo = getHospitalLogo(hospital.logo)
+  const hospitalSlug = hospital.slug || generateSlug(hospital.name)
+
+  const branchesInfo = hospital.branches && hospital.branches.length > 0 ? (
+    <p className="description-2 flex items-center gap-1">
+      <MapPin className="w-3 h-3" />
+      {hospital.branches[0].name}
+      {hospital.branches.length > 1 && (
+        <span className="ml-1">+{hospital.branches.length - 1} more</span>
+      )}
+    </p>
+  ) : null
+
+  return (
+    <Link
+      href={`/hospitals/${hospitalSlug}`}
+      className="group flex flex-col bg-white rounded-xs shadow-xs border border-gray-100 hover:border-gray-200  overflow-hidden"
+    >
+      {/* Image Section */}
+      <div className="relative h-48 bg-gray-50">
+        {hospitalImage ? (
+          <Image
+            src={hospitalImage}
+            alt={hospital.name}
+            fill
+            className="object-cover transition-transform duration-500 group-hover:scale-105"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
+            <Building2 className="w-12 h-12 text-gray-400" />
+          </div>
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-gray-800/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-t-xs" />
+      </div>
+
+      {/* Content Section */}
+      <div className="flex flex-col justify-between p-5 bg-gray-50/40 flex-1">
+        <div className="space-y-1">
+         <div className="flex gap-x-1 items-center">
+           {/* {hospitalLogo && (
+            <div className="w-20 h-8 relative">
+              <Image
+                src={hospitalLogo}
+                alt={`${hospital.name} logo`}
+                fill
+                className="object-contain"
+              />
+            </div>
+          )} */}
+
+          <h5 className="title-text line-clamp-1 group-hover:text-gray-700 transition-colors duration-200">
+            {hospital.name}
+          </h5>
+         </div>
+
+          {hospital.description && (
+            <p className="description-1 line-clamp-2">
+              {getShortabout(hospital.description)}
+            </p>
+          )}
+        </div>
+
+        {/* Footer Section */}
+        <div className="mt-4 pt-3 border-t border-gray-100 space-y-2">
+          {hospital.yearEstablished && (
+            <p className="description-2 flex items-center gap-1">
+              <Calendar className="w-4 h-4" />
+              Est. {hospital.yearEstablished}
+            </p>
+          )}
+
+          {hospital.accreditation && (
+            <p className="description-2 flex items-center gap-1">
+              <Award className="w-4 h-4" />
+              {hospital.accreditation}
+            </p>
+          )}
+
+          {hospital.beds && (
+            <p className="description-2 flex items-center gap-1">
+              <Bed className="w-4 h-4" />
+              {hospital.beds} Beds
+            </p>
+          )}
+
+         
+
+          {branchesInfo && (
+           <div className="border-t  border-gray-200 space-y-1">
+             <h3 className="heading-xs pt-2">
+              Branches
+            </h3>
+            <p className="description-1 font-medium">
+               {branchesInfo}
+            </p>
+            </div>
+          )}
+        </div>
+      </div>
+    </Link>
+  )
+}
+
+// Hospitals Carousel Component
+const HospitalsCarousel = ({ hospitals }: { hospitals: any[] }) => {
+  if (hospitals.length === 0) return null
+
+  const [emblaRef, emblaApi] = useEmblaCarousel({
+    loop: false,
+    align: 'start',
+    slidesToScroll: 1,
+    containScroll: 'trimSnaps'
+  })
+
+  const scrollPrev = useCallback(() => emblaApi && emblaApi.scrollPrev(), [emblaApi])
+  const scrollNext = useCallback(() => emblaApi && emblaApi.scrollNext(), [emblaApi])
+
+  const itemsPerView = 3
+  const visibleSlidesClass = `min-w-0 w-80`
+
+  return (
+    <section className="bg-white rounded-lg shadow-sm p-6 border border-gray-100">
+      <div className="flex justify-between items-center mb-6">
+        <h3 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
+          <Hospital className="w-5 h-5 text-gray-600" />
+          All Hospitals ({hospitals.length})
+        </h3>
+        {hospitals.length > itemsPerView && (
+          <div className="flex gap-2">
+            <button
+              onClick={scrollPrev}
+              className="bg-white rounded-lg p-2 shadow-sm border border-gray-200 hover:bg-gray-50 transition-colors"
+              aria-label="Previous slide"
+            >
+              <ChevronLeft className="w-4 h-4 text-gray-600" />
+            </button>
+            <button
+              onClick={scrollNext}
+              className="bg-white rounded-lg p-2 shadow-sm border border-gray-200 hover:bg-gray-50 transition-colors"
+              aria-label="Next slide"
+            >
+              <ChevronRight className="w-4 h-4 text-gray-600" />
+            </button>
+          </div>
+        )}
+      </div>
+      <div className="overflow-hidden" ref={emblaRef}>
+        <div className="flex gap-4">
+          {hospitals.map((hospital) => (
+            <div key={hospital._id || hospital.id} className={classNames("flex-shrink-0", visibleSlidesClass)}>
+              <HospitalCard hospital={hospital} />
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+const DoctorCard = ({ doctor }: { doctor: any }) => {
   const doctorImage = getDoctorImage(doctor.profileImage)
   const doctorSlug = generateSlug(doctor.name)
 
   return (
     <Link
       href={`/doctors/${doctorSlug}`}
-      className="group h-full flex flex-col hover:no-underline bg-white rounded-xs shadow-xs overflow-hidden border border-gray-200 hover:shadow-md transition-all duration-300 hover:-translate-y-0.5"
+      className="group flex flex-col bg-white rounded-2xl shadow-sm hover:shadow-md border border-gray-100 hover:border-gray-200 transition-all duration-300 overflow-hidden"
     >
-      <div className="relative flex-1 min-h-48 bg-gray-50">
+      {/* Image Section */}
+      <div className="relative h-48 bg-gray-50">
         {doctorImage ? (
           <Image
             src={doctorImage}
             alt={doctor.name}
             fill
-            className="object-cover group-hover:scale-105 transition-transform duration-300"
+            className="object-cover transition-transform duration-500 group-hover:scale-105"
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
             <User className="w-12 h-12 text-gray-400" />
           </div>
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+        <div className="absolute inset-0 bg-gradient-to-t from-gray-800/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-t-2xl" />
       </div>
-      <div className="p-5 flex-1 flex flex-col justify-between">
+
+      {/* Content Section */}
+      <div className="flex flex-col justify-between p-5 bg-gray-50/40 flex-1">
         <div className="space-y-2">
-          <h5 className="font-semibold text-gray-900 text-base line-clamp-1 group-hover:text-gray-600 transition-colors duration-200">{doctor.name}</h5>
-          <p className="text-gray-600 font-medium text-sm">{doctor.specialization}</p>
-          <p className="text-gray-600 text-xs">{doctor.qualification}</p>
-          <div className="flex items-center gap-3 text-xs text-gray-500 mt-1">
-            <span className="flex items-center gap-1"><Calendar className="w-3 h-3" /> {doctor.experience} yrs</span>
-            <span className="flex items-center gap-1"><Users className="w-3 h-3" /> {doctor.designation}</span>
-          </div>
-          {doctor.languagesSpoken && (
-            <p className="text-gray-500 text-xs">Lang: {doctor.languagesSpoken}</p>
+          <h5 className="title-text line-clamp-1 group-hover:text-gray-700 transition-colors duration-200">
+            {doctor.name}
+          </h5>
+          <p className="description-1 line-clamp-1">
+            {doctor.specialization}
+          </p>
+        </div>
+
+        {/* Footer Section */}
+        <div className="mt-4 pt-3 border-t border-gray-100 space-y-2">
+          {doctor.experience && (
+            <p className="description-2 flex items-center gap-1">
+              <Calendar className="w-4 h-4" />
+              {doctor.experience} Years
+            </p>
+          )}
+          {doctor.designation && (
+            <p className="description-2 flex items-center gap-1">
+              <Users className="w-4 h-4" />
+              {doctor.designation}
+            </p>
           )}
         </div>
-        {branchName && (
-          <div className="mt-3 pt-3 border-t border-gray-100">
-            <p className="text-gray-600 text-xs font-medium">At {branchName}</p>
-          </div>
-        )}
       </div>
     </Link>
   )
 }
 
 // Similar Doctors Carousel Component
-const SimilarDoctorsCarousel = ({ doctors, currentDoctorId }: { doctors: any[], currentDoctorId: string }) => {
-  const similarDoctors = doctors
-    .filter(d => d._id !== currentDoctorId)
-    .slice(0, 6)
-
-  if (similarDoctors.length === 0) return null
+const SimilarDoctorsCarousel = ({ doctors, currentDoctorId }: { doctors: any[]; currentDoctorId: string }) => {
+  if (doctors.length === 0) return null
 
   const [emblaRef, emblaApi] = useEmblaCarousel({
     loop: false,
@@ -334,24 +500,24 @@ const SimilarDoctorsCarousel = ({ doctors, currentDoctorId }: { doctors: any[], 
   const visibleSlidesClass = `min-w-0 w-80`
 
   return (
-    <section className="bg-white rounded-xs shadow-xs p-4 border border-gray-100">
+    <section className="bg-white rounded-lg shadow-sm p-6 border border-gray-100">
       <div className="flex justify-between items-center mb-6">
-        <h3 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
-          <User className="w-5 h-5 text-gray-600" />
-          Similar Doctors ({similarDoctors.length})
+        <h3 className="heading-sm font-semibold text-gray-900 flex items-center gap-2">
+          <Users className="w-5 h-5 text-gray-600" />
+          Similar Doctors ({doctors.length})
         </h3>
-        {similarDoctors.length > itemsPerView && (
+        {doctors.length > itemsPerView && (
           <div className="flex gap-2">
             <button
               onClick={scrollPrev}
-              className="bg-white rounded-xs p-2 shadow-xs border border-gray-200 hover:bg-gray-50 transition-colors"
+              className="bg-white rounded-lg p-2 shadow-sm border border-gray-200 hover:bg-gray-50 transition-colors"
               aria-label="Previous slide"
             >
               <ChevronLeft className="w-4 h-4 text-gray-600" />
             </button>
             <button
               onClick={scrollNext}
-              className="bg-white rounded-xs p-2 shadow-xs border border-gray-200 hover:bg-gray-50 transition-colors"
+              className="bg-white rounded-lg p-2 shadow-sm border border-gray-200 hover:bg-gray-50 transition-colors"
               aria-label="Next slide"
             >
               <ChevronRight className="w-4 h-4 text-gray-600" />
@@ -361,9 +527,9 @@ const SimilarDoctorsCarousel = ({ doctors, currentDoctorId }: { doctors: any[], 
       </div>
       <div className="overflow-hidden" ref={emblaRef}>
         <div className="flex gap-4">
-          {similarDoctors.map((doctor) => (
-            <div key={doctor._id} className={classNames("flex-shrink-0", visibleSlidesClass)}>
-              <DoctorCard doctor={doctor} branchName={doctor.branchName} />
+          {doctors.map((doctor) => (
+            <div key={doctor._id || doctor.id} className={classNames("flex-shrink-0", visibleSlidesClass)}>
+              <DoctorCard doctor={doctor} />
             </div>
           ))}
         </div>
@@ -372,174 +538,69 @@ const SimilarDoctorsCarousel = ({ doctors, currentDoctorId }: { doctors: any[], 
   )
 }
 
-// Similar Hospitals Carousel Component
-const SimilarHospitalsCarousel = ({ hospitals, currentHospitalId }: { hospitals: any[], currentHospitalId: string }) => {
-  const similarHospitals = hospitals
-    .filter(h => h._id !== currentHospitalId)
-    .slice(0, 6)
-
-  if (similarHospitals.length === 0) return null
-
-  const [emblaRef, emblaApi] = useEmblaCarousel({
-    loop: false,
-    align: 'start',
-    slidesToScroll: 1,
-    containScroll: 'trimSnaps'
-  })
-
-  const scrollPrev = useCallback(() => emblaApi && emblaApi.scrollPrev(), [emblaApi])
-  const scrollNext = useCallback(() => emblaApi && emblaApi.scrollNext(), [emblaApi])
-
-  const itemsPerView = 3
-  const visibleSlidesClass = `min-w-0 w-80`
-
-  return (
-    <section className="bg-white rounded-xs shadow-xs p-4 border border-gray-100">
-      <div className="flex justify-between items-center mb-6">
-        <h3 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
-          <Hospital className="w-5 h-5 text-gray-600" />
-          Similar Hospitals ({similarHospitals.length})
-        </h3>
-        {similarHospitals.length > itemsPerView && (
-          <div className="flex gap-2">
-            <button
-              onClick={scrollPrev}
-              className="bg-white rounded-xs p-2 shadow-xs border border-gray-200 hover:bg-gray-50 transition-colors"
-              aria-label="Previous slide"
-            >
-              <ChevronLeft className="w-4 h-4 text-gray-600" />
-            </button>
-            <button
-              onClick={scrollNext}
-              className="bg-white rounded-xs p-2 shadow-xs border border-gray-200 hover:bg-gray-50 transition-colors"
-              aria-label="Next slide"
-            >
-              <ChevronRight className="w-4 h-4 text-gray-600" />
-            </button>
-          </div>
-        )}
-      </div>
-      <div className="overflow-hidden" ref={emblaRef}>
-        <div className="flex gap-4">
-          {similarHospitals.map((hospital) => {
-            const hospitalImage = getHospitalImage(hospital.image)
-            const hospitalSlug = hospital.slug || generateSlug(hospital.name)
-            return (
-              <div key={hospital._id} className={classNames("flex-shrink-0 bg-white rounded-xs shadow-xs p-0 border border-gray-200 hover:shadow-md transition-all duration-300 hover:-translate-y-0.5 overflow-hidden", visibleSlidesClass)}>
-                <HospitalCard hospital={hospital} hospitalImage={hospitalImage} hospitalSlug={hospitalSlug} />
-              </div>
-            )
-          })}
-        </div>
-      </div>
-    </section>
-  )
-}
-
-// Hospital Card Component
-const HospitalCard = ({ hospital, hospitalImage, hospitalSlug }: { hospital: any, hospitalImage: string | null, hospitalSlug: string }) => (
-  <Link href={`/hospitals/${hospitalSlug}`} className="block group">
-    <div className="relative w-full h-48 rounded-t-xs overflow-hidden bg-gray-50">
-      {hospitalImage ? (
-        <Image
-          src={hospitalImage}
-          alt={hospital.name}
-          fill
-          className="object-cover group-hover:scale-105 transition-transform duration-300"
-        />
-      ) : (
-        <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
-          <Hospital className="w-12 h-12 text-gray-400" />
-        </div>
-      )}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-    </div>
-    <div className="p-5">
-      <h5 className="font-semibold text-gray-900 text-base mb-2 line-clamp-1">{hospital.name}</h5>
-      <p className="text-green-600 font-medium text-sm mb-2">{hospital.accreditation || 'Leading Provider'}</p>
-      <p className="text-gray-600 text-xs mb-2">{hospital.beds || 'N/A'} Beds</p>
-      {hospital.description && <p className="text-gray-500 text-xs line-clamp-2">{getShortabout(hospital.description)}</p>}
-    </div>
-  </Link>
-)
-
-// Skeleton Components
+// Hero Skeleton Component
 const HeroSkeleton = () => (
-  <section className="relative w-full h-[70vh]">
-    <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 animate-pulse" />
-    <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/20 to-transparent" />
-    <div className="absolute bottom-0 left-0 w-full z-10 px-6 pb-12 text-white">
+  <section className="relative w-full h-[70vh] bg-gradient-to-br from-gray-200 to-gray-300 animate-pulse">
+    <div className="absolute inset-0 bg-gradient-to-t from-gray-900/70 via-gray-800/40 to-transparent" />
+    <div className="absolute md:w-1/2 bottom-0 left-0 w-full z-10 px-6 pb-12">
       <div className="container mx-auto space-y-4">
-        <div className="space-y-2">
-          <div className="h-12 w-3/4 bg-white/10 rounded animate-pulse" />
-          <div className="h-6 w-1/2 bg-white/10 rounded animate-pulse" />
+        <div className="h-12 w-64 bg-gray-300 rounded animate-pulse" />
+        <div className="h-6 w-96 bg-gray-300 rounded animate-pulse" />
+        <div className="flex flex-wrap gap-3 mt-4">
+          {Array.from({ length: 2 }).map((_, i) => (
+            <div key={i} className="h-8 w-32 bg-gray-300 rounded animate-pulse" />
+          ))}
         </div>
       </div>
     </div>
   </section>
 )
 
+// Overview Skeleton Component
 const OverviewSkeleton = () => (
-  <section className="bg-white rounded-xs shadow-xs p-4 border border-gray-100">
-    <div className="h-8 w-48 bg-gray-200 rounded animate-pulse mb-6" />
+  <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-100 animate-pulse">
+    <div className="h-8 w-48 bg-gray-200 rounded mb-6" />
     <div className="space-y-6">
-      <div className="space-y-3">
-        <div className="h-24 w-full bg-gray-100 rounded-lg animate-pulse" />
-        <div className="h-4 w-full bg-gray-100 rounded animate-pulse" />
-      </div>
+      <div className="h-32 bg-gray-200 rounded" />
       <div className="grid md:grid-cols-2 gap-4">
         {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg animate-pulse">
-            <div className="w-3 h-3 bg-gray-200 rounded-full" />
-            <div className="space-y-1">
-              <div className="h-4 w-24 bg-gray-200 rounded" />
-              <div className="h-3 w-32 bg-gray-200 rounded" />
+          <div key={i} className="flex items-start gap-3 p-4 bg-gray-50 rounded-lg">
+            <div className="w-5 h-5 bg-gray-300 rounded-full mt-0.5" />
+            <div className="space-y-2">
+              <div className="h-4 w-32 bg-gray-300 rounded" />
+              <div className="h-4 w-48 bg-gray-300 rounded" />
             </div>
           </div>
         ))}
       </div>
     </div>
-  </section>
+  </div>
 )
 
-const CarouselSkeleton = ({ type }: { type: 'treatments' | 'hospitals' | 'doctors' }) => {
-  const itemsPerView = 3
-  const visibleSlidesClass = `min-w-0 w-80`
-
-  return (
-    <section className="bg-white rounded-xs shadow-xs p-4 border border-gray-100">
-      <div className="flex justify-between items-center mb-6">
-        <div className="flex items-center gap-2">
-          <div className="w-5 h-5 bg-gray-200 rounded animate-pulse" />
-          <div className="h-6 w-32 bg-gray-200 rounded animate-pulse" />
-          <div className="h-5 w-10 bg-gray-200 rounded animate-pulse ml-2" />
-        </div>
-        <div className="flex gap-2">
-          <div className="bg-white rounded-xs p-2 shadow-xs border border-gray-200 animate-pulse" />
-          <div className="bg-white rounded-xs p-2 shadow-xs border border-gray-200 animate-pulse" />
-        </div>
+// Carousel Skeleton Component
+const CarouselSkeleton = () => (
+  <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-100 animate-pulse">
+    <div className="flex justify-between items-center mb-6">
+      <div className="h-6 w-48 bg-gray-200 rounded" />
+      <div className="flex gap-2">
+        <div className="w-8 h-8 bg-gray-200 rounded-lg" />
+        <div className="w-8 h-8 bg-gray-200 rounded-lg" />
       </div>
-      <div className="overflow-hidden">
-        <div className="flex gap-6">
-          {Array.from({ length: Math.max(itemsPerView + 1, 6) }).map((_, i) => (
-            <div key={i} className={classNames("flex-shrink-0 bg-white rounded-xs shadow-xs p-0 border border-gray-200 animate-pulse overflow-hidden", visibleSlidesClass)}>
-              <div className="relative w-full h-40 bg-gray-100 rounded-t-xs" />
-              <div className="p-5 space-y-2">
-                <div className="h-5 bg-gray-200 rounded" />
-                <div className="h-4 bg-gray-200 rounded w-3/4" />
-                <div className="h-3 bg-gray-200 rounded w-1/2" />
-              </div>
-            </div>
-          ))}
-        </div>
+    </div>
+    <div className="overflow-hidden h-80">
+      <div className="flex gap-4">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <div key={i} className="flex-shrink-0 w-80 h-full bg-gray-200 rounded" />
+        ))}
       </div>
-    </section>
-  )
-}
+    </div>
+  </div>
+)
 
+// Sidebar Skeleton Component
 const SidebarSkeleton = () => (
   <aside className="lg:col-span-3 space-y-6">
-    <div className="bg-white sticky top-24 rounded-xs shadow-xs p-4 border border-gray-100">
+    <div className="bg-white sticky top-24 rounded-lg shadow-sm p-6 border border-gray-100">
       <div className="h-6 w-24 bg-gray-200 rounded animate-pulse mb-6" />
       <div className="space-y-4">
         {Array.from({ length: 4 }).map((_, i) => (
@@ -550,117 +611,13 @@ const SidebarSkeleton = () => (
   </aside>
 )
 
-// Embla Carousel Component for Treatments
-const EmblaCarouselTreatments = ({
-  items,
-  title,
-  Icon
-}: {
-  items: any[],
-  title: string,
-  Icon: any
-}) => {
-  const [emblaRef, emblaApi] = useEmblaCarousel({
-    loop: false,
-    align: 'start',
-    slidesToScroll: 1,
-    containScroll: 'trimSnaps'
-  })
-
-  const scrollPrev = useCallback(() => emblaApi && emblaApi.scrollPrev(), [emblaApi])
-  const scrollNext = useCallback(() => emblaApi && emblaApi.scrollNext(), [emblaApi])
-
-  const itemsPerView = 3
-  const visibleSlidesClass = `min-w-0 w-80`
-
-  return (
-    <section className="bg-white rounded-xs shadow-xs p-4 border border-gray-100">
-      <div className="flex justify-between items-center mb-6">
-        <h3 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
-          <Icon className="w-5 h-5 text-gray-600" />
-          {title} ({items.length})
-        </h3>
-        {items.length > itemsPerView && (
-          <div className="flex gap-2">
-            <button
-              onClick={scrollPrev}
-              className="bg-white rounded-xs p-2 shadow-xs border border-gray-200 hover:bg-gray-50 transition-colors"
-              aria-label="Previous slide"
-            >
-              <ChevronLeft className="w-4 h-4 text-gray-600" />
-            </button>
-            <button
-              onClick={scrollNext}
-              className="bg-white rounded-xs p-2 shadow-xs border border-gray-200 hover:bg-gray-50 transition-colors"
-              aria-label="Next slide"
-            >
-              <ChevronRight className="w-4 h-4 text-gray-600" />
-            </button>
-          </div>
-        )}
-      </div>
-      <div className="overflow-hidden" ref={emblaRef}>
-        <div className="flex gap-4">
-          {items.map((item, index) => (
-            <div key={item._id || index} className={classNames("flex-shrink-0 bg-white rounded-xs shadow-xs p-0 border border-gray-200 hover:shadow-md transition-all duration-300 hover:-translate-y-0.5 overflow-hidden", visibleSlidesClass)}>
-              <TreatmentCard item={item} />
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  )
-}
-
-// Treatment Card Component
-const TreatmentCard = ({ item }: { item: any }) => {
-  const treatmentImage = getTreatmentImage(item.treatmentImage)
-  const treatmentSlug = item.slug || generateSlug(item.name)
-
-  return (
-    <Link
-      href={`/treatment/${treatmentSlug}`}
-      className="group h-full flex flex-col hover:no-underline"
-    >
-      <div className="relative flex-1 min-h-40 rounded-t-xs overflow-hidden bg-gray-50">
-        {treatmentImage ? (
-          <Image
-            src={treatmentImage}
-            alt={item.name}
-            fill
-            className="object-cover group-hover:scale-105 transition-transform duration-300"
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
-            <Scissors className="w-10 h-10 text-gray-400" />
-          </div>
-        )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-      </div>
-      <div className="p-5 flex-1 flex flex-col justify-between">
-        <div className="space-y-2">
-          <h5 className="font-semibold text-gray-900 text-base line-clamp-1 group-hover:text-gray-600 transition-colors duration-200">{item.name}</h5>
-          {item.category && <p className="text-gray-600 font-medium text-xs line-clamp-1">{item.category}</p>}
-          <p className="text-gray-500 text-xs line-clamp-2">{getShortabout(item.description) || "Comprehensive medical treatment."}</p>
-        </div>
-        {item.cost && (
-          <div className="mt-3 pt-3 border-t border-gray-100">
-            <p className="text-gray-600 font-semibold text-xs">From ${item.cost}</p>
-          </div>
-        )}
-      </div>
-    </Link>
-  )
-}
-
 // Main Doctor Detail Component
 export default function DoctorDetail({ params }: { params: Promise<{ slug: string }> }) {
   const [doctor, setDoctor] = useState<any>(null)
   const [branch, setBranch] = useState<any>(null)
   const [hospital, setHospital] = useState<HospitalWithBranchPreview | null>(null)
-  const [allHospitals, setAllHospitals] = useState<any[]>([])
   const [allDoctors, setAllDoctors] = useState<any[]>([])
-  const [relatedTreatments, setRelatedTreatments] = useState<any[]>([])
+  const [allHospitals, setAllHospitals] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [isAboutExpanded, setIsAboutExpanded] = useState(false)
@@ -683,44 +640,69 @@ export default function DoctorDetail({ params }: { params: Promise<{ slug: strin
           let foundDoctor = null
           let foundBranch = null
           let foundHospital = null
-          let treatments: any[] = []
           let allDoctorsLocal: any[] = []
+          const doctorMap = new Map<string, any>()
 
+          // First pass: Find the current doctor and collect all doctors
           for (const hospitalItem of data.items) {
-            const hospitalSlug = generateSlug(hospitalItem.name)
             if (hospitalItem.branches && hospitalItem.branches.length > 0) {
               for (const branchItem of hospitalItem.branches) {
-                const branchNameSlug = generateSlug(branchItem.name)
+                // Collect doctors from branch
                 if (branchItem.doctors && branchItem.doctors.length > 0) {
                   for (const doctorItem of branchItem.doctors) {
                     const doctorNameSlug = generateSlug(doctorItem.name)
-                    if (doctorNameSlug === doctorSlug) {
+                    
+                    // Check if this is the doctor we're looking for
+                    if (doctorNameSlug === doctorSlug && !foundDoctor) {
                       foundDoctor = doctorItem
                       foundBranch = branchItem
                       foundHospital = hospitalItem
-                      treatments = branchItem.treatments || []
-                      break
                     }
-                    allDoctorsLocal.push({ ...doctorItem, branchName: branchItem.name })
+
+                    // Add doctor to map with hospital and branches info
+                    const key = doctorItem._id
+                    let existing = doctorMap.get(key)
+                    if (existing) {
+                      if (existing.hospitalName === hospitalItem.name) {
+                        if (!existing.branches.includes(branchItem.name)) {
+                          existing.branches.push(branchItem.name)
+                        }
+                      }
+                      // If different hospital, assume not for now
+                    } else {
+                      doctorMap.set(key, {
+                        ...doctorItem,
+                        hospitalName: hospitalItem.name,
+                        branches: [branchItem.name],
+                        hospitalSlug: hospitalItem.slug || generateSlug(hospitalItem.name)
+                      })
+                    }
                   }
                 }
-                if (foundDoctor) break
               }
             }
-            if (foundDoctor) break
           }
 
+          allDoctorsLocal = Array.from(doctorMap.values())
+
           if (foundDoctor && foundHospital && foundBranch) {
-            console.log('Found doctor:', foundDoctor.name)
+            // Find the full doctor with all branches
+            const fullDoctor = allDoctorsLocal.find(d => d._id === foundDoctor._id) || {
+              ...foundDoctor,
+              hospitalName: foundHospital.name,
+              branches: [foundBranch.name],
+              hospitalSlug: foundHospital.slug || generateSlug(foundHospital.name)
+            }
+            console.log('Found doctor:', fullDoctor.name)
             console.log('In branch:', foundBranch.name)
             console.log('In hospital:', foundHospital.name)
-            console.log('Doctor about:', foundDoctor.about)
-            setDoctor(foundDoctor)
+            console.log('Doctor treatments:', fullDoctor.treatments)
+            
+            setDoctor(fullDoctor)
             setBranch(foundBranch)
             setHospital(foundHospital)
-            setRelatedTreatments(treatments)
-            setAllHospitals(data.items)
             setAllDoctors(allDoctorsLocal)
+            setAllHospitals(data.items)
           } else {
             throw new Error("Doctor not found")
           }
@@ -738,6 +720,28 @@ export default function DoctorDetail({ params }: { params: Promise<{ slug: strin
     fetchDoctorData()
   }, [params])
 
+  // Get similar doctors based on shared treatments across all hospitals
+  const similarDoctorsRaw = (() => {
+    if (!doctor || !doctor.treatments || doctor.treatments.length === 0) return []
+    const currentTreatmentIds = new Set(doctor.treatments.map((t: any) => t._id))
+    return allDoctors.filter(d => 
+      d._id !== doctor._id && 
+      d.treatments && 
+      d.treatments.some((t: any) => currentTreatmentIds.has(t._id))
+    )
+  })()
+
+  // Group by hospital and take max 2 per hospital
+  const groupedByHospital = similarDoctorsRaw.reduce((acc, d) => {
+    if (!acc[d.hospitalName]) acc[d.hospitalName] = []
+    acc[d.hospitalName].push(d)
+    return acc
+  }, {} as Record<string, any[]>)
+
+  const similarDoctors = Object.values(groupedByHospital)
+    .flatMap(group => group.slice(0, 2))
+    .slice(0, 6)
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50">
@@ -748,9 +752,8 @@ export default function DoctorDetail({ params }: { params: Promise<{ slug: strin
             <div className="grid lg:grid-cols-12 gap-6">
               <main className="lg:col-span-9 space-y-6">
                 <OverviewSkeleton />
-                <CarouselSkeleton type="treatments" />
-                <CarouselSkeleton type="doctors" />
-                <CarouselSkeleton type="hospitals" />
+                <CarouselSkeleton />
+                <CarouselSkeleton />
               </main>
               <SidebarSkeleton />
             </div>
@@ -764,13 +767,13 @@ export default function DoctorDetail({ params }: { params: Promise<{ slug: strin
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 p-6">
         <Breadcrumb hospitalName="Hospital Name" branchName="Branch Name" doctorName="Doctor Name" hospitalSlug="" />
-        <div className="text-center space-y-6 max-w-md p-6 bg-white rounded-xs shadow-xs border border-gray-200">
+        <div className="text-center space-y-6 max-w-md p-6 bg-white rounded-lg shadow-sm border border-gray-200">
           <Stethoscope className="w-16 h-16 text-gray-400 mx-auto" />
           <h2 className="text-2xl font-semibold text-gray-900">Doctor Not Found</h2>
           <p className="text-gray-600 leading-relaxed">{error || "The requested doctor could not be found. Please check the URL or try searching again."}</p>
           <Link
             href="/hospitals"
-            className="inline-block w-full bg-gray-800 text-white px-6 py-3 rounded-md hover:bg-gray-900 transition-colors font-semibold"
+            className="inline-block w-full bg-gray-800 text-white px-6 py-3 rounded-lg hover:bg-gray-900 transition-colors font-semibold"
           >
             Go to Hospital Search
           </Link>
@@ -802,18 +805,17 @@ export default function DoctorDetail({ params }: { params: Promise<{ slug: strin
             alt={`${doctor.name} profile`}
             fill
             priority
-            className="object-contain  object-right"
+            className="object-contain object-right"
           />
         ) : (
           <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200" />
         )}
-        {/* <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/20 to-transparent" /> */}
         <div className="absolute md:w-1/2 bottom-0 left-0 w-full z-10 px-6 pb-12 text-gray-700">
           <div className="container mx-auto space-y-4">
-            <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold leading-tight">
+            <h1 className="title-text text-3xl md:text-4xl lg:text-5xl font-bold leading-tight">
               {doctor.name}
             </h1>
-            <p className="text-lg max-w-2xl leading-relaxed text-gray-700">
+            <p className="description-1 text-lg max-w-2xl leading-relaxed text-gray-700">
               {doctor.specialization} - {doctor.qualification} at {hospital.name}, {branch.name}
             </p>
             <div className="flex flex-wrap gap-3 mt-4">
@@ -823,7 +825,12 @@ export default function DoctorDetail({ params }: { params: Promise<{ slug: strin
                   {doctor.designation}
                 </span>
               )}
-             
+              {doctor.experience && (
+                <span className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-md text-sm font-medium">
+                  <Calendar className="w-4 h-4" />
+                  {doctor.experience} years experience
+                </span>
+              )}
             </div>
           </div>
         </div>
@@ -833,95 +840,128 @@ export default function DoctorDetail({ params }: { params: Promise<{ slug: strin
         <div className="container mx-auto px-4">
           <div className="grid lg:grid-cols-12 gap-6">
             <main className="lg:col-span-9 space-y-6">
-              <section className="bg-white rounded-xs shadow-xs p-4 border border-gray-100">
-                <h2 className="text-2xl font-semibold text-gray-900 mb-4">Doctor Profile</h2>
+              <section className="bg-white rounded-lg shadow-sm p-6 border border-gray-100">
+                <h2 className="heading-sm text-2xl font-semibold text-gray-900 mb-4">Doctor Profile</h2>
                 <div className="space-y-6">
                   {hasAboutContent && (
                     <div className="relative">
-                      <div className={`prose prose-lg max-w-none ${!isAboutExpanded ? 'line-clamp-4 overflow-hidden relative' : ''}`}>
+                      <div className={`prose prose-lg max-w-none ${!isAboutExpanded ? 'line-clamp-4' : ''}`}>
                         {renderRichText(doctor.about)}
-                        {!isAboutExpanded && isLongAbout && (
-                          <div className="absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-white to-transparent pointer-events-none" />
-                        )}
                       </div>
                       {isLongAbout && (
-                        <button 
+                        <button
                           onClick={() => setIsAboutExpanded(!isAboutExpanded)}
-                          className="mt-3 inline-flex items-center gap-1 px-4 py-2 bg-gray-50 text-gray-700 rounded-md text-sm font-medium hover:bg-gray-100 transition-colors border border-gray-200"
+                          className="mt-2 text-gray-600 hover:text-gray-800 font-medium text-sm transition-colors"
                         >
-                          {isAboutExpanded ? 'Read Less' : 'Read More'} 
-                          <ChevronRight className={`w-4 h-4 transition-transform ${isAboutExpanded ? 'rotate-90' : ''}`} />
+                          {isAboutExpanded ? 'Show Less' : 'Read More'}
                         </button>
                       )}
                     </div>
                   )}
-                  {!hasAboutContent && doctor.about && (
-                    <p className="text-gray-500 italic">No detailed information available.</p>
-                  )}
-                  <div className="grid md:grid-cols-2 gap-6">
-                    {doctor.specialization && (
-                      <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg border border-gray-100">
-                        <div className="w-3 h-3 bg-gray-500 rounded-full flex-shrink-0"></div>
-                        <div>
-                          <p className="font-medium text-gray-900">Specialization</p>
-                          <p className="text-gray-600 text-sm">{doctor.specialization}</p>
-                        </div>
-                      </div>
-                    )}
+                  <div className="grid md:grid-cols-2 gap-4">
                     {doctor.qualification && (
-                      <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg border border-gray-100">
-                        <Award className="w-5 h-5 text-gray-600 flex-shrink-0" />
+                      <div className="flex items-start gap-3 p-4 bg-gray-50 rounded-lg">
+                        <Award className="w-5 h-5 text-gray-600 mt-0.5 flex-shrink-0" />
                         <div>
-                          <p className="font-medium text-gray-900">Qualification</p>
-                          <p className="text-gray-600 text-sm">{doctor.qualification}</p>
-                        </div>
-                      </div>
-                    )}
-                    {doctor.designation && (
-                      <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg border border-gray-100">
-                        <Users className="w-5 h-5 text-gray-600 flex-shrink-0" />
-                        <div>
-                          <p className="font-medium text-gray-900">Designation</p>
-                          <p className="text-gray-600 text-sm">{doctor.designation}</p>
+                          <h4 className="heading-xs font-semibold text-gray-900 text-sm">Qualifications</h4>
+                          <p className="description-1 text-gray-600 text-sm mt-1">{doctor.qualification}</p>
                         </div>
                       </div>
                     )}
                     {doctor.experience && (
-                      <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg border border-gray-100">
-                        <Calendar className="w-5 h-5 text-gray-600 flex-shrink-0" />
+                      <div className="flex items-start gap-3 p-4 bg-gray-50 rounded-lg">
+                        <Calendar className="w-5 h-5 text-gray-600 mt-0.5 flex-shrink-0" />
                         <div>
-                          <p className="font-medium text-gray-900">Experience</p>
-                          <p className="text-gray-600 text-sm">{doctor.experience} years</p>
+                          <h4 className="heading-xs font-semibold text-gray-900 text-sm">Experience</h4>
+                          <p className="description-1 text-gray-600 text-sm mt-1">{doctor.experience} years</p>
                         </div>
                       </div>
                     )}
-                    {doctor.contactNumber && (
-                      <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg border border-gray-100">
-                        <Phone className="w-5 h-5 text-gray-600 flex-shrink-0" />
+                    {doctor.designation && (
+                      <div className="flex items-start gap-3 p-4 bg-gray-50 rounded-lg">
+                        <Users className="w-5 h-5 text-gray-600 mt-0.5 flex-shrink-0" />
                         <div>
-                          <p className="font-medium text-gray-900">Contact</p>
-                          <p className="text-gray-600 font-semibold text-sm">{doctor.contactNumber}</p>
+                          <h4 className="heading-xs font-semibold text-gray-900 text-sm">Designation</h4>
+                          <p className="description-1 text-gray-600 text-sm mt-1">{doctor.designation}</p>
+                        </div>
+                      </div>
+                    )}
+                    {doctor.languagesSpoken && (
+                      <div className="flex items-start gap-3 p-4 bg-gray-50 rounded-lg">
+                        <User className="w-5 h-5 text-gray-600 mt-0.5 flex-shrink-0" />
+                        <div>
+                          <h4 className="heading-xs font-semibold text-gray-900 text-sm">Languages Spoken</h4>
+                          <p className="description-1 text-gray-600 text-sm mt-1">{doctor.languagesSpoken}</p>
                         </div>
                       </div>
                     )}
                   </div>
                 </div>
               </section>
-
-              {relatedTreatments && relatedTreatments.length > 0 && (
-                <EmblaCarouselTreatments
-                  items={relatedTreatments}
-                  title="Treatments Offered"
-                  Icon={Scissors}
-                />
+              {allHospitals.length > 0 && (
+                <HospitalsCarousel hospitals={allHospitals} />
               )}
-
-              <SimilarDoctorsCarousel doctors={allDoctors} currentDoctorId={doctor._id} />
-
-              <SimilarHospitalsCarousel hospitals={allHospitals} currentHospitalId={hospital._id} />
+              {similarDoctors.length > 0 && (
+                <SimilarDoctorsCarousel doctors={similarDoctors} currentDoctorId={doctor._id} />
+              )}
             </main>
-
             <aside className="lg:col-span-3 space-y-6">
+              <div className="bg-white sticky top-24 rounded-lg shadow-sm p-6 border border-gray-100">
+                <h3 className="heading-sm text-lg font-semibold text-gray-900 mb-4">Contact Information</h3>
+                <div className="space-y-4">
+                  <div className="flex items-start gap-3">
+                    <Hospital className="w-5 h-5 text-gray-600 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <h4 className="heading-xs font-medium text-gray-900 text-sm">Hospital</h4>
+                      <p className="description-1 text-gray-600 text-sm mt-1">{hospital.name}</p>
+                      <p className="description-2 text-gray-500 text-xs mt-1">{branch.name}</p>
+                    </div>
+                  </div>
+                  {branch.address && (
+                    <div className="flex items-start gap-3">
+                      <MapPin className="w-5 h-5 text-gray-600 mt-0.5 flex-shrink-0" />
+                      <div>
+                        <h4 className="heading-xs font-medium text-gray-900 text-sm">Address</h4>
+                        <p className="description-1 text-gray-600 text-sm mt-1">{branch.address}</p>
+                      </div>
+                    </div>
+                  )}
+                  {branch.contactNumber && (
+                    <div className="flex items-start gap-3">
+                      <Phone className="w-5 h-5 text-gray-600 mt-0.5 flex-shrink-0" />
+                      <div>
+                        <h4 className="heading-xs font-medium text-gray-900 text-sm">Phone</h4>
+                        <p className="description-1 text-gray-600 text-sm mt-1">{branch.contactNumber}</p>
+                      </div>
+                    </div>
+                  )}
+                  {hospital.email && (
+                    <div className="flex items-start gap-3">
+                      <Mail className="w-5 h-5 text-gray-600 mt-0.5 flex-shrink-0" />
+                      <div>
+                        <h4 className="heading-xs font-medium text-gray-900 text-sm">Email</h4>
+                        <p className="description-1 text-gray-600 text-sm mt-1">{hospital.email}</p>
+                      </div>
+                    </div>
+                  )}
+                  {hospital.website && (
+                    <div className="flex items-start gap-3">
+                      <Building2 className="w-5 h-5 text-gray-600 mt-0.5 flex-shrink-0" />
+                      <div>
+                        <h4 className="heading-xs font-medium text-gray-900 text-sm">Website</h4>
+                        <a 
+                          href={hospital.website} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="description-1 text-gray-600 hover:text-gray-800 text-sm mt-1 block transition-colors"
+                        >
+                          Visit Website
+                        </a>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
               <ContactForm />
             </aside>
           </div>

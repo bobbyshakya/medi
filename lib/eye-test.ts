@@ -33,16 +33,16 @@ export const schedule: ScheduleLocation[] = [
     localContact: "+679 9470588 (Suva), +679 9470527 (Lautoka), +679 9470527 (Namaka)",
     availableSlots: [
       [
-        { time: "14:00", displayTime: "2:00 PM to 3:00 PM", isAvailable: true },
-        { time: "15:00", displayTime: "3:00 PM to 4:00 PM", isAvailable: true },
-        { time: "16:00", displayTime: "4:00 PM to 5:00 PM", isAvailable: true },
+        { time: "14:00", displayTime: "2:00 PM to 3:00 PM", isAvailable: false },
+        { time: "15:00", displayTime: "3:00 PM to 4:00 PM", isAvailable: false },
+        { time: "16:00", displayTime: "4:00 PM to 5:00 PM", isAvailable: false },
      
       ],
       [
         { time: "09:00", displayTime: "9:00 AM to 10:00 AM", isAvailable: true },
         { time: "10:00", displayTime: "10:00 AM to 11:00 AM", isAvailable: true },
         { time: "11:00", displayTime: "11:00 AM to 12:00 PM", isAvailable: true },
-                { time: "11:00", displayTime: "1:00 pm to 2:00 PM", isAvailable: true },
+        { time: "13:00", displayTime: "1:00 PM to 2:00 PM", isAvailable: true },
         { time: "14:00", displayTime: "2:00 PM to 3:00 PM", isAvailable: true },
         { time: "15:00", displayTime: "3:00 PM to 4:00 PM", isAvailable: true },
         { time: "16:00", displayTime: "4:00 PM to 5:00 PM", isAvailable: true },
@@ -52,7 +52,7 @@ export const schedule: ScheduleLocation[] = [
         { time: "09:00", displayTime: "9:00 AM to 10:00 AM", isAvailable: true },
         { time: "10:00", displayTime: "10:00 AM to 11:00 AM", isAvailable: true },
         { time: "11:00", displayTime: "11:00 AM to 12:00 PM", isAvailable: true },
-                { time: "11:00", displayTime: "1:00 pm to 2:00 PM", isAvailable: true },
+        { time: "13:00", displayTime: "1:00 PM to 2:00 PM", isAvailable: true },
         { time: "14:00", displayTime: "2:00 PM to 3:00 PM", isAvailable: true },
         { time: "15:00", displayTime: "3:00 PM to 4:00 PM", isAvailable: true },
         { time: "16:00", displayTime: "4:00 PM to 5:00 PM", isAvailable: true },
@@ -62,7 +62,7 @@ export const schedule: ScheduleLocation[] = [
         { time: "09:00", displayTime: "9:00 AM to 10:00 AM", isAvailable: true },
         { time: "10:00", displayTime: "10:00 AM to 11:00 AM", isAvailable: true },
         { time: "11:00", displayTime: "11:00 AM to 12:00 PM", isAvailable: true },
-                { time: "11:00", displayTime: "1:00 pm to 2:00 PM", isAvailable: true },
+        { time: "13:00", displayTime: "1:00 PM to 2:00 PM", isAvailable: true },
         { time: "14:00", displayTime: "2:00 PM to 3:00 PM", isAvailable: true },
         { time: "15:00", displayTime: "3:00 PM to 4:00 PM", isAvailable: true },
         { time: "16:00", displayTime: "4:00 PM to 5:00 PM", isAvailable: true },
@@ -102,16 +102,18 @@ export function formatScheduleDetails(location: ScheduleLocation): string[] {
     const formattedDate = formatDateFriendly(date)
     const time = location.times[index] || ""
     const venueCity = location.venues[index] || ""
-    const venueName = "The Eye Center"
+    let venueName = "The Eye Center"
     let phoneNumber = ""
 
-    // Dynamic phone assignment
+    // Dynamic venue name and phone assignment
     if (venueCity === "Suva") {
+      venueName = "The Eye Center"
       phoneNumber = "+679 9470588"
     } else if (venueCity === "Lautoka") {
+      venueName = "Laser Eye Center"
       phoneNumber = "+679 9470527 "
-    }
-    else if (venueCity === "Namaka") {
+    } else if (venueCity === "Namaka") {
+      venueName = "The Eye Center"
       phoneNumber = "+679 9470527 "
     }
 
@@ -145,4 +147,16 @@ export function getTimeSlotsForDate(location: ScheduleLocation, dateIndex: numbe
 export function isTimeSlotAvailable(location: ScheduleLocation, dateIndex: number, time: string): boolean {
   const slots = getTimeSlotsForDate(location, dateIndex)
   return slots.some(slot => slot.time === time && slot.isAvailable)
+}
+
+export function getAvailableDatesWithIndex(location: ScheduleLocation): Array<{ date: string; index: number; display: string }> {
+  return location.dates.map((date, index) => {
+    const slots = getTimeSlotsForDate(location, index);
+    if (slots.length > 0) {
+      const venueCity = location.venues[index] || "";
+      const display = `${formatDateFriendly(date)} - ${venueCity}`;
+      return { date, index, display };
+    }
+    return null;
+  }).filter(Boolean) as Array<{ date: string; index: number; display: string }>;
 }

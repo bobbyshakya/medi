@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Head from "next/head";
 
-import Hero from "@/components/Hero";
+import HomepageBannerSilder from "@/components/homepageBannerSilder";
 import Partners from "@/components/Partners";
 import TreatmentServices from "@/components/TreatmentServices";
 import Testimonials from "@/components/Testimonials";
@@ -42,7 +42,7 @@ export default function Home() {
       {/* ✅ Page Content */}
       <div className="bg-white min-h-screen">
         <main>
-          <Hero />
+          <HomepageBannerSilder />
           <Partners />
           <DidYouKnowSection />
           <BlogSection />

@@ -113,7 +113,7 @@ const renderRichText = (richContent: any): JSX.Element | null => {
   if (typeof richContent === 'string') {
     // Handle HTML string with dangerouslySetInnerHTML, stripping or mapping classes if needed
     // For simplicity, render as HTML, assuming global styles or inline styles
-    return <div className="text-gray-600 leading-relaxed prose space-y-3 prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: richContent }} />
+    return <div className="description-1 leading-relaxed prose space-y-3 prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: richContent }} />
   }
   if (!richContent || !richContent.nodes) return null
 
@@ -243,10 +243,9 @@ const SimilarHospitalsCarousel = ({ hospitals, currentHospitalId }: { hospitals:
 
   return (
     <section className="bg-white rounded-xs shadow-xs p-4 border border-gray-100">
-      <div className="flex justify-between items-center mb-8">
+      <div className="flex justify-between items-center mb-4">
         <h3 className="text-2xl font-semibold text-gray-800 flex items-center gap-3">
-          <Hospital className="w-6 h-6 text-gray-600" />
-          Similar Hospitals <span className="text-gray-500 font-normal">({similarHospitals.length})</span>
+          Similar Hospitals <span className="text-gray-700 text-base font-normal">({similarHospitals.length})</span>
         </h3>
         {similarHospitals.length > itemsPerView && (
           <div className="flex gap-2">
@@ -273,7 +272,7 @@ const SimilarHospitalsCarousel = ({ hospitals, currentHospitalId }: { hospitals:
             const hospitalImage = getHospitalImage(hospital.image)
             const hospitalSlug = hospital.slug || generateSlug(hospital.name)
             return (
-              <div key={hospital._id} className={classNames("flex-shrink-0 bg-white rounded-xs p-0 border border-gray-100 shadow-xs hover:shadow-lg transition-all duration-300 hover:-translate-y-1", visibleSlidesClass)}>
+              <div key={hospital._id} className={classNames("flex-shrink-0 bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden", visibleSlidesClass)}>
                 <HospitalCard hospital={hospital} hospitalImage={hospitalImage} hospitalSlug={hospitalSlug} />
               </div>
             )
@@ -284,32 +283,60 @@ const SimilarHospitalsCarousel = ({ hospitals, currentHospitalId }: { hospitals:
   )
 }
 
-// Hospital Card Component (similar to DoctorCard)
-const HospitalCard = ({ hospital, hospitalImage, hospitalSlug }: { hospital: any, hospitalImage: string | null, hospitalSlug: string }) => (
-  <Link href={`/hospitals/${hospitalSlug}`} className="block group">
-    <div className="relative w-full h-48 mb-0 rounded-t-xs overflow-hidden bg-gray-100">
-      {hospitalImage ? (
-        <Image
-          src={hospitalImage}
-          alt={hospital.name}
-          fill
-          className="object-cover w-full group-hover:scale-105 transition-transform duration-300"
-        />
-      ) : (
-        <div className="w-full h-full flex items-center justify-center">
-          <Hospital className="w-12 h-12 text-gray-400" />
-        </div>
-      )}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-    </div>
-    <div className="flex-1 min-w-0 p-6">
-      <h5 className="font-semibold text-gray-800 text-lg mb-2 line-clamp-1">{hospital.name}</h5>
-      <p className="text-gray-600 font-medium mb-2 line-clamp-1">{hospital.accreditation || 'Leading Healthcare Provider'}</p>
-      <p className="text-gray-500 text-sm mb-2 line-clamp-1">{hospital.beds || 'N/A'} Beds</p>
-      {hospital.description && <p className="text-gray-500 text-sm  line-clamp-1">{getShortDescription(hospital.description)}</p>}
-    </div>
-  </Link>
-)
+// Hospital Card Component
+const HospitalCard = ({ hospital, hospitalImage, hospitalSlug }: { hospital: any, hospitalImage: string | null, hospitalSlug: string }) => {
+  const accreditations = hospital.accreditation ? hospital.accreditation.split(/[, ]+/).map(a => a.trim()).filter(Boolean) : []
+  const firstBranch = hospital.branches && hospital.branches.length > 0 ? hospital.branches[0] : null
+  const branchDisplay = firstBranch ? (firstBranch.name || firstBranch.address?.split(',')[0] || 'Branch') : 'N/A'
+
+  return (
+    <Link href={`/hospitals/${hospitalSlug}`} className="block h-full">
+      <div className="relative w-full h-48 overflow-hidden bg-gray-100">
+        {hospitalImage ? (
+          <Image
+            src={hospitalImage}
+            alt={hospital.name}
+            fill
+            className="object-cover"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center">
+            <Hospital className="w-12 h-12 text-gray-400" />
+          </div>
+        )}
+      </div>
+      <div className="p-4 space-y-3">
+        <h3 className="font-semibold text-gray-800 text-base line-clamp-1">{hospital.name}</h3>
+        <p className="text-gray-600 text-sm leading-relaxed">{getShortDescription(hospital.description, 80)}</p>
+        {hospital.yearEstablished && (
+          <div className="flex items-center gap-2 text-xs text-gray-500">
+            <Calendar className="w-4 h-4" />
+            <span>Est. {hospital.yearEstablished}</span>
+          </div>
+        )}
+       
+        {hospital.beds && (
+          <div className="flex items-center gap-2 text-xs text-gray-500">
+            <Bed className="w-4 h-4" />
+            <span>{hospital.beds} Beds</span>
+          </div>
+        )}
+        {hospital.branches && hospital.branches.length > 0 && (
+          <div className="pt-2">
+            <p className="text-xs font-medium text-gray-700 mb-1">Branches</p>
+            <div className="flex items-center gap-1 text-xs text-gray-600">
+              <MapPin className="w-3 h-3 flex-shrink-0" />
+              <span>{branchDisplay}</span>
+              {hospital.branches.length > 1 && (
+                <span className="text-gray-500">+{hospital.branches.length - 1} more</span>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    </Link>
+  )
+}
 
 // Skeleton Components
 const HeroSkeleton = () => (
@@ -449,10 +476,9 @@ const EmblaCarousel = ({
 
   return (
     <div className="relative">
-      <div className="flex justify-between items-center mb-2">
+      <div className="flex justify-between items-center mb-4">
         <h3 className="text-2xl font-semibold text-gray-800 flex items-center gap-3">
-          <Icon className="w-5 h-5 text-[#241d1f]" />
-          {title} <span className="text-gray-500 font-normal">({items.length})</span>
+          {title} <span className="text-gray-800 text-base font-normal">({items.length})</span>
         </h3>
         {items.length > itemsPerView && (
           <div className="flex gap-2">
@@ -476,7 +502,7 @@ const EmblaCarousel = ({
       <div className="overflow-hidden" ref={emblaRef}>
         <div className="flex gap-6">
           {items.map((item, index) => (
-            <div key={item._id || index} className={classNames("flex-shrink-0 bg-white rounded-xs p-0 border border-gray-100 shadow-xs hover:shadow-lg transition-all duration-300 hover:-translate-y-1", visibleSlidesClass)}>
+            <div key={item._id || index} className={classNames("flex-shrink-0 bg-white rounded-xs p-0 border border-gray-100 shadow-xs hover:shadow-xs", visibleSlidesClass)}>
               {type === 'doctors' ? (
                 <DoctorCard item={item} />
               ) : (
@@ -506,7 +532,7 @@ const DoctorCard = ({ item }: { item: any }) => {
             src={doctorImage}
             alt={item.name}
             fill
-            className="object-cover w-full group-hover:scale-105 transition-transform duration-300"
+            className="object-cover w-full "
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
@@ -517,17 +543,17 @@ const DoctorCard = ({ item }: { item: any }) => {
       </div>
       <div className="p-6 flex-1 flex flex-col justify-between">
         <div className="space-y-3">
-          <h5 className="font-semibold text-gray-800 text-lg line-clamp-1 group-hover:text-blue-600 transition-colors duration-200">
+          <h5 className="title-text font-semibold text-gray-900 text-base mb-2 line-clamp-1">
             {item.name}
           </h5>
-          <p className="text-gray-600 font-medium line-clamp-1">
+          <p className="description-1 line-clamp-1">
             {item.specialization}
           </p>
-          <p className="text-gray-500 text-sm line-clamp-1">
+          <p className="description-1 line-clamp-2">
             {item.qualification}
           </p>
           {item.designation && (
-            <p className="text-gray-500 text-sm line-clamp-1">
+            <p className="description-1 line-clamp-2">
               {item.designation}
             </p>
           )}
@@ -553,7 +579,7 @@ const TreatmentCard = ({ item }: { item: any }) => {
             src={treatmentImage}
             alt={item.name}
             fill
-            className="object-cover w-full group-hover:scale-105 transition-transform duration-300"
+            className="object-cover w-full "
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
@@ -564,7 +590,7 @@ const TreatmentCard = ({ item }: { item: any }) => {
       </div>
       <div className="p-6 flex-1 flex flex-col justify-between">
         <div className="space-y-3">
-          <h5 className="font-semibold text-gray-800 text-lg line-clamp-1 group-hover:text-blue-600 transition-colors duration-200">
+          <h5 className="font-semibold text-gray-800 text-lg line-clamp-1 group-hover:text-gray-800 transition-colors duration-200">
             {item.name}
           </h5>
           <p className="text-gray-600 font-medium line-clamp-1">
@@ -843,9 +869,9 @@ export default function BranchDetail({ params }: { params: Promise<{ slug: strin
 
 // Stat Card Component
 const StatCard = ({ icon: Icon, value, label }: { icon: any; value: string | number; label: string }) => (
-  <div className="text-center p-6 bg-gray-50 rounded-xs border border-gray-100 hover:shadow-xs transition-all duration-200 hover:-translate-y-1">
+  <div className="text-center p-6 bg-gray-50 rounded-xs border border-gray-100 hover:shadow-xs ">
     <Icon className="w-8 h-8 text-gray-600 mx-auto mb-3" />
     <p className="text-3xl font-semibold text-gray-800">{value}</p>
     <p className="text-gray-500 mt-2 text-sm">{label}</p>
   </div>
-)
+) 

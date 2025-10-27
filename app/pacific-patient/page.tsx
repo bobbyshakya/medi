@@ -1,3 +1,4 @@
+// app/pacific-patient/page.tsx (updated main page)
 import { schedule, formatDateFriendly, formatScheduleDetails } from "@/lib/schedule";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,6 +7,27 @@ import Link from "next/link";
 import Partners from "@/components/Partners";
 import BlogCarousel from "@/components/BlogSection";
 import Testimonials from "@/components/Testimonials";
+import Banner from "@/components/PacificBanner";
+import FaqSection from "@/components/FaqSection" // Import the separate Banner component
+
+// Helper function to map schedule labels to flag placeholders
+function flagForLabel(label: string) {
+  const L = label.toLowerCase();
+  if (L.includes("png") || L.includes("papua")) {
+    return { src: "/icon/flag/png.png", alt: "Flag of Papua New Guinea" };
+  }
+
+  if (L.includes("solomon")) {
+    return { src: "/icon/flag/solomon-flag.png", alt: "Flag of Solomon Islands" };
+  }
+  if (L.includes("vanuatu")) {
+    return { src: "/icon/flag/vanuatu.png", alt: "Flag of Vanuatu" };
+  }
+  if (L.includes("fiji")) {
+    return { src: "/icon/flag/fiji.png", alt: "Flag of Fiji" };
+  }
+  return { src: "/icon/flag/fiji.png", alt: "Country flag" };
+}
 
 export const metadata = {
   title: 'Pacific Patient Meet | Consult Medivisor Director Nov 18-26, 2025 in PNG, Solomon Islands, Vanuatu, Fiji',
@@ -37,129 +59,26 @@ export const metadata = {
   },
 };
 
-// Helper function to map schedule labels to flag placeholders
-function flagForLabel(label: string) {
-  const L = label.toLowerCase();
-  if (L.includes("png") || L.includes("papua")) {
-    return { src: "/icon/flag/png.png", alt: "Flag of Papua New Guinea" };
-  }
-
-  if (L.includes("solomon")) {
-    return { src: "/icon/flag/solomon-flag.png", alt: "Flag of Solomon Islands" };
-  }
-  if (L.includes("vanuatu")) {
-    return { src: "/icon/flag/vanuatu.png", alt: "Flag of Vanuatu" };
-  }
-  if (L.includes("fiji")) {
-    return { src: "/icon/flag/fiji.png", alt: "Flag of Fiji" };
-  }
-  return { src: "/icon/flag/fiji.png", alt: "Country flag" };
-}
-
 export default function Page() {
   return (
     <section className="w-full bg-white">
-      <div className="relative px-2 bg-[#fffef7]  overflow-hidden">
-        <div className="container mx-auto px-6 lg:px-12 grid md:grid-cols-2 items-center md:gap-12">
-
-          {/* Left - Image */}
-          <div className="relative order-2 md:order-1 group w-full h-full">
-            <div className="  w-full h-[50vh] md:h-[80vh] l">
-              <img
-                src="/teams/sushant-sir.png"
-                alt="Mr. Kumar Sushant - Director, Medivisor India Treatment"
-                className="w-full h-full absolute bottom-0 object-cover md:object-cover "
-              />
-            </div>
-
-          </div>
-
-          {/* Right - Content */}
-          <div className="space-y-2 md:relative md:order-2 order-1  h-full">
-            {/* Badge */}
-            {/* <span className="inline-block bg-red-100 text-red-600 font-semibold text-xs uppercase tracking-widest px-4 py-1 rounded-full shadow-sm">
-              Meet Our Director
-            </span> */}
-
-            {/* Heading */}
-            <div>
-              <div className="md:pt-16 pt-10">
-                <h2 className="text-4xl sm:text-6xl text-center font-semibold tracking-tight text-gray-900">
-                  Pacific Patient Meet
-                </h2>
-                <p className="heading-lg my-2 text-center font-medium">
-                  Nov 18 – 26, 2025
-                </p>
-              </div>
-
-              {/* Director Info */}
-
-
-              {/* Schedule Section */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-5 h-full  justify-between pt-4">
-                {[
-                 { flag: "/icon/flag/png.png", country: "Papua New Guinea", city: "Port Moresby", date: "Nov 18–19" },
-                  { flag: "/icon/flag/solomon-flag.png", country: "Solomon Islands", city: "Honiara", date: "Nov 20–21" },
-                  { flag: "/icon/flag/vanuatu.png", country: "Vanuatu", city: "Port Vila", date: "Nov 23–24" },
-                  { flag: "/icon/flag/fiji.png", country: "Fiji", city: "Lautoka & Suva", date: "Nov 25–26" },
-                ].map((item, i) => (
-                  <div
-                    key={i}
-                    className="flex flex-col col-span-1 items-center justify-center "
-                  >
-                    <img
-                      src={item.flag}
-                      alt={`${item.country} Flag`}
-                      className="w-full h-auto  mb-0"
-                    />
-                    <p className="font-semibold text-gray-800 text-lg md:text-sm mt-3 text-center">
-                      {item.country}
-                    </p>
-                    <p className="font-semibold text-gray-800 text-lg md:text-sm text-center">
-                      ({item.city})
-                    </p>
-
-                    <p className="text-lg text-gray-800 md:text-sm mt-0">{item.date}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div className="bg-[#74c044] z-[9] absolute bottom-0  md:-left-1/2 border border-white rounded-xs p-3 shadow-xs">
-              <h3 className="text-xl font-bold text-gray-100">
-                Mr. Kumar Sushant
-              </h3>
-              <p className="text-gray-100 text-sm">
-                Director, Medivisor India Treatment
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Decorative Gradient Circles */}
-        <div className="absolute -top-10 -left-10 w-40 h-40 bg-red-100 rounded-full blur-3xl opacity-50"></div>
-        <div className="absolute bottom-0 right-0 w-56 h-56 bg-green-100 rounded-full blur-3xl opacity-50"></div>
-      </div>
+      {/* Separate Banner Component with Link */}
+      <Banner />
 
       {/* <Testimonials /> */}
-
 
       <main className="container mx-auto px-4 sm:px-6 lg:px-8">
         {/* ===================== SCHEDULE + STICKY REGISTRATION ===================== */}
         <section className="h-full px-2 md:px-0 py-8">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
             {/* Left - Schedule */}
-
             <div id="schedule" className="lg:col-span-6 space-y-4">
-
-
-              <div className="   mb-5 space-y-6 ">
+              <div className="mb-5 space-y-6">
                 {/* Intro */}
                 <div className="text-gray-700 leading-relaxed text-base">
                   For those suffering from infertility, cancer, heart disease, joint pain, spine problems, or kidney disease in
                   Papua New Guinea, Solomon Islands, Vanuatu, or Fiji, here’s a valuable opportunity to meet the Medivisor Director and Doctors right in your country and receive expert medical guidance.
                 </div>
-
-
 
                 {/* Heading */}
                 <div className="bg-[#E22026] p-4">
@@ -179,7 +98,6 @@ export default function Page() {
                 {/* Register Box */}
                 <h2 className="text-4xl md:text-2xl font-normal text-[#241d1f]">
                   𝗦𝗰𝗵𝗲𝗱𝘂𝗹𝗲
-
                 </h2>
               </div>
               <div className="space-y-4">
@@ -238,7 +156,7 @@ export default function Page() {
                           </div>
 
                           {loc.localContact && (
-                            <div className="text-right text- md:text-sm">
+                            <div className="text-right text-md:text-sm">
                               <p className="text-gray-500 text-sm">Local Contact</p>
                               <span className="font-medium text-[#241d1f] mt-1 block">
                                 {loc.localContact}
@@ -251,23 +169,19 @@ export default function Page() {
                   );
                 })}
               </div>
+              <FaqSection />
             </div>
 
             {/* Right - Sticky Registration Form */}
             <div className="lg:col-span-6">
               <div className="sticky top-16">
-                <div
-                  id="registration-form"
-                  className=" "
-                >
+                <div id="registration-form" className=" ">
                   <div className=" ">
                     <div className="">
-
                       <Registration />
                     </div>
                   </div>
                 </div>
-
                 {/* Additional Info Card */}
                 <div className="mt-6 bg-gray-50 border border-gray-200 rounded-xs p-6 transition-all duration-300 hover:shadow-xs">
                   <h4 className="font-semibold text-[#241d1f] mb-3 flex items-center gap-2">
@@ -299,8 +213,8 @@ export default function Page() {
             </div>
           </div>
         </section>
-      </main>
 
+      </main>
     </section>
   );
 }

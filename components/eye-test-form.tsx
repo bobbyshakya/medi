@@ -12,7 +12,8 @@ import {
   getLocationById,
   getAllLocationIds,
   formatDateFriendly,
-  getTimeSlotsForDate
+  getTimeSlotsForDate,
+  getAvailableDatesWithIndex
 } from "@/lib/eye-test"
 
 type FormState = {
@@ -52,32 +53,32 @@ export default function ModernRegistrationForm({ className }: { className?: stri
 
   const currentLocation = useMemo(() => getLocationById(form.country), [form.country])
 
-  // Get available dates with their times and venues
+  // Get available dates with their times and venues (only dates with available slots)
   const availableDates = useMemo(() => {
     if (!currentLocation) return []
 
-    return currentLocation.dates.map((date, index) => ({
+    return getAvailableDatesWithIndex(currentLocation).map(({ date, index, display }) => ({
       date,
+      display,
       time: currentLocation.times[index] || "",
       venue: currentLocation.venues[index] || "",
       dateIndex: index
     }))
   }, [currentLocation])
 
-  // Get available time slots for selected date
-  const availableTimeSlots = useMemo(() => {
-    if (!form.date || !currentLocation) return []
-
-    const selectedDateIndex = availableDates.findIndex(d => d.date === form.date)
-    if (selectedDateIndex === -1) return []
-
-    return getTimeSlotsForDate(currentLocation, selectedDateIndex)
-  }, [form.date, currentLocation, availableDates])
-
   // Get selected date details
   const selectedDateDetails = useMemo(() => {
     return availableDates.find(d => d.date === form.date)
   }, [form.date, availableDates])
+
+  // Get available time slots for selected date
+  const availableTimeSlots = useMemo(() => {
+    if (!form.date || !currentLocation || !selectedDateDetails) return []
+
+    const selectedDateIndex = selectedDateDetails.dateIndex;
+
+    return getTimeSlotsForDate(currentLocation, selectedDateIndex)
+  }, [form.date, currentLocation, selectedDateDetails])
 
   // Get selected time slot details
   const selectedTimeSlotDetails = useMemo(() => {
@@ -365,7 +366,7 @@ export default function ModernRegistrationForm({ className }: { className?: stri
             </option>
             {availableDates.map((dateObj, index) => (
               <option key={`${dateObj.date}-${index}`} value={dateObj.date}>
-                {formatDisplayDate(dateObj.date)} - {dateObj.venue}
+                {dateObj.display}
               </option>
             ))}
           </select>

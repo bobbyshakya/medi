@@ -25,7 +25,7 @@ const HeroSection = () => {
     <>
       <section
         aria-label="Hero Section"
-        className="relative md:px-0 px-2 md:h-[calc(100vh-10px)] overflow-hidden md:py-10"
+        className="relative md:px-0 px-2 md:h-[calc(100vh-100px)] overflow-hidden md:py-10"
         id="home"
       >
         {/* Background Layers */}

@@ -6,7 +6,7 @@ import Image from "next/image";
 export default function Banner() {
   return (
     <div className="relative px-2 bg-[#fffef7] overflow-hidden">
-      <div className="container mx-auto px-6 lg:px-12 grid md:grid-cols-2 items-center md:gap-12">
+      <div className=" grid md:grid-cols-2 items-center md:gap-12">
         {/* Left - Image */}
         <div className="relative order-2 md:order-1 group w-full h-full">
           <div className="w-full h-[50vh]  md:h-[calc(100vh-100px)]">
@@ -22,10 +22,11 @@ export default function Banner() {
         </div>
 
         {/* Right - Content */}
-        <div className="space-y-2 md:relative md:order-2 order-1 h-full">
+        <div className="space-y-2  flex items-center  md:relative md:order-2 order-1 h-full">
           {/* Heading */}
-          <div>
-            <div className="md:pt-16 pt-10">
+          <div className=" container mx-auto px-6 lg:px-12">
+            <div>
+            <div className="">
               <h2 className="text-4xl sm:text-6xl text-center font-semibold tracking-tight text-gray-900">
                 Pacific Patient Meet
               </h2>
@@ -73,6 +74,7 @@ export default function Banner() {
                 View Full Schedule & Register
               </Button>
             </Link>
+          </div>
           </div>
         </div>
       </div>

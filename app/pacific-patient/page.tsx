@@ -8,7 +8,7 @@ import Partners from "@/components/Partners";
 import BlogCarousel from "@/components/BlogSection";
 import Testimonials from "@/components/Testimonials";
 import Banner from "@/components/PacificBanner";
-import FaqSection from "@/components/FaqSection" // Import the separate Banner component
+import FaqSection from "@/components/PacificFAqSection" // Import the separate Banner component
 
 // Helper function to map schedule labels to flag placeholders
 function flagForLabel(label: string) {

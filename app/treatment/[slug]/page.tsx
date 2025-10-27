@@ -116,7 +116,7 @@ const renderRichText = (richContent: any): JSX.Element | null => {
                 alt="Embedded image"
                 width={600}
                 height={400}
-                className="w-full h-auto rounded-sm object-cover"
+                className="w-full h-auto rounded-xs object-cover"
               />
             </div>
           )
@@ -207,7 +207,7 @@ const HospitalsOfferingTreatmentCarousel = ({
   const canScrollNext = emblaApi ? emblaApi.canScrollNext() : false
 
   return (
-    <section className="bg-white rounded-sm shadow-sm border border-gray-100 p-8 mb-8">
+    <section className="bg-white rounded-xs shadow-xs border border-gray-100 p-8 mb-8">
       <div className="flex justify-between items-center mb-8">
         <h3 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
           <Hospital className="w-6 h-6 text-gray-500" />
@@ -220,7 +220,7 @@ const HospitalsOfferingTreatmentCarousel = ({
               onClick={scrollPrev}
               disabled={!canScrollPrev}
               className={classNames(
-                "bg-white rounded-sm p-3 shadow-sm border border-gray-200 hover:bg-gray-50 transition-all duration-200 hover:shadow-sm disabled:opacity-50 disabled:cursor-not-allowed",
+                "bg-white rounded-xs p-3 shadow-xs border border-gray-200 hover:bg-gray-50 transition-all duration-200 hover:shadow-xs disabled:opacity-50 disabled:cursor-not-allowed",
                 !canScrollPrev && "opacity-50 cursor-not-allowed"
               )}
               aria-label="Previous slide"
@@ -231,7 +231,7 @@ const HospitalsOfferingTreatmentCarousel = ({
               onClick={scrollNext}
               disabled={!canScrollNext}
               className={classNames(
-                "bg-white rounded-sm p-3 shadow-sm border border-gray-200 hover:bg-gray-50 transition-all duration-200 hover:shadow-sm disabled:opacity-50 disabled:cursor-not-allowed",
+                "bg-white rounded-xs p-3 shadow-xs border border-gray-200 hover:bg-gray-50 transition-all duration-200 hover:shadow-xs disabled:opacity-50 disabled:cursor-not-allowed",
                 !canScrollNext && "opacity-50 cursor-not-allowed"
               )}
               aria-label="Next slide"
@@ -251,7 +251,7 @@ const HospitalsOfferingTreatmentCarousel = ({
               const specialistCount = hospital.specialistCount || 0
               
               return (
-                <div key={hospital._id} className={classNames("bg-white rounded-sm border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-0.5", visibleSlidesClass)}>
+                <div key={hospital._id} className={classNames("bg-white rounded-xs border border-gray-100 shadow-xs hover:shadow-md transition-all duration-300 ", visibleSlidesClass)}>
                   <Link href={`/hospitals/${hospitalSlug}`} className="block group">
                     <div className="relative w-full h-48 rounded-t-sm overflow-hidden bg-gray-50">
                       {hospitalImage ? (
@@ -266,12 +266,12 @@ const HospitalsOfferingTreatmentCarousel = ({
                           <Hospital className="w-12 h-12 text-gray-400" />
                         </div>
                       )}
-                      <div className="absolute top-3 right-3 bg-indigo-600 text-white px-2.5 py-1 rounded-full text-xs font-medium">
+                      <div className="absolute top-3 right-3 bg-gray-100 text-gray-800 px-2.5 py-1 rounded-full text-xs font-medium">
                         {specialistCount} Doctors
                       </div>
                     </div>
                     <div className="p-6">
-                      <h5 className="font-bold text-gray-900 text-lg mb-2 line-clamp-1 group-hover:text-indigo-600 transition-colors">
+                      <h5 className="font-bold text-gray-900 text-lg mb-2 line-clamp-1 group-hover:text-gray-600 transition-colors">
                         {hospital.name}
                       </h5>
                       <p className="text-gray-600 font-medium mb-3 line-clamp-1 text-sm">
@@ -316,7 +316,7 @@ const DoctorCard = ({ doctor }: { doctor: any }) => {
   return (
     <Link
       href={`/doctors/${doctorSlug}`}
-      className="group h-full flex flex-col hover:no-underline bg-white rounded-sm border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-0.5"
+      className="group h-full flex flex-col hover:no-underline bg-white rounded-xs border border-gray-100 shadow-xs hover:shadow-md transition-all duration-300 "
     >
       <div className="relative w-full h-48 rounded-t-sm overflow-hidden bg-gray-50">
         {doctorImage ? (
@@ -332,24 +332,24 @@ const DoctorCard = ({ doctor }: { doctor: any }) => {
           </div>
         )}
       </div>
-      <div className="flex-1 p-6">
-        <div className="space-y-3">
-          <h5 className="font-bold text-gray-900 text-lg line-clamp-1 group-hover:text-indigo-600 transition-colors duration-200">
+      <div className="flex-1 p-3">
+        <div className="space-y-1">
+          <h5 className="font-bold text-gray-900 text-lg line-clamp-1 group-hover:text-gray-600 transition-colors duration-200">
             {doctor.name}
           </h5>
           <p className="text-gray-700 font-semibold line-clamp-1 text-sm">
             {doctor.specialization}
           </p>
-          <p className="text-gray-500 text-xs line-clamp-1">
+          <p className="description-1 line-clamp-1">
             {doctor.qualification}
           </p>
           {doctor.designation && (
-            <p className="text-gray-500 text-xs line-clamp-1">
+            <p className="description-1 line-clamp-1">
               {doctor.designation}
             </p>
           )}
           {doctor.experience && (
-            <p className="text-gray-500 text-xs font-medium">
+            <p className="description-1 font-medium">
               {doctor.experience} years experience
             </p>
           )}
@@ -358,25 +358,25 @@ const DoctorCard = ({ doctor }: { doctor: any }) => {
           <div className="pt-4 border-t border-gray-100 mt-4">
             <div className="space-y-2">
               <div className="flex items-start gap-2">
-                <Building2 className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
+              
                 <div className="flex-1">
-                  <p className="text-gray-900 text-xs font-semibold">
+                  <p className="description">
                     Available at {hospitalBranches.length} location{hospitalBranches.length > 1 ? 's' : ''}
                   </p>
-                  <div className="mt-1 space-y-1">
-                    {hospitalBranches.slice(0, 2).map((hb: any, index: number) => (
-                      <div key={index} className="flex items-start gap-1">
+                  <div className="mt-1 space-y-1 flex items-center gap-x-1">
+                    {hospitalBranches.slice(0, 1).map((hb: any, index: number) => (
+                      <div key={index} className="flex items-center gap-1">
                         <MapPin className="w-3 h-3 text-gray-400 mt-0.5 flex-shrink-0" />
                         <div>
-                          <p className="text-gray-600 text-xs line-clamp-1">
+                          <p className="description-1 line-clamp-1">
                             {hb.hospitalName} - {hb.branchName}
                           </p>
                         </div>
                       </div>
                     ))}
                     {hospitalBranches.length > 2 && (
-                      <p className="text-gray-500 text-xs">
-                        +{hospitalBranches.length - 2} more location{hospitalBranches.length - 2 > 1 ? 's' : ''}
+                      <p className="text-gray-700 text-xs">
+                        +{hospitalBranches.length - 1} more {hospitalBranches.length - 2 > 1 ? 's' : ''}
                       </p>
                     )}
                   </div>
@@ -416,7 +416,7 @@ const SpecialistDoctorsCarousel = ({
   const canScrollNext = emblaApi ? emblaApi.canScrollNext() : false
 
   return (
-    <section className="bg-white rounded-sm shadow-sm border border-gray-100 p-8 mb-8">
+    <section className="bg-white rounded-xs shadow-xs border border-gray-100 p-8 mb-8">
       <div className="flex justify-between items-center mb-8">
         <h3 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
           <Stethoscope className="w-6 h-6 text-gray-500" />
@@ -428,7 +428,7 @@ const SpecialistDoctorsCarousel = ({
               onClick={scrollPrev}
               disabled={!canScrollPrev}
               className={classNames(
-                "bg-white rounded-sm p-3 shadow-sm border border-gray-200 hover:bg-gray-50 transition-all duration-200 hover:shadow-sm disabled:opacity-50 disabled:cursor-not-allowed",
+                "bg-white rounded-xs p-3 shadow-xs border border-gray-200 hover:bg-gray-50 transition-all duration-200 hover:shadow-xs disabled:opacity-50 disabled:cursor-not-allowed",
                 !canScrollPrev && "opacity-50 cursor-not-allowed"
               )}
               aria-label="Previous slide"
@@ -439,7 +439,7 @@ const SpecialistDoctorsCarousel = ({
               onClick={scrollNext}
               disabled={!canScrollNext}
               className={classNames(
-                "bg-white rounded-sm p-3 shadow-sm border border-gray-200 hover:bg-gray-50 transition-all duration-200 hover:shadow-sm disabled:opacity-50 disabled:cursor-not-allowed",
+                "bg-white rounded-xs p-3 shadow-xs border border-gray-200 hover:bg-gray-50 transition-all duration-200 hover:shadow-xs disabled:opacity-50 disabled:cursor-not-allowed",
                 !canScrollNext && "opacity-50 cursor-not-allowed"
               )}
               aria-label="Next slide"
@@ -481,7 +481,7 @@ const HeroSkeleton = () => (
 )
 
 const OverviewSkeleton = () => (
-  <section className="bg-white rounded-sm shadow-sm p-8 border border-gray-100 mb-8">
+  <section className="bg-white rounded-xs shadow-xs p-8 border border-gray-100 mb-8">
     <div className="h-8 w-48 bg-gray-200 rounded animate-pulse mb-6" />
     <div className="space-y-4">
       <div className="h-20 w-full bg-gray-100 rounded animate-pulse" />
@@ -493,11 +493,11 @@ const OverviewSkeleton = () => (
 
 const SidebarSkeleton = () => (
   <aside className="lg:col-span-3 space-y-8">
-    <div className="bg-white sticky top-24 rounded-sm shadow-sm p-6 border border-gray-100">
+    <div className="bg-white sticky top-24 rounded-xs shadow-xs p-6 border border-gray-100">
       <div className="h-6 w-32 bg-gray-200 rounded animate-pulse mb-6" />
       <div className="space-y-4">
         {Array.from({ length: 3 }).map((_, i) => (
-          <div key={i} className="h-16 bg-gray-100 rounded-sm animate-pulse" />
+          <div key={i} className="h-16 bg-gray-100 rounded-xs animate-pulse" />
         ))}
       </div>
     </div>
@@ -709,13 +709,13 @@ export default function TreatmentDetail({ params }: { params: Promise<{ slug: st
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50/50 p-6 relative">
         <Breadcrumb treatmentName="Treatment Name" />
-        <div className="text-center space-y-6 max-w-md p-8 bg-white rounded-sm shadow-sm border border-gray-100">
+        <div className="text-center space-y-6 max-w-md p-8 bg-white rounded-xs shadow-xs border border-gray-100">
           <Scissors className="w-16 h-16 text-gray-300 mx-auto" />
           <h2 className="text-2xl font-bold text-gray-900">Treatment Not Found</h2>
           <p className="text-gray-600 leading-relaxed">{error || "The requested treatment could not be found. Please check the URL or try searching again."}</p>
           <Link
             href="/treatments"
-            className="inline-block w-full bg-indigo-600 text-white px-6 py-3 rounded-sm hover:bg-indigo-700 transition-all font-semibold shadow-sm hover:shadow-md"
+            className="inline-block w-full bg-gray-100 text-white px-6 py-3 rounded-xs hover:bg-indigo-700 transition-all font-semibold shadow-xs hover:shadow-md"
           >
             Browse All Treatments
           </Link>
@@ -755,12 +755,12 @@ export default function TreatmentDetail({ params }: { params: Promise<{ slug: st
             </p>
             {treatment.cost && (
               <div className="flex flex-wrap gap-3 mt-4">
-                <span className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-sm text-sm font-semibold border border-white/20">
+                <span className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-xs text-sm font-semibold border border-white/20">
                   <Award className="w-4 h-4" />
                   Starting from ${treatment.cost}
                 </span>
                 {treatment.duration && (
-                  <span className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-sm text-sm font-semibold border border-white/20">
+                  <span className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-xs text-sm font-semibold border border-white/20">
                     <Calendar className="w-4 h-4" />
                     {treatment.duration}
                   </span>
@@ -779,7 +779,7 @@ export default function TreatmentDetail({ params }: { params: Promise<{ slug: st
           <div className="grid lg:grid-cols-12 gap-8">
             <main className="lg:col-span-9 space-y-8">
               {/* Treatment Overview */}
-              <section className="bg-white rounded-sm shadow-sm p-8 border border-gray-100 mb-8">
+              <section className="bg-white rounded-xs shadow-xs p-8 border border-gray-100 mb-8">
                 <h2 className="text-2xl font-bold text-gray-900 mb-6">About This Treatment</h2>
                 <div className="">
                   {treatment.description && (
@@ -789,8 +789,8 @@ export default function TreatmentDetail({ params }: { params: Promise<{ slug: st
                   )}
                   <div className="grid md:grid-cols-3 gap-6 mt-8">
                     {treatment.category && (
-                      <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-sm border border-gray-100">
-                        <div className="w-3 h-3 bg-indigo-600 rounded-full flex-shrink-0"></div>
+                      <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-xs border border-gray-100">
+                        <div className="w-3 h-3 bg-gray-100 rounded-full flex-shrink-0"></div>
                         <div>
                           <p className="font-semibold text-gray-900 text-xs uppercase tracking-wide">Category</p>
                           <p className="text-gray-700 text-sm">{treatment.category}</p>
@@ -798,7 +798,7 @@ export default function TreatmentDetail({ params }: { params: Promise<{ slug: st
                       </div>
                     )}
                     {treatment.duration && (
-                      <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-sm border border-gray-100">
+                      <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-xs border border-gray-100">
                         <Calendar className="w-5 h-5 text-gray-500 flex-shrink-0" />
                         <div>
                           <p className="font-semibold text-gray-900 text-xs uppercase tracking-wide">Duration</p>
@@ -807,11 +807,11 @@ export default function TreatmentDetail({ params }: { params: Promise<{ slug: st
                       </div>
                     )}
                     {treatment.cost && (
-                      <div className="flex items-center gap-3 p-4 bg-indigo-50 rounded-sm border border-indigo-100">
-                        <Award className="w-5 h-5 text-indigo-600 flex-shrink-0" />
+                      <div className="flex items-center gap-3 p-4 bg-indigo-50 rounded-xs border border-indigo-100">
+                        <Award className="w-5 h-5 text-gray-600 flex-shrink-0" />
                         <div>
                           <p className="font-semibold text-gray-900 text-xs uppercase tracking-wide">Estimated Cost</p>
-                          <p className="text-indigo-600 font-bold text-sm">${treatment.cost}</p>
+                          <p className="text-gray-600 font-bold text-sm">${treatment.cost}</p>
                         </div>
                       </div>
                     )}

@@ -282,7 +282,7 @@ const HospitalCard = ({ hospital }: { hospital: any }) => {
   return (
     <Link
       href={`/hospitals/${hospitalSlug}`}
-      className="group flex flex-col bg-white rounded-xs shadow-xs border border-gray-100 hover:border-gray-200  overflow-hidden"
+      className="group flex flex-col bg-white rounded-xs shadow-xs border border-gray-100 hover:border-gray-100  overflow-hidden"
     >
       {/* Image Section */}
       <div className="relative h-48 bg-gray-50">
@@ -302,7 +302,7 @@ const HospitalCard = ({ hospital }: { hospital: any }) => {
       </div>
 
       {/* Content Section */}
-      <div className="flex flex-col justify-between p-5 bg-gray-50/40 flex-1">
+      <div className="flex flex-col justify-between bg-gray-100 p-5  flex-1">
         <div className="space-y-1">
          <div className="flex gap-x-1 items-center">
            {/* {hospitalLogo && (
@@ -384,7 +384,7 @@ const HospitalsCarousel = ({ hospitals }: { hospitals: any[] }) => {
   const scrollNext = useCallback(() => emblaApi && emblaApi.scrollNext(), [emblaApi])
 
   const itemsPerView = 3
-  const visibleSlidesClass = `min-w-0 w-80`
+  const visibleSlidesClass = `min-w-0 w-[calc(33.333%-0.666rem)]`
 
   return (
     <section className="bg-white rounded-lg shadow-sm p-6 border border-gray-100">
@@ -432,7 +432,7 @@ const DoctorCard = ({ doctor }: { doctor: any }) => {
   return (
     <Link
       href={`/doctors/${doctorSlug}`}
-      className="group flex flex-col bg-white rounded-2xl shadow-sm hover:shadow-md border border-gray-100 hover:border-gray-200 transition-all duration-300 overflow-hidden"
+      className="group flex flex-col bg-white rounded-xs shadow-xs hover:shadow-md border border-gray-100 hover:border-gray-200 transition-all duration-300 overflow-hidden"
     >
       {/* Image Section */}
       <div className="relative h-48 bg-gray-50">
@@ -452,7 +452,7 @@ const DoctorCard = ({ doctor }: { doctor: any }) => {
       </div>
 
       {/* Content Section */}
-      <div className="flex flex-col justify-between p-5 bg-gray-50/40 flex-1">
+      <div className="flex flex-col bg-gray-100 justify-between p-5  flex-1">
         <div className="space-y-2">
           <h5 className="title-text line-clamp-1 group-hover:text-gray-700 transition-colors duration-200">
             {doctor.name}
@@ -497,10 +497,10 @@ const SimilarDoctorsCarousel = ({ doctors, currentDoctorId }: { doctors: any[]; 
   const scrollNext = useCallback(() => emblaApi && emblaApi.scrollNext(), [emblaApi])
 
   const itemsPerView = 3
-  const visibleSlidesClass = `min-w-0 w-80`
+  const visibleSlidesClass = `min-w-0 w-[calc(33.333%-0.666rem)]`
 
   return (
-    <section className="bg-white rounded-lg shadow-sm p-6 border border-gray-100">
+    <section className="bg-white rounded-xs shadow-xs p-6 border border-gray-100">
       <div className="flex justify-between items-center mb-6">
         <h3 className="heading-sm font-semibold text-gray-900 flex items-center gap-2">
           <Users className="w-5 h-5 text-gray-600" />
@@ -864,7 +864,7 @@ export default function DoctorDetail({ params }: { params: Promise<{ slug: strin
                         <Award className="w-5 h-5 text-gray-600 mt-0.5 flex-shrink-0" />
                         <div>
                           <h4 className="heading-xs font-semibold text-gray-900 text-sm">Qualifications</h4>
-                          <p className="description-1 text-gray-600 text-sm mt-1">{doctor.qualification}</p>
+                          <p className="description-1  mt-1">{doctor.qualification}</p>
                         </div>
                       </div>
                     )}
@@ -873,7 +873,7 @@ export default function DoctorDetail({ params }: { params: Promise<{ slug: strin
                         <Calendar className="w-5 h-5 text-gray-600 mt-0.5 flex-shrink-0" />
                         <div>
                           <h4 className="heading-xs font-semibold text-gray-900 text-sm">Experience</h4>
-                          <p className="description-1 text-gray-600 text-sm mt-1">{doctor.experience} years</p>
+                          <p className="description-1  mt-1">{doctor.experience} years</p>
                         </div>
                       </div>
                     )}
@@ -882,7 +882,7 @@ export default function DoctorDetail({ params }: { params: Promise<{ slug: strin
                         <Users className="w-5 h-5 text-gray-600 mt-0.5 flex-shrink-0" />
                         <div>
                           <h4 className="heading-xs font-semibold text-gray-900 text-sm">Designation</h4>
-                          <p className="description-1 text-gray-600 text-sm mt-1">{doctor.designation}</p>
+                          <p className="description-1  mt-1">{doctor.designation}</p>
                         </div>
                       </div>
                     )}
@@ -891,7 +891,7 @@ export default function DoctorDetail({ params }: { params: Promise<{ slug: strin
                         <User className="w-5 h-5 text-gray-600 mt-0.5 flex-shrink-0" />
                         <div>
                           <h4 className="heading-xs font-semibold text-gray-900 text-sm">Languages Spoken</h4>
-                          <p className="description-1 text-gray-600 text-sm mt-1">{doctor.languagesSpoken}</p>
+                          <p className="description-1  mt-1">{doctor.languagesSpoken}</p>
                         </div>
                       </div>
                     )}
@@ -913,7 +913,7 @@ export default function DoctorDetail({ params }: { params: Promise<{ slug: strin
                     <Hospital className="w-5 h-5 text-gray-600 mt-0.5 flex-shrink-0" />
                     <div>
                       <h4 className="heading-xs font-medium text-gray-900 text-sm">Hospital</h4>
-                      <p className="description-1 text-gray-600 text-sm mt-1">{hospital.name}</p>
+                      <p className="description-1  mt-1">{hospital.name}</p>
                       <p className="description-2 text-gray-500 text-xs mt-1">{branch.name}</p>
                     </div>
                   </div>
@@ -922,7 +922,7 @@ export default function DoctorDetail({ params }: { params: Promise<{ slug: strin
                       <MapPin className="w-5 h-5 text-gray-600 mt-0.5 flex-shrink-0" />
                       <div>
                         <h4 className="heading-xs font-medium text-gray-900 text-sm">Address</h4>
-                        <p className="description-1 text-gray-600 text-sm mt-1">{branch.address}</p>
+                        <p className="description-1  mt-1">{branch.address}</p>
                       </div>
                     </div>
                   )}
@@ -931,7 +931,7 @@ export default function DoctorDetail({ params }: { params: Promise<{ slug: strin
                       <Phone className="w-5 h-5 text-gray-600 mt-0.5 flex-shrink-0" />
                       <div>
                         <h4 className="heading-xs font-medium text-gray-900 text-sm">Phone</h4>
-                        <p className="description-1 text-gray-600 text-sm mt-1">{branch.contactNumber}</p>
+                        <p className="description-1  mt-1">{branch.contactNumber}</p>
                       </div>
                     </div>
                   )}
@@ -940,7 +940,7 @@ export default function DoctorDetail({ params }: { params: Promise<{ slug: strin
                       <Mail className="w-5 h-5 text-gray-600 mt-0.5 flex-shrink-0" />
                       <div>
                         <h4 className="heading-xs font-medium text-gray-900 text-sm">Email</h4>
-                        <p className="description-1 text-gray-600 text-sm mt-1">{hospital.email}</p>
+                        <p className="description-1  mt-1">{hospital.email}</p>
                       </div>
                     </div>
                   )}

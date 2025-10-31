@@ -28,13 +28,13 @@ function flagForLabel(label: string) {
   }
   return { src: "/icon/flag/fiji.png", alt: "Country flag" };
 }
-
+  
 export const metadata = {
-  title: 'Pacific Patient Meet | Consult Medivisor Director Nov 18-26, 2025 in PNG, Solomon Islands, Vanuatu, Fiji',
-  description: 'For those suffering from infertility, cancer, heart disease, joint pain, spine problems, or kidney disease in Papua New Guinea, Solomon Islands, Vanuatu, or Fiji, meet Mr. Kumar Sushant, Director of Medivisor India Treatment. Learn about treatment options, costs, travel, and support.',
+  title: 'Pacific Patient Meet I Nov 18-26 I PNG, Solomon, Vanuatu, Fiji',
+  description: 'Hello Friends, A Medivisor medical team is coming to your country! If you or your loved ones are suffering from any long-term illness or have been recently diagnosed with a condition that cannot be treated locally, this is your chance to meet the Medivisor team in person and explore the best possible treatment options in India.',
   openGraph: {
-    title: 'Pacific Patient Meet | Consult Medivisor Director Nov 18-26, 2025 in PNG, Solomon Islands, Vanuatu, Fiji',
-    description: 'For those suffering from infertility, cancer, heart disease, joint pain, spine problems, or kidney disease in Papua New Guinea, Solomon Islands, Vanuatu, or Fiji, meet Mr. Kumar Sushant, Director of Medivisor India Treatment. Learn about treatment options, costs, travel, and support.',
+    title: 'Pacific Patient Meet I Nov 18-26 I PNG, Solomon, Vanuatu, Fiji',
+    description: 'Hello Friends, A Medivisor medical team is coming to your country! If you or your loved ones are suffering from any long-term illness or have been recently diagnosed with a condition that cannot be treated locally, this is your chance to meet the Medivisor team in person and explore the best possible treatment options in India.',
     images: [
       {
         url: 'https://medivisorindiatreatment.com/thumbnail/pacific-meet.jpg',
@@ -49,8 +49,8 @@ export const metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Pacific Patient Meet | Consult Medivisor Director Nov 18-26, 2025 in PNG, Solomon Islands, Vanuatu, Fiji',
-    description: 'For those suffering from infertility, cancer, heart disease, joint pain, spine problems, or kidney disease in Papua New Guinea, Solomon Islands, Vanuatu, or Fiji, meet Mr. Kumar Sushant, Director of Medivisor India Treatment. Learn about treatment options, costs, travel, and support.',
+    title: 'Pacific Patient Meet I Nov 18-26 I PNG, Solomon, Vanuatu, Fiji',
+    description: 'Hello Friends, A Medivisor medical team is coming to your country! If you or your loved ones are suffering from any long-term illness or have been recently diagnosed with a condition that cannot be treated locally, this is your chance to meet the Medivisor team in person and explore the best possible treatment options in India.',
     images: ['https://medivisorindiatreatment.com/thumbnail/pacific-meet.jpg'],
   },
   other: {

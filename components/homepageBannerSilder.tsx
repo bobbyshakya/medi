@@ -4,7 +4,7 @@
 import React from 'react';
 import Slider from 'react-slick';
 import Banner1 from '@/components/Hero';
-import Banner2 from '@/components/eyeBanner';
+// import Banner2 from '@/components/eyeBanner';
 import Banner3 from '@/components/PacificBanner';
 
 import "slick-carousel/slick/slick.css";
@@ -104,11 +104,11 @@ const HeroSlider = () => {
         <div key="banner1">
           <Banner1 />
         </div>
-        <div key="banner2">
+        {/* <div key="banner2">
           <a href="/fiji-eye-test ">
             <Banner2 />
           </a>
-        </div>
+        </div> */}
         <div key="banner3">
           <a href="/pacific-patient">
             <Banner3 />

@@ -34,7 +34,7 @@ const faqData: FAQItem[] = [
   {
     id: '3',
     question: 'How can I register?',
-    answer: 'Simply fill out the registration form in the comment section or contact your local Medivisor representative for assistance.',
+    answer: 'Simply fill out the registration form or contact your local Medivisor representative for assistance.',
     category: 'Registration',
     icon: FileText
   },

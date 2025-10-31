@@ -73,14 +73,45 @@ export default function Page() {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
             {/* Left - Schedule */}
             <div id="schedule" className="lg:col-span-6 space-y-4">
-              <div className="mb-5 space-y-6">
-                {/* Intro */}
+              <div className="space-y-6">
                 <div className="text-gray-700 leading-relaxed text-base">
-                  For those suffering from infertility, cancer, heart disease, joint pain, spine problems, or kidney disease in
-                  Papua New Guinea, Solomon Islands, Vanuatu, or Fiji, here’s a valuable opportunity to meet the Medivisor Director and Doctors right in your country and receive expert medical guidance.
+                  <p className="mb-1">
+                    <strong>Hello Friends,</strong>
+                  </p>
+                  <p className="mb-1 flex items-center gap-1 description">
+                    A Medivisor medical team is coming to your country!
+
+                  </p>
+
+                  <p className="description">
+                    If you or your loved ones are suffering from any long-term illness or have been recently diagnosed with a
+                    condition that cannot be treated locally, this is your chance to meet the Medivisor team in person and explore the
+                    best possible treatment options in India.
+                  </p>
                 </div>
 
-                {/* Heading */}
+                {/* Ideal For Section */}
+                <div className="">
+                  <h3 className="text-2xl font-bold text-gray-800 mb-4">👩‍⚕️ Ideal for patients suffering from:</h3>
+                  <ul className="space-y-1 ml-5 description list-disc ">
+                    <li>Brain Tumours, Head & Neck Tumours, or other types of Tumour</li>
+                    <li>Any types of Cancer</li>
+                    <li>Infertility or other Gynecological Problems</li>
+                    <li>Spinal Deformities and Chronic Back Pain</li>
+                    <li>Cardiac (Heart) Conditions</li>
+                    <li>Knee, Hip, or other Orthopedic Problems</li>
+                    <li>Kidney Failure, Kidney Stones, or other Renal Disorders</li>
+                    <li>Liver Cirrhosis, Liver Failure, or other Liver Conditions</li>
+                    <li>Any other Surgical or Complex Medical Need</li>
+                  </ul>
+                </div>
+
+                {/* Note / Call-to-Action */}
+                <div className="bg-gray-100 border border-gray-100 rounded-xs p-4 text-gray-700 leading-relaxed shadow-xs">
+                  <p>
+                    📅 <strong>Don’t miss this opportunity</strong> to receive expert medical guidance directly from the Medivisor team — right in your country!
+                  </p>
+                </div>
                 <div className="bg-[#E22026] p-4">
                   <div className="text-2xl mb-3 font-bold text-gray-100 border-l-4 border-[#E22026] pl-3">
                     What You’ll Learn
@@ -94,12 +125,12 @@ export default function Page() {
                     <li className="list-disc">How Medivisor supports you throughout your journey to recovery</li>
                   </ul>
                 </div>
-
-                {/* Register Box */}
-                <h2 className="text-4xl md:text-2xl font-normal text-[#241d1f]">
-                  𝗦𝗰𝗵𝗲𝗱𝘂𝗹𝗲
+                {/* Schedule Heading */}
+                <h2 className="text-3xl md:text-2xl font-semibold text-[#241d1f] mt-6">
+                  Schedule
                 </h2>
               </div>
+
               <div className="space-y-4">
                 {schedule.map((loc) => {
                   const flag = flagForLabel(loc.label);

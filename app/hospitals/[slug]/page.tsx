@@ -58,15 +58,10 @@ type HospitalWithBranchPreviewExtended = HospitalWithBranchPreview & {
 // Helper Functions
 // ==============================
 
-const getWixImageUrl = (imageStr: string): string | null => {
-  if (!imageStr || typeof imageStr !== 'string') return null;
-  if (!imageStr.startsWith('wix:image://v1/')) return null;
-
-  const parts = imageStr.split('/');
-  if (parts.length < 4) return null;
-
-  const id = parts[3];
-  return `https://static.wixstatic.com/media/${id}`;
+const getWixImageUrl = (imageStr: string | null | undefined): string | null => {
+  if (!imageStr || typeof imageStr !== "string" || !imageStr.startsWith("wix:image://v1/")) return null
+  const parts = imageStr.split("/")
+  return parts.length >= 4 ? `https://static.wixstatic.com/media/${parts[3]}` : null
 }
 
 const getImageUrl = (content: any): string | null => {

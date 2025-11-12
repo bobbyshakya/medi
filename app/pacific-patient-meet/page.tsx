@@ -72,7 +72,7 @@ export default function Page() {
         <section className="h-full px-2 md:px-0 py-8">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
             {/* Left - Schedule */}
-            <div id="schedule" className="lg:col-span-6 space-y-4">
+            <div  className="lg:col-span-6 space-y-4">
               <div className="space-y-6">
                 <div className="text-gray-700 leading-relaxed text-base">
                   <p className="mb-1">
@@ -206,7 +206,7 @@ export default function Page() {
             {/* Right - Sticky Registration Form */}
             <div className="lg:col-span-6">
               <div className="sticky top-16">
-                <div id="registration-form" className=" ">
+                <div id="schedule" className=" ">
                   <div className=" ">
                     <div className="">
                       <Registration />

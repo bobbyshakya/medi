@@ -9,7 +9,7 @@ export default function Banner() {
       <div className=" grid md:grid-cols-2 items-end md:gap-12">
         {/* Left - Image */}
         <div className="relative order-2 md:order-1 group w-full h-full flex items-end">
-          <div className="w-full h-[45vh] md:h-[calc(90vh-100px)] relative">
+          <div className="w-full h-auto md:h-[calc(90vh-100px)] relative">
             <Image
               src="/banner/Doctor-Team.png"
               alt="Mr. Kumar Sushant - Director, Medivisor India Treatment"

@@ -79,13 +79,13 @@ export default function Page() {
                     <strong>Hello Friends,</strong>
                   </p>
                   <p className="mb-1 flex items-center gap-1 description">
-                    A Medivisor and Yashoda medical team is coming to your country!
+                    A Medivisor and Yashoda medical team from India is coming to your country!
 
                   </p>
 
                   <p className="description">
                     If you or your loved ones are suffering from any long-term illness or have been recently diagnosed with a
-                    condition that cannot be treated locally, this is your chance to meet the Medivisor and Yasodha team in person and explore the
+                    condition that cannot be treated locally, this is your chance to meet the Medivisor and Yasodha medical team in person and explore the
                     best possible treatment options in India.
                   </p>
                 </div>

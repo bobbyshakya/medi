@@ -251,22 +251,35 @@ export function getLocationById(id: LocationId): ScheduleLocation | undefined {
   const location = schedule.find((loc) => loc.id === id);
   if (location) {
     // Apply the future date filter before returning the data for the form
-    return getFutureDatesForLocation(location);
+    const filteredLocation = getFutureDatesForLocation(location);
+    // If filtering results in no dates, treat it as if the location doesn't exist for the form context
+    if (filteredLocation.dates.length === 0) return undefined;
+    return filteredLocation;
   }
   return undefined;
 }
 
+/**
+ * Returns only the LocationIds that still have at least one future date available.
+ * This is used to populate the Country dropdown in the form.
+ */
 export function getAllLocationIds(): LocationId[] {
-  return schedule.map((loc) => loc.id)
+  return schedule
+    .filter(loc => {
+      // Check if the location has any future dates after filtering
+      const filteredLoc = getFutureDatesForLocation(loc);
+      return filteredLoc.dates.length > 0;
+    })
+    .map((loc) => loc.id);
 }
 
 /**
- * Returns available time slots. This relies on the location object being 
- * passed, which, if coming from the form selection, is already filtered 
- * by getLocationById.
+ * Returns available time slots for a specific date index within the filtered location.
+ * This filters for slots where isAvailable is true, implementing the "hide unavailable option" logic.
  */
 export function getTimeSlotsForDate(location: ScheduleLocation, dateIndex: number): TimeSlot[] {
   if (location.availableSlots && location.availableSlots[dateIndex]) {
+    // Filter to only include available slots (isAvailable: true)
     return location.availableSlots[dateIndex].filter(slot => slot.isAvailable)
   }
   return DEFAULT_TIME_SLOTS.filter(slot => slot.isAvailable)

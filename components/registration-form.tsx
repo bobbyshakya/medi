@@ -1,295 +1,221 @@
 // registration-form.tsx
-"use client"
-import { useMemo, useState } from "react"
-import type React from "react"
-import { cn } from "@/lib/utils"
-import { useRouter } from "next/navigation"
+"use client";
+
+import React, { useMemo, useEffect } from "react";
+import { cn } from "@/lib/utils";
+import { useRouter } from "next/navigation";
 import {
-  schedule,
   type LocationId,
   type TimeSlot,
   getFlagEmoji,
   getLocationById,
   getAllLocationIds,
   formatDateFriendly,
-  getTimeSlotsForDate
-} from "@/lib/schedule"
+  getTimeSlotsForDate,
+} from "@/lib/schedule";
 
 type FormState = {
-  name: string
-  email: string
-  phone: string
-  country: LocationId
-  date: string
-  timeSlot: string
-  notes: string
-}
+  name: string;
+  email: string;
+  phone: string;
+  country: LocationId | "";
+  date: string;
+  timeSlot: string;
+  notes: string;
+};
 
 type FormErrors = {
-  name?: string
-  email?: string
-  phone?: string
-  country?: string
-  date?: string
-  timeSlot?: string
-}
+  name?: string;
+  email?: string;
+  phone?: string;
+  date?: string;
+  timeSlot?: string;
+};
 
 export default function ModernRegistrationForm({ className }: { className?: string }) {
-  const router = useRouter()
-  const [loading, setLoading] = useState(false)
-  const [submitted, setSubmitted] = useState<null | { ok: boolean; msg: string }>(null)
-  const [errors, setErrors] = useState<FormErrors>({})
+  const router = useRouter();
+  const [loading, setLoading] = React.useState(false);
+  const [submitted, setSubmitted] = React.useState<null | { ok: boolean; msg: string }>(null);
+  const [errors, setErrors] = React.useState<FormErrors>({});
 
-  const [form, setForm] = useState<FormState>({
+  const [form, setForm] = React.useState<FormState>({
     name: "",
     email: "",
     phone: "",
-    country: "png", // Default to first location
+    country: "",
     date: "",
     timeSlot: "",
     notes: "",
-  })
+  });
 
-  const currentLocation = useMemo(() => getLocationById(form.country), [form.country])
+  // Only show countries that have future dates
+  const availableLocationIds = useMemo(() => getAllLocationIds(), []);
 
-  // Get available dates with their times and venues
+  // Auto-select first available country on mount
+  useEffect(() => {
+    if (!form.country && availableLocationIds.length > 0) {
+      setForm(prev => ({ ...prev, country: availableLocationIds[0] }));
+    }
+  }, [availableLocationIds, form.country]);
+
+  // Current location (already filtered for future dates)
+  const currentLocation = useMemo(() => {
+    if (!form.country) return undefined;
+    return getLocationById(form.country as LocationId);
+  }, [form.country]);
+
+  // Available future dates + venue/time info
   const availableDates = useMemo(() => {
-    if (!currentLocation) return []
-
+    if (!currentLocation) return [];
     return currentLocation.dates.map((date, index) => ({
       date,
       time: currentLocation.times[index] || "",
       venue: currentLocation.venues[index] || "",
-      dateIndex: index
-    }))
-  }, [currentLocation])
+      dateIndex: index,
+    }));
+  }, [currentLocation]);
 
-  // Get available time slots for selected date
-  const availableTimeSlots = useMemo(() => {
-    if (!form.date || !currentLocation) return []
+  // Available time slots (only isAvailable: true)
+  const availableTimeSlots = useMemo((): TimeSlot[] => {
+    if (!form.date || !currentLocation) return [];
+    const dateIndex = availableDates.findIndex(d => d.date === form.date);
+    if (dateIndex === -1) return [];
+    return getTimeSlotsForDate(currentLocation, dateIndex);
+  }, [form.date, currentLocation, availableDates]);
 
-    const selectedDateIndex = availableDates.findIndex(d => d.date === form.date)
-    if (selectedDateIndex === -1) return []
+  const selectedDateDetails = useMemo(() => availableDates.find(d => d.date === form.date), [form.date, availableDates]);
+  const selectedTimeSlotDetails = useMemo(() => availableTimeSlots.find(t => t.time === form.timeSlot), [form.timeSlot, availableTimeSlots]);
 
-    return getTimeSlotsForDate(currentLocation, selectedDateIndex)
-  }, [form.date, currentLocation, availableDates])
-
-  // Get selected date details
-  const selectedDateDetails = useMemo(() => {
-    return availableDates.find(d => d.date === form.date)
-  }, [form.date, availableDates])
-
-  // Get selected time slot details
-  const selectedTimeSlotDetails = useMemo(() => {
-    return availableTimeSlots.find(t => t.time === form.timeSlot)
-  }, [form.timeSlot, availableTimeSlots])
-
-  // Form validation
   const validateForm = (): boolean => {
-    const newErrors: FormErrors = {}
+    const newErrors: FormErrors = {};
 
-    if (!form.name.trim()) {
-      newErrors.name = "Full name is required"
-    } else if (form.name.trim().length < 2) {
-      newErrors.name = "Name must be at least 2 characters"
-    }
+    if (!form.name.trim()) newErrors.name = "Full name is required";
+    else if (form.name.trim().length < 2) newErrors.name = "Name must be at least 2 characters";
 
-    if (!form.email.trim()) {
-      newErrors.email = "Email is required"
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
-      newErrors.email = "Please enter a valid email address"
-    }
+    if (!form.email.trim()) newErrors.email = "Email is required";
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) newErrors.email = "Please enter a valid email address";
 
-    if (!form.phone.trim()) {
-      newErrors.phone = "Phone number is required"
-    } else if (form.phone.trim().length < 6) {
-      newErrors.phone = "Please enter a valid phone number"
-    }
+    if (!form.phone.trim()) newErrors.phone = "Phone number is required";
+    else if (form.phone.replace(/\D/g, "").length < 6) newErrors.phone = "Please enter a valid phone number";
 
-    if (!form.date) {
-      newErrors.date = "Please select a date"
-    }
+    if (!form.date) newErrors.date = "Please select a date";
+    if (!form.timeSlot) newErrors.timeSlot = "Please select a time slot";
 
-    if (!form.timeSlot) {
-      newErrors.timeSlot = "Please select a time slot"
-    }
-
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
-  }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const onChange = (key: keyof FormState, value: string) => {
-    setForm((f) => {
-      const next = { ...f, [key]: value }
-
-      // Reset dependent fields when parent field changes
+    setForm(prev => {
+      const next = { ...prev, [key]: value };
       if (key === "country") {
-        next.date = "" // Reset date when country changes
-        next.timeSlot = "" // Reset time slot when country changes
+        next.date = "";
+        next.timeSlot = "";
       } else if (key === "date") {
-        next.timeSlot = "" // Reset time slot when date changes
+        next.timeSlot = "";
       }
+      return next;
+    });
 
-      return next
-    })
-
-    // Clear error when user starts typing
     if (errors[key as keyof FormErrors]) {
-      setErrors((prev) => ({ ...prev, [key]: undefined }))
+      setErrors(prev => ({ ...prev, [key]: undefined }));
     }
-  }
+  };
 
-  async function onSubmit(e: React.FormEvent) {
-    e.preventDefault()
+  const onSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!validateForm()) return;
 
-    // Validate form before submission
-    if (!validateForm()) {
-      return
-    }
-
-    setLoading(true)
-    setSubmitted(null)
+    setLoading(true);
+    setSubmitted(null);
 
     try {
-      const selectedLocation = getLocationById(form.country)
+      const location = getLocationById(form.country as LocationId);
+      if (!location) throw new Error("Invalid location");
 
-      if (!selectedLocation) {
-        throw new Error("Invalid location selected")
-      }
-
-      const formData = {
+      const payload = {
         name: form.name.trim(),
         email: form.email.trim(),
-        countryName: selectedLocation.label,
+        countryName: location.label,
         whatsapp: form.phone.replace(/\D/g, ""),
         message: form.notes.trim(),
         appointmentDate: form.date,
         appointmentTime: selectedTimeSlotDetails?.displayTime || form.timeSlot,
         appointmentVenue: selectedDateDetails?.venue || "",
-        appointmentLocation: selectedLocation.label,
-      }
+        appointmentLocation: location.label,
+      };
 
       const res = await fetch("/api/submit", {
         method: "POST",
-        headers: { "Content-Type": "application/json", Accept: "application/json" },
-        body: JSON.stringify(formData),
-      })
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
 
-      const contentType = res.headers.get("content-type") || ""
-      let result: any = null
-
-      if (contentType.includes("application/json")) {
-        result = await res.json()
-      } else {
-        const text = await res.text()
-        if (res.ok) {
-          router.push("/thank-you")
-          return
-        }
-        throw new Error(text || `Request failed (${res.status})`)
+      if (res.ok) {
+        router.push("/thank-you");
+        return;
       }
 
-      if (res.ok && (!result || result.ok)) {
-        router.push("/thank-you")
-        return
-      }
-
-      setSubmitted({
-        ok: false,
-        msg: (result && result.error) || "Submission failed. Please try again.",
-      })
+      const text = await res.text();
+      throw new Error(text || "Submission failed");
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Network error. Please try again."
       setSubmitted({
         ok: false,
-        msg: message,
-      })
+        msg: error instanceof Error ? error.message : "Network error. Please try again.",
+      });
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
-  // Format date for display (date only, no time)
-  const formatDisplayDate = (date: string) => {
-    return formatDateFriendly(date)
-  }
-
-  // Get display label for location
-  const getLocationDisplayLabel = (locationId: LocationId): string => {
-    const location = getLocationById(locationId)
-    return location?.label || locationId
-  }
+  const formatDisplayDate = (date: string) => formatDateFriendly(date);
 
   return (
     <form
       onSubmit={onSubmit}
       className={cn(
         "max-w-3xl mx-auto grid gap-4 rounded-xs border border-gray-200 bg-white shadow-xs p-6 md:p-4",
-        className,
+        className
       )}
-      id="registration-form"
-      aria-labelledby="registration-title"
       noValidate
     >
-      {/* Header */}
       <div className="text-center space-y-2">
-        <h2 id="registration-title" className="text-2xl font-semibold text-gray-900">
-          Secure Your Appointment
-        </h2>
+        <h2 className="text-2xl font-semibold text-gray-900">Secure Your Appointment</h2>
         <p className="text-gray-600 text-sm">Fill out the form below to book your consultation slot.</p>
       </div>
 
-      {/* Form Fields */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3 bg-gray-50 p-5 py-6 rounded-xs">
         {/* Full Name */}
         <div className="grid gap-2">
-          <label htmlFor="name" className="text-sm font-medium text-gray-900">
-            Full Name *
-          </label>
+          <label htmlFor="name" className="text-sm font-medium text-gray-900">Full Name *</label>
           <input
             id="name"
-            required
             value={form.name}
-            onChange={(e) => onChange("name", e.target.value)}
+            onChange={e => onChange("name", e.target.value)}
             className={cn(
               "h-12 rounded-xs border text-sm bg-white px-2 outline-none focus:ring-2 focus:ring-blue-500 transition-colors",
-              errors.name ? "border-red-500 focus:ring-red-500" : "border-gray-300 focus:ring-blue-500",
+              errors.name ? "border-red-500 focus:ring-red-500" : "border-gray-300"
             )}
             placeholder="Enter your full name"
-            autoComplete="name"
-            aria-describedby={errors.name ? "name-error" : undefined}
           />
-          {errors.name && (
-            <p id="name-error" className="text-red-500 text-xs mt-1">
-              {errors.name}
-            </p>
-          )}
+          {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name}</p>}
         </div>
 
         {/* Email */}
         <div className="grid gap-2">
-          <label htmlFor="email" className="text-sm font-medium text-gray-900">
-            Email *
-          </label>
+          <label htmlFor="email" className="text-sm font-medium text-gray-900">Email *</label>
           <input
             id="email"
             type="email"
-            required
             value={form.email}
-            onChange={(e) => onChange("email", e.target.value)}
+            onChange={e => onChange("email", e.target.value)}
             className={cn(
               "h-12 rounded-xs border text-sm bg-white px-2 outline-none focus:ring-2 focus:ring-blue-500 transition-colors",
-              errors.email ? "border-red-500 focus:ring-red-500" : "border-gray-300 focus:ring-blue-500",
+              errors.email ? "border-red-500 focus:ring-red-500" : "border-gray-300"
             )}
             placeholder="you@example.com"
-            autoComplete="email"
-            aria-describedby={errors.email ? "email-error" : undefined}
           />
-          {errors.email && (
-            <p id="email-error" className="text-red-500 text-xs mt-1">
-              {errors.email}
-            </p>
-          )}
+          {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
         </div>
 
         {/* Phone */}
@@ -299,122 +225,94 @@ export default function ModernRegistrationForm({ className }: { className?: stri
           </label>
           <input
             id="phone"
-            required
             value={form.phone}
-            onChange={(e) => onChange("phone", e.target.value)}
+            onChange={e => onChange("phone", e.target.value)}
             className={cn(
               "h-12 rounded-xs border text-sm bg-white px-2 outline-none focus:ring-2 focus:ring-blue-500 transition-colors",
-              errors.phone ? "border-red-500 focus:ring-red-500" : "border-gray-300 focus:ring-blue-500",
+              errors.phone ? "border-red-500 focus:ring-red-500" : "border-gray-300"
             )}
             placeholder="+61 400 000 000"
-            autoComplete="tel"
-            aria-describedby={errors.phone ? "phone-error" : undefined}
           />
-          {errors.phone && (
-            <p id="phone-error" className="text-red-500 text-xs mt-1">
-              {errors.phone}
-            </p>
-          )}
+          {errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone}</p>}
         </div>
 
-        {/* Location */}
+        {/* Country */}
         <div className="grid gap-2">
-          <label htmlFor="country" className="text-sm font-medium text-gray-900">
-            Country *
-          </label>
+          <label htmlFor="country" className="text-sm font-medium text-gray-900">Country *</label>
           <select
             id="country"
             value={form.country}
-            onChange={(e) => onChange("country", e.target.value as LocationId)}
+            onChange={e => onChange("country", e.target.value as LocationId)}
             className="h-12 rounded-xs border border-gray-300 text-sm bg-white px-4 outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
           >
-            {getAllLocationIds().map((locationId) => {
-              const location = getLocationById(locationId)
-              if (!location) return null
-
-              return (
-                <option key={locationId} value={locationId}>
-                  {getFlagEmoji(locationId)} {location.label}
+            <option value="">Select country</option>
+            {availableLocationIds.map(id => {
+              const loc = getLocationById(id);
+              return loc ? (
+                <option key={id} value={id}>
+                  {getFlagEmoji(id)} {loc.label}
                 </option>
-              )
+              ) : null;
             })}
           </select>
         </div>
 
         {/* Date */}
         <div className="grid gap-2">
-          <label htmlFor="date" className="text-sm font-medium text-gray-900">
-            Preferred Date *
-          </label>
+          <label htmlFor="date" className="text-sm font-medium text-gray-900">Preferred Date *</label>
           <select
             id="date"
-            required
-            disabled={!availableDates.length}
             value={form.date}
-            onChange={(e) => onChange("date", e.target.value)}
+            onChange={e => onChange("date", e.target.value)}
+            disabled={!availableDates.length}
             className={cn(
               "h-12 rounded-xs border text-sm bg-white px-2 outline-none focus:ring-2 focus:ring-blue-500 transition-colors",
-              errors.date ? "border-red-500 focus:ring-red-500" : "border-gray-300 focus:ring-blue-500",
-              !availableDates.length ? "opacity-50 cursor-not-allowed" : "",
+              errors.date ? "border-red-500 focus:ring-red-500" : "border-gray-300",
+              !availableDates.length && "opacity-50 cursor-not-allowed"
             )}
-            aria-describedby={errors.date ? "date-error" : undefined}
           >
             <option value="" disabled>
               {availableDates.length ? "Select date" : "No dates available"}
             </option>
-            {availableDates.map((dateObj, index) => (
-              <option key={`${dateObj.date}-${index}`} value={dateObj.date}>
-                {formatDisplayDate(dateObj.date)}
+            {availableDates.map(d => (
+              <option key={d.date} value={d.date}>
+                {formatDisplayDate(d.date)}
               </option>
             ))}
           </select>
-          {errors.date && (
-            <p id="date-error" className="text-red-500 text-xs mt-1">
-              {errors.date}
-            </p>
-          )}
+          {errors.date && <p className="text-red-500 text-xs mt-1">{errors.date}</p>}
         </div>
 
         {/* Time Slot */}
         <div className="grid gap-2">
-          <label htmlFor="timeSlot" className="text-sm font-medium text-gray-900">
-            Preferred Time Slot *
-          </label>
+          <label htmlFor="timeSlot" className="text-sm font-medium text-gray-900">Preferred Time Slot *</label>
           <select
             id="timeSlot"
-            required
-            disabled={!form.date || !availableTimeSlots.length}
             value={form.timeSlot}
-            onChange={(e) => onChange("timeSlot", e.target.value)}
+            onChange={e => onChange("timeSlot", e.target.value)}
+            disabled={!form.date || !availableTimeSlots.length}
             className={cn(
               "h-12 rounded-xs border text-sm bg-white px-2 outline-none focus:ring-2 focus:ring-blue-500 transition-colors",
-              errors.timeSlot ? "border-red-500 focus:ring-red-500" : "border-gray-300 focus:ring-blue-500",
-              !form.date || !availableTimeSlots.length ? "opacity-50 cursor-not-allowed" : "",
+              errors.timeSlot ? "border-red-500 focus:ring-red-500" : "border-gray-300",
+              (!form.date || !availableTimeSlots.length) && "opacity-50 cursor-not-allowed"
             )}
-            aria-describedby={errors.timeSlot ? "timeSlot-error" : undefined}
           >
             <option value="" disabled>
               {!form.date ? "Select a date first" : availableTimeSlots.length ? "Select time slot" : "No slots available"}
             </option>
-            {availableTimeSlots.map((slot, index) => (
-              <option key={`${slot.time}-${index}`} value={slot.time}>
+            {availableTimeSlots.map(slot => (
+              <option key={slot.time} value={slot.time}>
                 {slot.displayTime}
               </option>
             ))}
           </select>
-          {errors.timeSlot && (
-            <p id="timeSlot-error" className="text-red-500 text-xs mt-1">
-              {errors.timeSlot}
-            </p>
-          )}
+          {errors.timeSlot && <p className="text-red-500 text-xs mt-1">{errors.timeSlot}</p>}
         </div>
 
-        {/* Venue Display (Read-only) */}
+        {/* Venue Display */}
         {selectedDateDetails?.venue && (
           <div className="md:col-span-2 grid gap-2">
-            <label className="text-sm font-medium text-gray-900">
-              Selected Venue
-            </label>
+            <label className="text-sm font-medium text-gray-900">Selected Venue</label>
             <div className="h-12 rounded-xs border border-gray-300 text-sm bg-white px-4 flex items-center">
               {selectedDateDetails.venue}
             </div>
@@ -423,65 +321,48 @@ export default function ModernRegistrationForm({ className }: { className?: stri
 
         {/* Notes */}
         <div className="md:col-span-2 grid gap-2">
-          <label htmlFor="notes" className="text-sm font-medium text-gray-900">
-            Message
-          </label>
+          <label htmlFor="notes" className="text-sm font-medium text-gray-900">Message</label>
           <textarea
             id="notes"
             value={form.notes}
-            onChange={(e) => onChange("notes", e.target.value)}
+            onChange={e => onChange("notes", e.target.value)}
             className="min-h-[150px] rounded-xs border border-gray-300 text-sm bg-white px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500 transition-colors resize-vertical"
             placeholder="Briefly describe your concern or any additional information..."
           />
         </div>
       </div>
 
-      {/* Status Message */}
       {submitted && (
         <div
           role="status"
           aria-live="polite"
           className={cn(
             "rounded-xs px-4 py-3 text-sm font-medium",
-            submitted.ok
-              ? "bg-green-50 text-green-700 border border-green-200"
-              : "bg-red-50 text-red-700 border border-red-200",
+            submitted.ok ? "bg-green-50 text-green-700 border border-green-200" : "bg-red-50 text-red-700 border border-red-200"
           )}
         >
           {submitted.msg}
         </div>
       )}
 
-      {/* Submit Button */}
       <button
         type="submit"
         disabled={loading}
         className={cn(
           "h-12 w-full rounded-xs font-semibold transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-offset-2",
-          loading
-            ? "bg-gray-400 text-white"
-            : "bg-gray-100 text-gray-800 hover:bg-gray-200 ",
+          loading ? "bg-gray-400 text-white" : "bg-gray-100 text-gray-800 hover:bg-gray-200"
         )}
       >
         {loading ? (
           <span className="flex items-center justify-center">
-            <svg
-              className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-            >
+            <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-              <path
-                className="opacity-75"
-                fill="currentColor"
-                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-              ></path>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
             Processing...
           </span>
         ) : (
-          "Register Now "
+          "Register Now"
         )}
       </button>
 
@@ -489,5 +370,5 @@ export default function ModernRegistrationForm({ className }: { className?: stri
         By submitting, you agree to our terms and consent to be contacted regarding your appointment.
       </p>
     </form>
-  )
+  );
 }

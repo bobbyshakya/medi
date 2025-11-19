@@ -21,6 +21,15 @@ import {
   Star
 } from "lucide-react"
 
+// NOTE: The original code had: import { metadata } from "./metadata";
+// In Next.js App Router, 'metadata' must be defined and exported from a
+// SERVER component (or a file that exports only metadata).
+// Since this file is a "use client" component, the correct way to handle
+// page metadata is to define and export it from a sibling 'layout.tsx'
+// or 'page.tsx' file that is NOT marked "use client", or let the root
+// layout handle global metadata. The import has been removed to fix the
+// client/server module conflict.
+
 // =============================================================================
 // TYPES & UTILITIES
 // =============================================================================
@@ -457,6 +466,7 @@ const useHospitalsData = () => {
     const fetchData = async () => {
       setLoading(true)
       try {
+        // NOTE: Replace with your actual API endpoint.
         const res = await fetch(`/api/hospitals?pageSize=1000`)
         if (!res.ok) throw new Error("Failed to fetch hospital data")
         const data = await res.json() as ApiResponse
@@ -1219,13 +1229,13 @@ const HospitalCard = ({ branch }: { branch: BranchType & { hospitalName: string;
 const DoctorCard = ({ doctor }: { doctor: ExtendedDoctorType }) => {
   const specialization = Array.isArray(doctor.specialization)
     ? doctor.specialization
-        .map((s) =>
-          typeof s === "object" && s !== null
-            ? (s as any).name || (s as any).title || ""
-            : s
-        )
-        .filter(Boolean)
-        .join(", ")
+      .map((s) =>
+        typeof s === "object" && s !== null
+          ? (s as any).name || (s as any).title || ""
+          : s
+      )
+      .filter(Boolean)
+      .join(", ")
     : [doctor.specialization].filter(Boolean).join(", ");
 
   const slug = generateSlug(`${doctor.doctorName}`);
@@ -1241,7 +1251,7 @@ const DoctorCard = ({ doctor }: { doctor: ExtendedDoctorType }) => {
     }
 
     // Always pick first location (index 0)
-    const first = locations[1] || locations[0];
+    const first = locations[0]; // Changed from [1] || [0] to just [0] for consistent primary location
 
     const branch = first.branchName ? ` ${first.branchName}` : "";
     const city = first?.cities?.[0]?.cityName ? `, ${first.cities[0].cityName}` : "";
@@ -1698,3 +1708,16 @@ export default function HospitalsPage() {
     </Suspense>
   )
 }
+// Note: If you want to add metadata, create a sibling file named 'metadata.ts' or
+// 'layout.tsx' in the same directory (app/hospitals) and export a constant
+// named 'metadata' from there.
+// Example content for a sibling 'metadata.ts' file:
+/*
+import type { Metadata } from 'next'
+
+export const metadata: Metadata = {
+  title: 'Hospitals | Find Branches, Doctors, and Treatments',
+  description: 'Search for hospital branches, specialist doctors, and available treatments.',
+  // Add other metadata fields like openGraph, twitter, etc.
+}
+*/

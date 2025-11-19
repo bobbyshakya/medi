@@ -108,12 +108,15 @@ function calculateReadTime(content: string | RicosContent | undefined, minutesTo
 
   let text = ''
   if (typeof content === 'string') {
+    // Basic HTML tag removal for string content
     text = content.replace(/<[^>]*>/g, '')
   } else if (content && 'nodes' in content) {
+    // Use the Ricos parser for rich content
     text = extractTextFromRicos(content.nodes)
   }
 
   const wordsPerMinute = 200
+  // Split by whitespace and filter out empty strings
   const wordCount = text.split(/\s+/).filter((word) => word.length > 0).length
   const minutes = Math.ceil(wordCount / wordsPerMinute)
   return minutes === 0 ? 'Less than 1 min read' : `${minutes} min read`
@@ -169,27 +172,32 @@ export default function BlogPost({ slug }: BlogPostProps) {
         if (!wixClient.posts) {
           console.error('Error: wixClient.posts module not available')
           setError('Blog service not available. Please check configuration.')
+          setIsLoading(false)
           return
         }
 
         let fetchedPost: Post | null = null
 
+        // 1. Try getPostBySlug with simplified parameters
         try {
           if (typeof wixClient.posts.getPostBySlug === 'function') {
             console.log('Trying getPostBySlug...')
-            const response = await wixClient.posts.getPostBySlug(slug, {
-              fieldsets: ['CONTENT_TEXT', 'URL', 'RICH_CONTENT', 'TAGS', 'COVER_MEDIA', 'MEDIA'],
-            })
-
+            
+            // Use minimal parameters to avoid parsing issues
+            const response = await wixClient.posts.getPostBySlug(slug)
+            
             if (response.post) {
               fetchedPost = response.post as Post
               console.log('Successfully fetched post using getPostBySlug')
             }
           }
-        } catch (getBySlugError) {
-          console.log('getPostBySlug failed, trying queryPosts:', getBySlugError)
+        } catch (getBySlugError: any) {
+          // Extract just the error message for cleaner logging
+          const errorMessage = getBySlugError?.message || 'Unknown Wix SDK error'
+          console.log(`getPostBySlug failed (Error: ${errorMessage}). Trying queryPosts...`)
         }
 
+        // 2. Fallback to queryPosts (primary method due to getPostBySlug issues)
         if (!fetchedPost) {
           try {
             if (typeof wixClient.posts.queryPosts === 'function') {
@@ -199,10 +207,32 @@ export default function BlogPost({ slug }: BlogPostProps) {
               if (response.items && response.items.length > 0) {
                 fetchedPost = response.items[0] as Post
                 console.log('Successfully fetched post using queryPosts')
+              } else {
+                console.log('No post found with the given slug')
               }
             }
-          } catch (queryError) {
-            console.error('queryPosts also failed:', queryError)
+          } catch (queryError: any) {
+            console.error('queryPosts also failed:', queryError?.message || queryError)
+          }
+        }
+
+        // 3. Final fallback - try listPosts with filtering
+        if (!fetchedPost) {
+          try {
+            if (typeof wixClient.posts.listPosts === 'function') {
+              console.log('Trying listPosts as final fallback...')
+              const response = await wixClient.posts.listPosts()
+              const postsList = response.posts || []
+              
+              // Manually filter by slug
+              fetchedPost = postsList.find((p: any) => p.slug === slug) as Post
+              
+              if (fetchedPost) {
+                console.log('Successfully fetched post using listPosts + manual filtering')
+              }
+            }
+          } catch (listError: any) {
+            console.error('listPosts also failed:', listError?.message || listError)
           }
         }
 
@@ -213,21 +243,25 @@ export default function BlogPost({ slug }: BlogPostProps) {
           try {
             let relatedPostsData: Post[] = []
             if (typeof wixClient.posts.queryPosts === 'function') {
-              console.log('Trying to fetch related posts using queryPosts...')
+              console.log('Fetching related posts using queryPosts...')
               const postTags = fetchedPost.tags || []
               const postCategories = fetchedPost.categoryIds || []
-
+              
+              // Base query excluding the current post
               let query = wixClient.posts.queryPosts().ne('_id', fetchedPost._id).limit(6)
               
+              // Only apply filtering if there are tags or categories
               if (postTags.length > 0) {
-                query = query.hasSome('hashtags', postTags)
+                // Using hashtags field, as tags field is often the slug for hashtags
+                query = query.hasSome('hashtags', postTags.slice(0, 5)) // Limit tags to avoid complex query issues
               } else if (postCategories.length > 0) {
-                query = query.hasSome('categoryIds', postCategories)
+                query = query.hasSome('categoryIds', postCategories.slice(0, 5)) // Limit categories
               }
 
               const relatedResponse = await query.find()
               relatedPostsData = relatedResponse.items as Post[]
             } else if (typeof wixClient.posts.listPosts === 'function') {
+              // Fallback if queryPosts isn't available
               const relatedResponse = await wixClient.posts.listPosts({
                 paging: { limit: 10 },
               })
@@ -237,14 +271,15 @@ export default function BlogPost({ slug }: BlogPostProps) {
                 .slice(0, 6) as Post[]
             }
             setRelatedPosts(relatedPostsData)
-          } catch (relatedError) {
-            console.error('Failed to fetch related posts:', relatedError)
+          } catch (relatedError: any) {
+            console.error('Failed to fetch related posts:', relatedError?.message || relatedError)
+            // Don't set error state for related posts failure
           }
         } else {
           setError("Post not found. The blog post you're looking for doesn't exist or has been removed.")
         }
       } catch (err: any) {
-        console.error('Failed to fetch post:', err)
+        console.error('Failed to fetch post (general error):', err)
         setError(`Failed to load post: ${err.message || 'Unknown error'}`)
       } finally {
         setIsLoading(false)
@@ -274,6 +309,7 @@ export default function BlogPost({ slug }: BlogPostProps) {
           window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`, '_blank')
           break
         case 'whatsapp':
+          // Use a more standard mobile/desktop friendly format
           window.open(`https://wa.me/?text=${encodedTitle}%20${encodedUrl}`, '_blank')
           break
         default:
@@ -426,20 +462,32 @@ export default function BlogPost({ slug }: BlogPostProps) {
                         )}
                       </div>
 
-                      {/* {imageUrl && (
-                        <div className="mb-8 rounded-lg overflow-hidden">
-                          <img
-                            src={imageUrl}
-                            alt={post.title}
-                            className="w-full h-auto object-cover"
-                            loading="eager"
-                            onError={(e) => {
-                              const target = e.target as HTMLImageElement
-                              target.style.display = 'none'
-                            }}
-                          />
+                      {/* Cover Image/Video Section */}
+                      {youtubeEmbedUrl ? (
+                        <div className="mb-8 rounded-lg overflow-hidden aspect-[16/9]">
+                          <iframe
+                            className="w-full h-full"
+                            src={youtubeEmbedUrl}
+                            title="Embedded YouTube video"
+                            frameBorder="0"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            allowFullScreen
+                          ></iframe>
                         </div>
-                      )} */}
+                      ) : imageUrl ? (
+                         <div className="mb-8 rounded-lg overflow-hidden">
+                            <img
+                              src={imageUrl}
+                              alt={post.title}
+                              className="w-full h-auto object-cover"
+                              loading="eager"
+                              onError={(e) => {
+                                const target = e.target as HTMLImageElement
+                                target.style.display = 'none'
+                              }}
+                            />
+                          </div>
+                      ) : null}
                     </header>
 
                     <div className="prose prose-lg max-w-none">

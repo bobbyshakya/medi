@@ -245,7 +245,7 @@ export default function ContactForm() {
     
     // Use Red theme for the active tab accent
     const activeClasses = isHospital 
-        ? "border-red-600 text-red-600" 
+        ? "border-gray-600 text-gray-600" 
         : "border-gray-300 text-gray-700";
         
     const inactiveClasses = "border-transparent text-gray-800 hover:text-gray-700 hover:border-gray-200";

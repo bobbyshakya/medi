@@ -4,7 +4,8 @@ import { wixServerClient } from "@/lib/wixServer";
 // Define a list of allowed origins.
 const ALLOWED_ORIGINS = [
   "https://www.medivisorindiatreatment.com",
-  "https://medivisorindiatreatment.com"
+  "https://medivisorindiatreatment.com",
+  "https://localhost:3000"
 ];
 
 /**
@@ -47,8 +48,9 @@ export async function GET(
     let post = null;
 
     if (typeof wixServerClient.posts.getPostBySlug === "function") {
+      // FIX: Removed "CONTENT_TEXT" to resolve the 400 Bad Request error.
       const response = await wixServerClient.posts.getPostBySlug(slug, {
-        fieldsets: ["CONTENT_TEXT", "URL", "RICH_CONTENT"],
+        fieldsets: ["URL", "RICH_CONTENT"],
       });
       post = response.post;
     }

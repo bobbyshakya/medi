@@ -9,8 +9,13 @@ import Script from 'next/script';
 import { WixAuthProvider } from '@/components/wix-auth-provider';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import { Metadata } from 'next';
+import { defaultMetadata } from '@/app/metadata';
 
 const inter = Inter({ subsets: ['latin'] });
+
+// Export metadata from the configuration
+export const metadata: Metadata = defaultMetadata;
 
 export const viewport = {
   width: 'device-width',
@@ -18,9 +23,16 @@ export const viewport = {
   maximumScale: 1,
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+interface RootLayoutProps {
+  children: React.ReactNode;
+}
+
+export default function RootLayout({ children }: RootLayoutProps) {
   return (
     <html lang="en">
+      <head>
+        {/* You can add additional head elements here if needed */}
+      </head>
       <body className={inter.className}>
         <WixAuthProvider>
           {/* Global Scripts */}

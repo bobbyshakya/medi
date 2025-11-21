@@ -43,6 +43,8 @@ interface Post {
   coverMedia?: {
     image?: string
   }
+  // Optional blur data URL used for Next/Image placeholder blur
+  blurDataUrl?: string
   excerpt?: string
   content?: string
 }
@@ -217,10 +219,12 @@ export default function BlogCarousel() {
                                   src={wixImageUrl || "/placeholder.svg"}
                                   width={800}
                                   height={500}
-                                  priority   // extremely important for LCP
+                                  priority
                                   quality={70}
                                   sizes="100vw"
                                   alt={post.title}
+                                  placeholder="blur"
+                                  blurDataURL={post.blurDataUrl || "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAADAAQDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="}
                                   className="absolute top-0 left-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
                                 />
                               ) : (

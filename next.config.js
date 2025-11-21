@@ -10,8 +10,8 @@ const nextConfig = {
   },
   images: {
     unoptimized: true,
+    domains: ['static.wixstatic.com'],
   },
-
   // ✅ Add redirects for old /single-post URLs
   async redirects() {
     return [

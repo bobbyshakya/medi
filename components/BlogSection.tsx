@@ -86,7 +86,7 @@ function calculateReadTime(text: string | undefined): string {
   return minutes === 0 ? "1 min read" : `${minutes} min read`
 }
 
-const LIMIT = 9
+const LIMIT = 8
 const fetcher = (url: string) => fetch(url).then((r) => r.json())
 
 export default function BlogCarousel() {

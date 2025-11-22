@@ -9,10 +9,67 @@ import { Menu, X, ChevronDown } from 'lucide-react';
 import { FaFacebookF, FaYoutube, FaInstagram, FaWhatsapp } from 'react-icons/fa';
 import ContactModal from '@/components/ContactModal';
 import { motion, useScroll, useMotionValueEvent } from 'framer-motion';
+import BranchFilter from "@/components/BranchFilter";
 
+// =================================================================
+// ⭐ NEW: Data Definitions and Fetching Function
+// =================================================================
+
+// Define the structure of data expected from the API for type safety
+interface City { _id: string; cityName: string; }
+interface Treatment { _id: string; name: string; }
+interface Specialization { _id: string; name: string; }
+interface Doctor {
+  _id: string;
+  doctorName: string;
+  specialization: (Specialization | string)[]; // Can be array of objects or strings before/after enrichment
+}
+
+interface Branch {
+  _id: string;
+  branchName: string;
+  city: City[];
+  treatments: Treatment[];
+  doctors: Doctor[];
+  specialists?: any[];
+}
+
+interface Hospital {
+  _id: string;
+  hospitalName: string;
+  treatments?: Treatment[];
+  doctors?: Doctor[];
+  branches: Branch[];
+}
+
+
+// Function to fetch real data from the API route
+async function fetchMasterHospitalData(): Promise<Hospital[]> {
+  console.log("Fetching master hospital data from /api/hospitals?fetchMaster=true...");
+
+  // Call the API route with the flag to get unpaginated master data
+  const response = await fetch('/api/hospitals?fetchMaster=true', {
+    // Important: Use no-cache to ensure fresh data for the initial load if data changes often
+    cache: 'no-store'
+  });
+
+  if (!response.ok) {
+    console.error(`API Fetch Error: ${response.status} - ${response.statusText}`);
+    // Throw error to be caught by the useEffect block
+    throw new Error(`Failed to fetch hospital data: ${response.statusText}`);
+  }
+
+  const data = await response.json();
+
+  // The API returns { items: [...], total: 0, ... }, so we extract the items array
+  return (data.items || []) as Hospital[];
+}
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [allHospitals, setAllHospitals] = useState<Hospital[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [hasError, setHasError] = useState(false);
   const [openSubmenu, setOpenSubmenu] = useState<string | null>(null);
   const [windowWidth, setWindowWidth] = useState<number>(0);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -26,7 +83,18 @@ export default function Header() {
       setIsScrolled(false);
     }
   });
-
+  useEffect(() => {
+    fetchMasterHospitalData()
+      .then(data => {
+        setAllHospitals(data);
+        setIsLoading(false);
+      })
+      .catch(error => {
+        console.error("Failed to fetch hospital data:", error);
+        setIsLoading(false);
+        setHasError(true); // Set error state on failure
+      });
+  }, []); // Runs once on mount
   // Track window width for mobile/desktop submenu logic
   useEffect(() => {
     const updateWindowWidth = () => setWindowWidth(window.innerWidth);
@@ -65,17 +133,7 @@ export default function Header() {
       ],
     },
     // NEW DROPDOWN SECTION FOR HOSPITAL, TREATMENT, AND DOCTOR
-    {
-      label: 'Our Experts',
-      subItems: [
-        // Assuming a dedicated page for hospitals
-        { href: '/hospitals', label: 'Hospitals' }, 
-        // Assuming a dedicated page for treatments
-        { href: '/treatments', label: 'Treatments' },
-        // Assuming a dedicated page for doctors
-        { href: '/doctors', label: 'Doctors' },
-      ],
-    },
+
     {
       label: 'Gallery',
       subItems: [
@@ -95,9 +153,8 @@ export default function Header() {
   return (
     <>
       <motion.header
-        className={`fixed top-0 left-0 w-full z-50 bg-white transition-all duration-300 ease-in-out ${
-          isScrolled ? 'py-2 shadow-xs' : 'py-3 shadow-xs'
-        }`}
+        className={`fixed top-0 left-0 w-full z-50 bg-white transition-all duration-300 ease-in-out ${isScrolled ? 'py-2 shadow-xs' : 'py-3 shadow-xs'
+          }`}
       >
         <nav className="flex justify-between container mx-auto items-center px-4 lg:px-0">
           {/* Logo */}
@@ -115,9 +172,8 @@ export default function Header() {
           <div className="flex items-center gap-4">
             {/* Links */}
             <div
-              className={`fixed inset-0 bg-white md:static md:bg-transparent transition-transform duration-500 ease-in-out md:translate-x-0 md:flex md:items-center md:gap-8 ${
-                isMenuOpen ? 'translate-x-0' : 'translate-x-full'
-              } z-40`}
+              className={`fixed inset-0 bg-white md:static md:bg-transparent transition-transform duration-500 ease-in-out md:translate-x-0 md:flex md:items-center md:gap-8 ${isMenuOpen ? 'translate-x-0' : 'translate-x-full'
+                } z-40`}
             >
               {/* Mobile Close Icon */}
               <div className="flex justify-between items-center px-4 py-4 md:hidden border-b border-gray-200">
@@ -136,6 +192,7 @@ export default function Header() {
                   <X size={28} />
                 </button>
               </div>
+              {/* <BranchFilter allHospitals={allHospitals} /> */}
 
               <ul className="flex flex-col md:flex-row gap-2 md:gap-8 px-6 md:px-0 pt-6 md:pt-0">
                 {navItems.map((item) => (
@@ -173,9 +230,8 @@ export default function Header() {
                       {item.subItems && (
                         <ChevronDown
                           size={18}
-                          className={`ml-1 text-gray-500 cursor-pointer transition-transform duration-300 ${
-                            openSubmenu === item.label ? 'rotate-180' : ''
-                          } md:group-hover:rotate-180`}
+                          className={`ml-1 text-gray-500 cursor-pointer transition-transform duration-300 ${openSubmenu === item.label ? 'rotate-180' : ''
+                            } md:group-hover:rotate-180`}
                           onClick={() => handleSubmenuToggle(item.label)}
                         />
                       )}
@@ -184,11 +240,10 @@ export default function Header() {
                     {/* Submenu */}
                     {item.subItems && (
                       <ul
-                        className={`transition-all duration-300 ease-in-out overflow-hidden md:absolute md:top-full md:left-0 md:bg-white md:shadow-md md:rounded-md md:py-2 md:min-w-[220px] md:opacity-0 md:invisible md:scale-95 md:group-hover:opacity-100 md:group-hover:visible md:group-hover:scale-100 ${
-                          openSubmenu === item.label
+                        className={`transition-all duration-300 ease-in-out overflow-hidden md:absolute md:top-full md:left-0 md:bg-white md:shadow-md md:rounded-md md:py-2 md:min-w-[220px] md:opacity-0 md:invisible md:scale-95 md:group-hover:opacity-100 md:group-hover:visible md:group-hover:scale-100 ${openSubmenu === item.label
                             ? 'max-h-screen md:max-h-fit'
                             : 'max-h-0 md:max-h-fit'
-                        }`}
+                          }`}
                       >
                         {item.subItems.map((subItem) => (
                           <li key={subItem.href}>

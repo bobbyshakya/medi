@@ -1,6 +1,10 @@
+
+
 "use client";
+
 import { useState, useEffect } from "react";
 import Head from "next/head";
+
 import HomepageBannerSilder from "@/components/homepageBannerSilder";
 import Partners from "@/components/Partners";
 import TreatmentServices from "@/components/TreatmentServices";
@@ -17,20 +21,26 @@ import DidYouKnowSection from "@/components/DidYouKnow";
 
 export default function Home() {
   const [isModalOpen, setIsModalOpen] = useState(false);
+
   useEffect(() => {
     const handleModalOpen = () => setIsModalOpen(true);
     const modalButtons = document.querySelectorAll(".modal-open-btn");
+
     modalButtons.forEach((button) => {
       button.addEventListener("click", handleModalOpen);
     });
+
     return () => {
       modalButtons.forEach((button) => {
         button.removeEventListener("click", handleModalOpen);
       });
     };
   }, []);
+
   return (
     <>
+     
+
       {/* ✅ Page Content */}
       <div className="bg-white min-h-screen">
         <main>

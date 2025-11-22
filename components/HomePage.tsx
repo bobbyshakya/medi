@@ -13,6 +13,7 @@ import PaitentSupport from "@/components/paitentSupport";
 import PartnerSection from "@/components/PartnerSection";
 import ExtentCare from "@/components/extentCare";
 import ContactModal from "@/components/ContactModal";
+import BranchFilter from "./BranchFilter";
 import Activities from "@/components/Activities";
 import CtaSection from "@/components/CtaSection";
 import DidYouKnowSection from "@/components/DidYouKnow";
@@ -43,6 +44,7 @@ export default function Home() {
       <div className="bg-white min-h-screen">
         <main>
           <HomepageBannerSilder />
+          <BranchFilter allHospitals={[]} />
           <Partners />
           <DidYouKnowSection />
           <BlogSection />

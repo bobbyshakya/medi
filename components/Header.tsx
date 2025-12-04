@@ -138,7 +138,7 @@ const socialLinks = [
     className: "bg-blue-600"
   },
   {
-    href: "https://www.youtube.com/watch?v=m1Cm1ivOjzU",
+    href: "https://www.youtube.com/@medivisorindiatreatment",
     icon: FaYoutube,
     title: "YouTube",
     className: "bg-red-600"

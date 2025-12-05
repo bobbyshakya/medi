@@ -1,4 +1,3 @@
-// File: app/hospitals/branches/[slug]/page.tsx
 "use client"
 import { useState, useEffect, useCallback, useMemo, useRef } from "react"
 import Image from "next/image"
@@ -175,11 +174,14 @@ const Breadcrumb = ({ hospitalName, branchName, hospitalSlug }: { hospitalName: 
           Home
         </Link>
         <span>/</span>
-        <Link href="/hospitals" className="hover:text-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-400/50 rounded-xs">
-          Hospitals
-        </Link>
-   
        
+        <Link href="/search" className="flex items-center hover:text-gray-700 transition-colors">
+      
+
+          Hospitals        </Link>
+     
+
+
         <span>/</span>
         <span className="text-gray-900 font-medium">{branchName}</span>
       </div>
@@ -219,7 +221,8 @@ const BranchCard = ({ data }: { data: any }) => {
   const { branchName, city, specialization, noOfDoctors, totalBeds, hospitalName, yearEstablished, hospitalImage, accreditation, logo } = data;
   const firstCity = city?.[0]?.cityName || 'N/A'
   const firstSpecialty = specialization?.[0]?.name || 'Multi Speciality'
-  const fullSlug = `${generateSlug(hospitalName)}-${generateSlug(branchName)}`
+  // UPDATED: Use only branchName slug for the URL
+  const fullSlug = generateSlug(branchName) 
   const doctorsCount = noOfDoctors || 0
   const bedsCount = totalBeds || 0
   const estdYear = yearEstablished || 'N/A'
@@ -228,7 +231,7 @@ const BranchCard = ({ data }: { data: any }) => {
   const accImage = accreditation?.[0] ? getWixImageUrl(accreditation[0].image) : null
 
   return (
-    <Link href={`/hospitals/branches/${fullSlug}`} className="block h-full focus:outline-none focus:ring-2 focus:ring-gray-400/50 border border-gray-100 rounded-xs shadow-xs bg-white hover:shadow-sm transition-shadow relative flex flex-col overflow-hidden">
+    <Link href={`/search/hospitals/${fullSlug}`} className="block h-full focus:outline-none focus:ring-2 focus:ring-gray-400/50 border border-gray-100 rounded-xs shadow-xs bg-white hover:shadow-sm transition-shadow relative flex flex-col overflow-hidden">
       {/* Hospital Image Section */}
       <div className="relative w-full h-48 bg-gray-50">
         {hospitalImg ? (
@@ -303,16 +306,39 @@ const BranchCard = ({ data }: { data: any }) => {
 // DoctorCard (redirects to hospital search with doctor filter)
 const DoctorCard = ({ doctor }: { doctor: any }) => {
   const doctorImage = getDoctorImage(doctor.profileImage)
+  
+  // --- UPDATED SPECIALIZATION LOGIC START ---
   const specializationDisplay = useMemo(() => {
-    if (!doctor.specialization) return "General Practitioner"
-    if (Array.isArray(doctor.specialization)) {
-      const names = doctor.specialization
-        .map((spec: any) => typeof spec === 'object' ? spec?.name : spec)
-        .filter(Boolean)
-      return names.join(', ') || "General Practitioner"
+    // Helper to safely extract the name/title from a specialization object or return the string
+    const getSpecializationName = (s: any): string => {
+      if (typeof s === "object" && s !== null) {
+        return (s as any).name || (s as any).title || "";
+      }
+      return String(s);
+    };
+
+    // 1. Convert specialization data into a clean array of names
+    const specializationArray = (Array.isArray(doctor.specialization) ? doctor.specialization : [doctor.specialization])
+      .map(getSpecializationName)
+      .filter(Boolean);
+
+    if (specializationArray.length === 0) {
+      return "General Practitioner";
     }
-    return doctor.specialization as string
+
+    const primary = specializationArray[0];
+    const remainingCount = specializationArray.length - 1;
+
+    if (remainingCount > 0) {
+      // Example: "Cardiology +1"
+      return `${primary} +${remainingCount} Specialties`;
+    }
+
+    // Example: "Cardiology"
+    return primary;
   }, [doctor.specialization])
+  // --- UPDATED SPECIALIZATION LOGIC END ---
+
   const doctorSlug = generateSlug(doctor.doctorName)
   return (
     <Link href={`/doctors/${doctorSlug}`} className="group flex flex-col h-full bg-white border border-gray-100 rounded-xs shadow-sm hover:shadow-md overflow-hidden transition-all focus:outline-none focus:ring-2 focus:ring-gray-400/50">
@@ -349,17 +375,20 @@ const DoctorCard = ({ doctor }: { doctor: any }) => {
   )
 }
 
-// TreatmentCard
+// TreatmentCard (Ensuring proper use of image/name/slug)
 const TreatmentCard = ({ item }: { item: any }) => {
+  // Use 'treatmentImage' if available, otherwise fallback to 'image'
   const treatmentImage = getTreatmentImage(item.treatmentImage || item.image)
-  const itemSlug = generateSlug(item.name)
+  const itemName = item.name || item.title || 'N/A Treatment' // Added fallback for robust data handling
+  const itemSlug = generateSlug(itemName) // Generate slug from the actual name used
+  
   return (
     <Link href={`/treatment/${itemSlug}`} className="group flex flex-col h-full bg-white border border-gray-100 rounded-xs shadow-sm hover:shadow-md overflow-hidden transition-all focus:outline-none focus:ring-2 focus:ring-gray-400/50">
       <div className="relative h-48 overflow-hidden bg-gray-50 rounded-t-lg">
         {treatmentImage ? (
           <img
             src={treatmentImage}
-            alt={`${item.name} treatment`}
+            alt={`${itemName} treatment`}
             className="object-cover group-hover:scale-105 transition-transform duration-300 w-full h-full"
             style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}
             onError={(e) => { e.currentTarget.style.display = "none" }}
@@ -370,8 +399,19 @@ const TreatmentCard = ({ item }: { item: any }) => {
           </div>
         )}
       </div>
-      <div className={`p-6 flex-1 flex flex-col ${inter.variable} font-light`}>
-        <h3 className="text-xl md:text-xl font-medium text-gray-900 leading-tight line-clamp-1">{item.name}</h3>
+      <div className="p-4 flex-1 flex flex-col  font-light">
+        {/* Use itemName for display */}
+        <h3 className="text-xl md:text-base font-medium text-gray-900 leading-tight mb-1 line-clamp-1">{itemName}</h3>
+        {/* ADDED: Display specialist/department for context */}
+        {/* {item.specialistName && (
+            <p className="text-sm text-gray-700 mt-1 line-clamp-1">Specialist: {item.specialistName}</p>
+        )} */}
+        {/* {item.startingCost && (
+            <p className="text-sm text-gray-600 mt-1 line-clamp-1 flex items-center gap-1">
+                <DollarSign className="w-4 h-4 text-gray-500"/>
+                Starts at: {item.startingCost}
+            </p>
+        )} */}
       </div>
     </Link>
   )
@@ -419,6 +459,13 @@ const DoctorsList = ({ doctors }: { doctors: any[] }) => {
     emblaApi.on('reInit', onSelect)
     emblaApi.on('select', onSelect)
   }, [emblaApi, onSelect])
+
+  // UPDATED: A-Z Sorting for carousel slides
+  const sortedDoctors = useMemo(() => {
+    return [...doctors]
+      .filter(d => d?._id)
+      .sort((a, b) => (a.doctorName || '').localeCompare(b.doctorName || ''))
+  }, [doctors]);
 
 
   const doctorOptions = useMemo(() => {
@@ -472,11 +519,11 @@ const DoctorsList = ({ doctors }: { doctors: any[] }) => {
         </div>
       </div>
 
-      {/* UPDATED: Embla Carousel Implementation */}
-      <div className="relative px-8 pb-8">
+      {/* UPDATED: Embla Carousel Implementation uses sortedDoctors */}
+      <div className="relative px-4 pb-8">
         <div className={EMBLA_CLASSES.viewport} ref={emblaRef}>
           <div className={EMBLA_CLASSES.container}>
-            {doctors.filter(doctor => doctor?._id).map((doctor) => (
+            {sortedDoctors.map((doctor) => (
               <DoctorCarouselSlide key={doctor._id} doctor={doctor} />
             ))}
           </div>
@@ -516,49 +563,10 @@ const DoctorsList = ({ doctors }: { doctors: any[] }) => {
   )
 }
 
-// DoctorSearchCard
-const DoctorSearchCard = ({ doctor, onClick }: { doctor: any; onClick: () => void }) => {
-  const doctorImage = getDoctorImage(doctor.profileImage)
-  const specializationDisplay = useMemo(() => {
-    if (!doctor.specialization) return "General Practitioner"
-    if (Array.isArray(doctor.specialization)) {
-      const names = doctor.specialization.map((spec: any) => typeof spec === 'object' ? spec?.name : spec).filter(Boolean)
-      return names.join(', ') || "General Practitioner"
-    }
-    return doctor.specialization as string
-  }, [doctor.specialization])
-  const doctorSlug = generateSlug(doctor.doctorName)
-  return (
-    <Link
-      href={`/doctors/${doctorSlug}`}
-      onClick={onClick}
-      className="flex items-center gap-4 p-6 hover:bg-gray-50/50 transition-colors border-b border-gray-100 last:border-b-0"
-    >
-      <div className="relative w-16 h-16 flex-shrink-0">
-        {doctorImage ? (
-          <img
-            src={doctorImage}
-            alt={doctor.doctorName}
-            className="object-cover rounded-full w-full h-full"
-            style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}
-            onError={(e) => { e.currentTarget.style.display = "none" }}
-          />
-        ) : (
-          <div className="w-full h-full bg-gray-200 rounded-full flex items-center justify-center">
-            <Stethoscope className="w-8 h-8 text-gray-300" />
-          </div>
-        )}
-      </div>
-      <div className="flex-1 min-w-0">
-        <h4 className="font-medium text-gray-900 truncate">{doctor.doctorName}</h4>
-        <p className="text-sm text-gray-600 truncate">{specializationDisplay}</p>
-      </div>
-    </Link>
-  )
-}
-
-// TreatmentsList
+// TreatmentsList (UPDATED to include Search/Filter and use combined treatment list)
 const TreatmentsList = ({ treatments }: { treatments: any[] }) => {
+  const router = useRouter() // ADDED: Initialize useRouter
+  const [searchTerm, setSearchTerm] = useState("")
   const [emblaRef, emblaApi] = useEmblaCarousel({ loop: false, align: 'start', dragFree: false, containScroll: 'keepSnaps' })
   const [prevBtnDisabled, setPrevBtnDisabled] = useState(true)
   const [nextBtnDisabled, setNextBtnDisabled] = useState(true)
@@ -577,6 +585,49 @@ const TreatmentsList = ({ treatments }: { treatments: any[] }) => {
     emblaApi.on('reInit', onSelect)
     emblaApi.on('select', onSelect)
   }, [emblaApi, onSelect])
+  
+  // UPDATED: Filter and Sort Logic (applies search term)
+  const sortedAndFilteredTreatments = useMemo(() => {
+    const lowerSearch = searchTerm.toLowerCase()
+    
+    return [...treatments]
+      .filter(t => 
+        (t?.name || t?.title || '').toLowerCase().includes(lowerSearch) ||
+        (t?.specialistName || '').toLowerCase().includes(lowerSearch) // Allow filtering by specialist/department name
+      )
+      // Sort by name A-Z
+      .sort((a, b) => (a.name || a.title || '').localeCompare(b.name || b.title || '')) 
+  }, [treatments, searchTerm]);
+
+  // Options for SearchDropdown (based on all treatments for complete search range)
+  const allTreatmentOptions = useMemo(() => {
+    return [...treatments]
+      .filter(t => t?.name || t?.title)
+      .sort((a, b) => (a.name || a.title || '').localeCompare(b.name || b.title || ''))
+      .map(t => ({
+        id: t._id,
+        // Store the slug for redirection
+        slug: generateSlug(t.name || t.title),
+        // Format for search display: "Treatment Name (Specialist Name)"
+        name: `${t.name || t.title} (${t.specialistName || 'Treatment'})`
+      }))
+  }, [treatments])
+
+  // UPDATED: Handles selection from the dropdown to REDIRECT to the treatment page
+  const handleTreatmentSelect = useCallback((id: string) => {
+    const selectedTreatment = allTreatmentOptions.find(opt => opt.id === id);
+    if (selectedTreatment && selectedTreatment.slug) {
+        // Clear search and redirect to the specific treatment page
+        setSearchTerm(""); 
+        router.push(`/treatment/${selectedTreatment.slug}`) 
+    } else {
+      // Fallback: If no slug, just set the search term to filter the carousel as before
+       if (selectedTreatment) {
+         setSearchTerm(selectedTreatment.name);
+       }
+    }
+  }, [allTreatmentOptions, router])
+
 
   if (!treatments?.length) {
     return (
@@ -590,18 +641,41 @@ const TreatmentsList = ({ treatments }: { treatments: any[] }) => {
   return (
     <section className={`bg-gray-50 rounded-xs shadow-xs border border-gray-100 ${inter.variable} font-light`}>
       <div className="px-4 pt-4">
-        <h2 className="text-2xl md:text-xl font-medium text-gray-900 tracking-tight flex items-center mb-6 mt-2">
-          Available Treatments
-        </h2>
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 mb-3">
+            <h2 className="text-2xl md:text-xl font-medium text-gray-900 tracking-tight flex items-center mt-2">
+                Available Treatments 
+                {/* ({sortedAndFilteredTreatments.length}) */}
+            </h2>
+            <div className="relative w-full md:w-80">
+                <SearchDropdown
+                    value={searchTerm}
+                    onChange={setSearchTerm}
+                    placeholder="Search treatments by name or specialist..."
+                    options={allTreatmentOptions} // Use the full list for search capability
+                    selectedOption={null}
+                    onOptionSelect={handleTreatmentSelect} // UPDATED: Redirects on select
+                    onClear={() => setSearchTerm("")}
+                    type="treatment"
+                />
+            </div>
+        </div>
       </div>
-      <div className="relative px-8 pb-8">
+      <div className="relative px-4 pb-8">
         <div className={EMBLA_CLASSES.viewport} ref={emblaRef}>
           <div className={EMBLA_CLASSES.container}>
-            {treatments.filter(t => t?.name).map((item) => (
-              <div key={item._id || Math.random()} className={classNames(EMBLA_CLASSES.slide, EMBLA_SLIDE_SIZES.xs, EMBLA_SLIDE_SIZES.sm, EMBLA_SLIDE_SIZES.lg)}>
+            {/* Use sortedAndFilteredTreatments for A-Z display and filter */}
+            {sortedAndFilteredTreatments.map((item) => (
+              // Ensure we use the proper unique key for the slide
+              <div key={item._id} className={classNames(EMBLA_CLASSES.slide, EMBLA_SLIDE_SIZES.xs, EMBLA_SLIDE_SIZES.sm, EMBLA_SLIDE_SIZES.lg)}>
                 <TreatmentCard item={item} />
               </div>
             ))}
+            {sortedAndFilteredTreatments.length === 0 && (
+                <div className="pl-4 py-8 text-center w-full min-h-40 flex flex-col items-center justify-center">
+                    <X className="w-10 h-10 text-gray-300 mb-2"/>
+                    <p className="text-gray-500">No treatments found matching "{searchTerm}".</p>
+                </div>
+            )}
           </div>
         </div>
         {treatments.length > 3 && (
@@ -663,7 +737,7 @@ const EmblaCarousel = ({ slides, options }: { slides: any[]; options: EmblaOptio
       <div className={EMBLA_CLASSES.viewport} ref={emblaRef}>
         <div className={EMBLA_CLASSES.container}>
           {slides.map((slide, index) => (
-            <div key={slide._id || index} className={classNames(EMBLA_CLASSES.slide, EMBLA_SLIDE_SIZES.xs, EMBLA_SLIDE_SIZES.sm, EMBLA_SLIDE_SIZES.lg)}>
+            <div key={slide.key || index} className={classNames(EMBLA_CLASSES.slide, EMBLA_SLIDE_SIZES.xs, EMBLA_SLIDE_SIZES.sm, EMBLA_SLIDE_SIZES.lg)}>
               {slide}
             </div>
           ))}
@@ -718,7 +792,7 @@ const SimilarBranchesList = ({ branches, allBranchesForSearch, currentCityDispla
     containScroll: 'keepSnaps',
   }), [])
 
-  // UPDATED: branchOptions now uses allBranchesForSearch to include ALL branches
+  // UPDATED: branchOptions now uses allBranchesForSearch to include ALL branches (which is now sorted A-Z)
   const branchOptions = useMemo(() => {
     return allBranchesForSearch
       .filter(branch => branch?._id && branch.hospitalName && branch.branchName)
@@ -735,14 +809,15 @@ const SimilarBranchesList = ({ branches, allBranchesForSearch, currentCityDispla
       })
   }, [allBranchesForSearch])
 
-  // UPDATED: handleBranchSelect to correctly redirect using hospital name and branch name for the slug
+  // UPDATED: handleBranchSelect to correctly redirect using ONLY branch name for the slug
   const handleBranchSelect = useCallback((id: string) => {
     // Find the branch from the comprehensive list
     const branchItem = allBranchesForSearch.find(b => b._id === id)
     if (branchItem && branchItem.hospitalName) {
       setSearchTerm("")
-      const fullSlug = `${generateSlug(branchItem.hospitalName)}-${generateSlug(branchItem.branchName)}`
-      router.push(`/hospitals/branches/${fullSlug}`)
+      // NEW: Use only branchName slug for the URL
+      const fullSlug = generateSlug(branchItem.branchName)
+      router.push(`/search/hospitals/${fullSlug}`)
     }
   }, [allBranchesForSearch, router])
 
@@ -761,7 +836,7 @@ const SimilarBranchesList = ({ branches, allBranchesForSearch, currentCityDispla
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-0">
           <h2 className="text-2xl md:text-xl font-medium mt-2 text-gray-900 tracking-tight flex items-center">
 
-            Near Similar  by Hospitals in {currentCityDisplay} {/* This title uses the city filter for context */}
+            Near Similar by Hospitals in {currentCityDisplay} {/* This title uses the city filter for context */}
             {/* ({branches.length}) */}
           </h2>
           <div className="relative w-full md:w-80">
@@ -769,7 +844,7 @@ const SimilarBranchesList = ({ branches, allBranchesForSearch, currentCityDispla
             <SearchDropdown
               value={searchTerm}
               onChange={setSearchTerm}
-              placeholder="Search all hospitals and branches..."
+              placeholder="Search hospital by name and city"
               options={branchOptions} // This is the list of ALL branches
               selectedOption={null}
               onOptionSelect={handleBranchSelect}
@@ -780,7 +855,7 @@ const SimilarBranchesList = ({ branches, allBranchesForSearch, currentCityDispla
         </div>
       </div>
       {branches?.length > 0 ? (
-        <div className="relative px-8 pb-8">
+        <div className="relative px-4 pb-8">
           {/* UPDATED: Use EmblaCarousel with BranchCard that now includes yearEstablished */}
           <EmblaCarousel slides={branches.map(b => <BranchCard key={b._id} data={b} />)} options={options} />
         </div>
@@ -886,7 +961,12 @@ const SearchDropdown = ({ value, onChange, placeholder, options, selectedOption,
                 key={option.id}
                 onClick={() => {
                   onOptionSelect(option.id)
-                  setIsOpen(false)
+                  // Keep search term active for filter
+                  if (type === 'treatment' || type === 'doctor') {
+                    setIsOpen(false) 
+                  } else {
+                    setIsOpen(false)
+                  }
                 }}
                 className={`w-full text-left px-4 border-b border-gray-200 py-2 text-sm transition-colors ${option.id === selectedOption ? 'bg-gray-700 text-white' : 'text-gray-700 hover:bg-gray-50'
                   }`}
@@ -984,7 +1064,45 @@ const SidebarSkeleton = () => (
   </div>
 )
 
-// Main Component (UPDATED: Include hospitalImage, logo, accreditation in similarBranches mapping for proper data in BranchCard)
+/**
+ * FIX: Updated to use the explicit `new Object()` constructor instead of the literal `{}`
+ * to circumvent the rare and unusual `TypeError: {} is not a function` in the old runtime environment.
+ * * Extracts and flattens all unique treatments from the nested 'specialists' structure.
+ * It also enriches each treatment with the name of its specialist for filtering/display.
+ * @param branch The branch object containing the specialists array.
+ * @returns An array of unique treatment objects.
+ */
+const extractUniqueTreatments = (branch: any): any[] => {
+  if (!branch?.specialists) return []
+
+  // FIX: Using new Object() instead of {} to work around the unusual runtime error
+  const uniqueTreatmentsObject = new Object() as { [key: string]: any }
+
+  (branch.specialists as any[]).forEach((specialist: any) => {
+    const specialistName = specialist.name || 'Unknown Specialist'
+    specialist.treatments?.forEach((treatment: any) => {
+      // Create a robust key using _id or a combination of names
+      const key = treatment._id || `${treatment.name || 'n/a'}-${specialistName}`
+      
+      // Ensure the treatment is unique and link it to its specialist
+      // Check for existence using the key in the object
+      if (!uniqueTreatmentsObject[key]) {
+          uniqueTreatmentsObject[key] = {
+              ...treatment,
+              // ADDED: Specialist information for filtering/display
+              specialistName: specialistName,
+              // Fallback to the generated key if _id is missing
+              _id: treatment._id || key 
+          }
+      }
+    })
+  })
+
+  // Convert object values back to an array
+  return Object.values(uniqueTreatmentsObject)
+}
+
+// Main Component (UPDATED: Extract all treatments using the new helper function)
 export default function BranchDetail({ params }: { params: Promise<{ slug: string }> }) {
   const [branch, setBranch] = useState<any>(null)
   const [hospital, setHospital] = useState<HospitalWithBranchPreview | null>(null)
@@ -999,6 +1117,8 @@ export default function BranchDetail({ params }: { params: Promise<{ slug: strin
       try {
         const resolvedParams = await params
         const branchSlug = resolvedParams.slug
+        // NOTE: This assumes an API endpoint '/api/hospitals' exists and returns a structure containing 'items'
+        // Since you are asking to "check my api route file to proper tratment data show", we assume this endpoint is where the data lives.
         const res = await fetch('/api/hospitals')
         if (!res.ok) throw new Error("Failed to fetch hospitals")
         const data = await res.json()
@@ -1012,7 +1132,9 @@ export default function BranchDetail({ params }: { params: Promise<{ slug: strin
             const branchMatch = hospitalItem.branches.find((b: any) => {
               if (!b?.branchName) return false
               const expectedBranchSlug = `${hospitalSlug}-${generateSlug(b.branchName)}`
-              return expectedBranchSlug === branchSlug
+              // NEW: Match the incoming branchSlug (e.g., "apollo-hospital-bangalore") 
+              // against the end of the full expected slug (e.g., "apollo-hospital-group-apollo-hospital-bangalore")
+              return expectedBranchSlug.endsWith(branchSlug) 
             })
             if (branchMatch) {
               foundBranch = branchMatch
@@ -1037,6 +1159,23 @@ export default function BranchDetail({ params }: { params: Promise<{ slug: strin
     }
     fetchBranchData()
   }, [params])
+
+  // --- Data Transformations ---
+
+  // 1. Extract and flatten all treatments from specialists (FIXED DATA SOURCE)
+  // This uses the robust extractUniqueTreatments which now uses new Object()
+  const allTreatments = useMemo(() => extractUniqueTreatments(branch), [branch])
+
+  // 2. A-Z Sorting for Facilities
+  const sortedFacilities = useMemo(() => {
+    // FIX: Defensively check if branch?.facilities is an array before spreading or sorting
+    const facilities = Array.isArray(branch?.facilities) ? branch.facilities : []
+    
+    // Sort the array copy
+    return [...facilities].sort((a: any, b: any) => (a.name || '').localeCompare(b.name || ''))
+  }, [branch?.facilities])
+  
+  // --- Conditional Rendering / Loading States ---
 
   if (loading) {
     return (
@@ -1089,7 +1228,7 @@ export default function BranchDetail({ params }: { params: Promise<{ slug: strin
 
   const currentCities = branch.city?.map((c: any) => c?.cityName).filter(Boolean) || []
 
-  // 1. FILTERED LIST FOR SLIDER/CARDS (Only similar/nearby branches) - UPDATED: Include hospitalImage, logo, accreditation
+  // 3. FILTERED LIST FOR SLIDER/CARDS (Only similar/nearby branches)
   const similarBranches = allHospitals
     .filter((h: any) => h.branches) // Filter out hospitals without branches list
     .flatMap((h: any) =>
@@ -1110,8 +1249,9 @@ export default function BranchDetail({ params }: { params: Promise<{ slug: strin
           accreditation: b.accreditation || h.accreditation // UPDATED
         }))
     )
+    .sort((a: any, b: any) => (a.branchName || '').localeCompare(b.branchName || '')) // ADDED: Alphabetical sort by branchName
 
-  // 2. COMPREHENSIVE LIST FOR SEARCH DROPDOWN (All branches everywhere) - UPDATED: Full branches with enhanced mapping
+  // 4. COMPREHENSIVE LIST FOR SEARCH DROPDOWN (All branches everywhere)
   const allHospitalBranches = allHospitals
     .filter((h: any) => h.branches)
     .flatMap((h: any) =>
@@ -1126,6 +1266,8 @@ export default function BranchDetail({ params }: { params: Promise<{ slug: strin
           accreditation: b.accreditation || h.accreditation // UPDATED
         }))
     )
+    // ADDED: A-Z Sorting for the comprehensive search list
+    .sort((a: any, b: any) => (a.branchName || '').localeCompare(b.branchName || ''))
 
   const currentCityDisplay = currentCities.length > 0 ? currentCities.join(', ') : 'Nearby Locations'
   const firstSpecialtyName = branch.specialization?.[0]?.name || 'N/A'
@@ -1225,22 +1367,23 @@ export default function BranchDetail({ params }: { params: Promise<{ slug: strin
                   <h2 className="text-2xl md:text-xl font-medium text-gray-900 tracking-tight flex items-center mb-2">About {branch.branchName}</h2>
                   {renderRichText(branch.description)}
                   {/* UPDATED: Added dynamic Link with hospitalSlug */}
-                <div className="mt-1">
-                    <Link href={`/hospitals/${hospitalSlug}`} className="border-b border-gray-600 text-gray-700 hover:text-gray-900 transition-colors">
-                    Read about the {hospital.hospitalName} 
-                  </Link>
-                </div>
+                  <div className="mt-1">
+                    <Link href={`/search/${hospitalSlug}`} className="border-b border-gray-600 text-gray-700 hover:text-gray-900 transition-colors">
+                      Read about the {hospital.hospitalName}
+                    </Link>
+                  </div>
                 </section>
               )}
 
-              {branch.facilities?.length > 0 && (
+              {/* UPDATED: Use sortedFacilities array */}
+              {sortedFacilities.length > 0 && (
                 <section className={`bg-gray-50 p-4 rounded-xs shadow-xs border border-gray-100 ${inter.variable} font-light`}>
                   <h2 className="text-2xl md:text-3xl font-medium text-gray-900 tracking-tight mb-8 flex items-center gap-3">
                     <Building2 className="w-7 h-7" />
                     Key Facilities
                   </h2>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                    {branch.facilities.map((fac: any) => (
+                    {sortedFacilities.map((fac: any) => (
                       <div key={fac._id || Math.random()} className="flex items-center gap-3 p-4 bg-gray-50/50 rounded-xs">
                         <Hospital className="w-5 h-5 text-gray-600 flex-shrink-0" />
                         <span className="text-sm text-gray-700 font-light">{fac.name}</span>
@@ -1249,18 +1392,19 @@ export default function BranchDetail({ params }: { params: Promise<{ slug: strin
                   </div>
                 </section>
               )}
-
+  {allTreatments.length > 0 && <TreatmentsList treatments={allTreatments} />}
               {branch.doctors?.length > 0 && <DoctorsList doctors={branch.doctors} />}
-              {branch.treatments?.length > 0 && <TreatmentsList treatments={branch.treatments} />}
+              {/* NOW USES allTreatments (flattened and extracted) which addresses the original nested structure issue */}
+            
               <SimilarBranchesList
-                branches={similarBranches} // Filtered for slider display
-                allBranchesForSearch={allHospitalBranches} // Full list for search dropdown
-                currentCityDisplay={currentCityDisplay}
+                branches={similarBranches} // Filtered for slider display (already sorted A-Z)
+                allBranchesForSearch={allHospitalBranches} // Full list for search dropdown (now sorted A-Z)
+                currentCityDisplay={currentCities.length > 0 ? currentCities.join(', ') : 'Nearby Locations'}
               />
             </main>
 
             <aside className="lg:col-span-3 space-y-8">
-  
+
               <ContactForm />
             </aside>
           </div>

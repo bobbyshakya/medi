@@ -293,7 +293,7 @@ const BranchCard = ({ branch, hospitalSlug }: { branch: any, hospitalSlug: strin
   // FIXED: Using the passed hospitalSlug for link construction
   const branchSlug = generateSlug(branch.branchName)
   const branchNameDisplay = branch.isMain ? `${branch.branchName || 'Unnamed Branch'} (Main Branch)` : (branch.branchName || 'Unnamed Branch')
-  const linkHref = `/hospitals/branches/${hospitalSlug}-${branchSlug}` // FIXED: Correct link structure
+  const linkHref = `/search/hospitals/${branchSlug}` // FIXED: Correct link structure
 
   const specialties = useMemo(() => {
     const specSet = new Set<string>()
@@ -459,7 +459,7 @@ const SimilarHospitalCard = ({ hospital }: { hospital: any }) => {
   const branchCount = hospital.branches?.length || 0
 
   return (
-    <Link href={`/hospitals/${hospitalSlug}`}
+    <Link href={`/search/${hospitalSlug}`}
       // Updated: Rounded corners and shadow moderated
       className={`group flex flex-col h-full bg-white border border-gray-100 rounded-xs shadow-xs overflow-hidden transform hover:shadow-xs transition-all duration-300 hover:border-gray-100 ${inter.variable} font-light`}
     >
@@ -560,9 +560,8 @@ const Breadcrumb = ({ hospitalName, hospitalSlug }: { hospitalName: string, hosp
         </li>
         <li className="flex items-center">
           <ChevronRight className="w-4 h-4 text-gray-400" />
-          <Link href="/hospitals" className="ml-2 text-sm font-medium text-gray-500 hover:text-gray-600 transition-colors">
-            Hospitals
-          </Link>
+          <Link href="/search" className="ml-2 text-sm font-medium text-gray-500 hover:text-gray-600 transition-colors">
+            Hospitals          </Link>
         </li>
         <li className="flex items-center">
           <ChevronRight className="w-4 h-4 text-gray-400" />
@@ -690,7 +689,7 @@ const ErrorState = ({ error }: { error: string | null }) => (
   // Updated main background to bg-gray-50
   <div className={`min-h-screen flex flex-col items-center justify-center bg-gray-50 p-6 relative ${inter.variable}`}>
     <div className="absolute top-6 left-6">
-      <Link href="/hospitals" className={`flex items-center gap-2 text-gray-800 hover:text-gray-900 transition-colors duration-200 bg-white/90 backdrop-blur-sm px-4 py-3 rounded-full border border-gray-200 shadow-lg ${inter.variable} font-semibold`} >
+      <Link href="/search" className={`flex items-center gap-2 text-gray-800 hover:text-gray-900 transition-colors duration-200 bg-white/90 backdrop-blur-sm px-4 py-3 rounded-full border border-gray-200 shadow-lg ${inter.variable} font-semibold`} >
         <ChevronLeft className="w-5 h-5" /> Back to Search
       </Link>
     </div>
@@ -702,7 +701,7 @@ const ErrorState = ({ error }: { error: string | null }) => (
       <p className={`text-lg text-gray-600 leading-relaxed ${inter.variable} font-light`}>
         {error || "The requested hospital could not be found. Please verify the URL or try searching again from the main list."}
       </p>
-      <Link href="/hospitals" className={`inline-block w-full bg-gray-600 text-white px-8 py-3 rounded-full font-bold hover:bg-gray-700 transition-all duration-200 shadow-lg mt-4 ${inter.variable}`} >
+      <Link href="/search" className={`inline-block w-full bg-gray-600 text-white px-8 py-3 rounded-full font-bold hover:bg-gray-700 transition-all duration-200 shadow-lg mt-4 ${inter.variable}`} >
         Go to Hospital Search
       </Link>
     </div>

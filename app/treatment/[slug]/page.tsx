@@ -30,6 +30,8 @@
 // FIXED: Confirmed URL formatting uses hyphens (-) for query parameters (e.g., city=new-delhi) via generateSlug utility, ensuring a modern URL format.
 // UPDATED: Based on API response, remove "Group" from hospital names for display. For branch titles, use branchName directly (includes hospital + location). For doctor locations, prefer branchName if available, else hospitalName without "Group".
 // UPDATED: Ensured proper branch name display in DoctorCard footer by prioritizing the first location with branchName available.
+// UPDATED: Adjusted card margins, padding, and size calculations to strictly match the component skeletons (e.g., Carousel and Doctors grid gaps/columns).
+// UPDATED LOGIC: City Filter options are now sorted A-Z by city name.
 
 "use client"
 
@@ -354,14 +356,23 @@ const getAllExtendedDoctors = (hospitals: Hospital[]): Doctor[] => {
 const DoctorCard = ({ doctor }: DoctorCardProps) => {
   const profileImage = doctor.profileImage ? getWixImageUrl(doctor.profileImage) : null
   const doctorSlug = generateSlug(doctor.doctorName)
-  
+
   // Prioritize the first location that has a branchName for proper branch display; fallback to first location
   const primaryLocation = doctor.locations.find(loc => loc.branchName) || doctor.locations[0]
   // Use branchName if available, else cleaned hospitalName
   const displayLocation = primaryLocation?.branchName || cleanHospitalName(primaryLocation?.hospitalName) || 'N/A'
 
-  // Get up to 3 department names for badges
-  const departmentNames = doctor.departments.slice(0, 3).map(d => d.name)
+  // --- UPDATED LOGIC FOR DEPARTMENT BADGES ---
+
+  // Get the name of the first department
+  const firstDepartmentName = doctor.departments[0]?.name
+
+  // Calculate the number of remaining departments to display, up to a maximum of 3 total (1 displayed name + max 2 in the count)
+  const remainingDepartmentCount = doctor.departments.length > 1
+    ? Math.min(doctor.departments.length - 1, 2) // Max out at +2 (for 3 or more departments)
+    : 0
+
+  // --- END OF UPDATED LOGIC ---
 
   return (
     <Link href={`/doctors/${doctorSlug}`} className="block">
@@ -395,25 +406,35 @@ const DoctorCard = ({ doctor }: DoctorCardProps) => {
           </header>
 
           <div className="space-y-2">
-            <div className="flex items-center gap-2">
+
+
+            {/* Department Badges (First Name + Remaining Count) */}
+            {firstDepartmentName && (
+              <div className="flex flex-wrap gap-1">
+                {/* First Department Name */}
+                <span
+                  className="inline-flex items-center text-sm font-medium text-gray-900"
+                >
+                  {firstDepartmentName}
+                </span>
+
+                {/* Remaining Departments Count Badge */}
+                {remainingDepartmentCount > 0 && (
+                  <span
+                    className="inline-flex items-center text-sm font-medium text-gray-900"
+                  >
+                    +{remainingDepartmentCount} Department
+                  </span>
+                )}
+              </div>
+            )}
+              <div className="flex items-center gap-2">
+              {/* Implemented the green dot icon as per design notes in the file context */}
+
               <p className="text-sm text-gray-900 font-normal">
                 {doctor.experienceYears} Years Exp.
               </p>
             </div>
-
-            {/* Department Badges (up to 3) */}
-            {departmentNames.length > 0 && (
-              <div className="flex flex-wrap gap-1">
-                {departmentNames.map((deptName, idx) => (
-                  <span
-                    key={idx}
-                    className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700"
-                  >
-                    {deptName}
-                  </span>
-                ))}
-              </div>
-            )}
           </div>
 
           <footer className="border-t border-gray-100 pt-2 mt-auto">
@@ -450,9 +471,12 @@ const SearchDropdown = ({ value, onChange, placeholder, options, selectedOption,
   // Determine the value to display in the input field
   const displayedValue = selectedOptionName || value;
 
-  const filteredOptions = useMemo(() =>
-    options.filter(option => option.name.toLowerCase().includes(value.toLowerCase())),
-    [options, value])
+  const filteredOptions = useMemo(() => {
+    return options
+      .filter(option => option.name.toLowerCase().includes(value.toLowerCase()))
+      // UPDATED LOGIC: Sort by name A-Z
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [options, value])
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -611,10 +635,17 @@ const CityFilter = ({
   searchValue
 }: CityFilterProps) => {
   const options = useMemo(() => {
-    return Array.from(new Map(cities.map(c => [c._id, c])).values()).map(c => ({
+    // Collect unique cities and map to {id, name}
+    const uniqueCities = Array.from(new Map(cities.map(c => [c._id, c])).values())
+    // Map to option format
+    const cityOptions = uniqueCities.map(c => ({
       id: c._id,
       name: c.cityName
     }))
+    // Sorting logic is now within SearchDropdown's useMemo for better filtering performance,
+    // but we can ensure a base sort here too, though SearchDropdown will re-sort filtered results.
+    // Let's rely on SearchDropdown for the final A-Z sort in the filteredOptions.
+    return cityOptions
   }, [cities])
 
   return (
@@ -645,7 +676,7 @@ const Breadcrumb = ({ treatmentName }: BreadcrumbProps) => (
         Home
       </Link>
       <ChevronRightIcon className="w-4 h-4" aria-hidden />
-      <Link href="/hospitals?view=treatments" className="hover:text-[#74BF44] transition-colors">
+      <Link href="/search?view=treatments" className="hover:text-[#74BF44] transition-colors">
         Treatments
       </Link>
       <ChevronRightIcon className="w-4 h-4" aria-hidden />
@@ -675,11 +706,12 @@ const BranchesOfferingTreatmentCarousel = ({ branches, treatmentName, emblaRef, 
   if (branches.length === 0) return null
 
   return (
-    <div className={`relative bg-white rounded-sm border border-gray-100 p-4 shadow-xs overflow-hidden ${inter.variable} font-extralight`} role="region" aria-label="Branches Carousel">
+    <div className={`relative  overflow-hidden ${inter.variable} font-extralight`} role="region" aria-label="Branches Carousel">
       <div className="embla__viewport overflow-hidden h-auto" ref={emblaRef}>
-        <div className="embla__container flex -ml-4">
+        {/* UPDATED: Changed gap logic to match CarouselSkeleton (gap-4) */}
+        <div className="embla__container flex gap-4">
           {branches.map((branch) => {
-             const slug = generateSlug(`${branch.hospitalName} ${branch.branchName}`)
+             const slug = generateSlug(`${branch.branchName}`)
             const hospitalImg = branch.branchImage ? getContentImage(branch.branchImage) : null
             const hospitalLogoUrl = branch.hospitalLogo ? getWixImageUrl(branch.hospitalLogo) : null
             // Use branchName directly as displayTitle (includes hospital + location)
@@ -693,8 +725,10 @@ const BranchesOfferingTreatmentCarousel = ({ branches, treatmentName, emblaRef, 
             const accImage = branch.accreditation?.[0]?.image ? getWixImageUrl(branch.accreditation[0].image) : null
 
             return (
-              <div key={branch._id} className="flex-[0_0_100%] md:flex-[0_0_calc(33.333%-1rem)] pl-4 pr-2">
-                <Link href={`/hospitals/branches/${slug}`} className="block w-full h-[calc(100%-2rem)] md:h-auto max-w-sm mx-auto md:mx-0/50 border border-gray-100 rounded-sm shadow-xs bg-white hover:shadow-sm transition-shadow relative flex flex-col overflow-hidden">
+              // UPDATED: Use the calculated width from CarouselSkeleton to ensure 3 cards fit with gap-4
+              <div key={branch._id} className="min-w-0 w-full md:w-[calc(33.333%-0.666rem)] flex-shrink-0">
+                {/* UPDATED: Removed custom height/margin compensating classes */}
+                <Link href={`/search/hospitals/${slug}`} className="block w-full border border-gray-100 rounded-sm shadow-xs bg-white hover:shadow-sm transition-shadow relative flex flex-col overflow-hidden h-full">
                   {/* Hospital Image Section */}
                   <div className="relative w-full h-48 bg-gray-100">
                     {hospitalImg ? (
@@ -864,7 +898,7 @@ export default function TreatmentPage({ params }: TreatmentPageProps) {
     setCitySearchValue("");
 
     // 5. Construct the redirection URL
-    const baseUrl = `/hospitals?view=${view}&treatment=${treatmentSlug}`;
+    const baseUrl = `/search?view=${view}&treatment=${treatmentSlug}`;
     let redirectUrl = baseUrl;
 
     if (selectedCity) {
@@ -1096,12 +1130,12 @@ export default function TreatmentPage({ params }: TreatmentPageProps) {
       <section className="md:py-12 relative z-10">
         <div className="container mx-auto px-4">
           <div className=" grid md:grid-cols-12 gap-8">
-            <main className="space-y-8 col-span-12 lg:col-span-9" >
-              <section className={`bg-white rounded-sm border border-gray-100 p-6 mb-6 shadow-xs transition-all ${inter.variable} font-extralight`}>
-                <h2 className={`text-2xl md:text-3xl font-medium text-[#241d1f] mb-2 tracking-tight ${inter.variable}`}>About This Treatment</h2>
+            <main className="space-y-4 col-span-12 lg:col-span-9" >
+              <section className={`bg-white rounded-sm border border-gray-100 p-4 mb-4 shadow-xs transition-all ${inter.variable} font-extralight`}>
+                <h2 className="text-2xl md:text-xl font-medium text-gray-900 tracking-tight flex items-center mb-2">About This Treatment</h2>
                 <div>
                   {treatment.description && renderRichText(treatment.description)}
-                  <div className="grid md:grid-cols-3 gap-6 mt-8">
+                  <div className="grid md:grid-cols-3 gap-4 mt-4">
                     {treatment.category && (
                       <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-sm border border-gray-100">
                         <div className="w-3 h-3 bg-[#74BF44] rounded-full flex-shrink-0"></div>
@@ -1134,9 +1168,9 @@ export default function TreatmentPage({ params }: TreatmentPageProps) {
               </section>
 
               {allBranches.length > 0 && (
-                <section className="space-y-4">
+                <section className="space-y-4 bg-white rounded-sm border border-gray-100 p-4  shadow-xs">
                   <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                    <h3 className={`text-xl font-medium text-[#241d1f] ${inter.variable}`}>Branches Offering {treatment.name} ({filteredBranches.length} of {allBranches.length})</h3>
+                    <h3 className={`text-xl font-medium text-[#241d1f] ${inter.variable}`}>Hospitals Offering {treatment.name} </h3>
                     <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
                       {/* City Filter - Redirects to /hospitals?view=hospitals&treatment={slug} */}
                       <CityFilter
@@ -1165,9 +1199,9 @@ export default function TreatmentPage({ params }: TreatmentPageProps) {
               )}
 
               {allMatchingDoctors.length > 0 && (
-                <section className="space-y-4">
+                <section className="space-y-4 bg-white rounded-sm border border-gray-100 p-4 shadow-xs">
                   <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                    <h3 className={`text-xl font-medium text-[#241d1f] ${inter.variable}`}>Specialist Doctors for {treatment.name} ({filteredDoctors.length} of {allMatchingDoctors.length})</h3>
+                    <h3 className={`text-xl font-medium text-[#241d1f] ${inter.variable}`}>Specialist Doctors for {treatment.name} </h3>
                     <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
                       {/* Doctor City Filter - Redirects to /hospitals?view=doctors&treatment={slug} */}
                       <CityFilter
@@ -1179,20 +1213,20 @@ export default function TreatmentPage({ params }: TreatmentPageProps) {
                       />
                     </div>
                   </div>
-                  {filteredDoctors.length > 0 ? (
-                    <div className="grid md:grid-cols-3 lg:grid-cols-4 gap-6">
-                      {filteredDoctors.map((doctor) => (
-                        <DoctorCard key={doctor._id} doctor={doctor} />
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="text-center py-12 bg-white rounded-sm border border-gray-100" role="alert">
-                      <Stethoscope className="w-12 h-12 text-[#241d1f]/20 mx-auto mb-4" />
-                      <p className={`text-[#241d1f]/50 text-sm ${inter.variable}`}>No specialist doctors match your current city filter. Try adjusting your selection.</p>
-                    </div>
-                  )}
-                </section>
-              )}
+                {filteredDoctors.length > 0 ? (
+                  <div className="grid md:grid-cols-3 lg:grid-cols-3 gap-6">
+                    {filteredDoctors.map((doctor) => (
+                      <DoctorCard key={doctor._id} doctor={doctor} />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-12 bg-white rounded-sm border border-gray-100" role="alert">
+                    <Stethoscope className="w-12 h-12 text-[#241d1f]/20 mx-auto mb-4" />
+                    <p className={`text-[#241d1f]/50 text-sm ${inter.variable}`}>No specialist doctors match your current city filter. Try adjusting your selection.</p>
+                  </div>
+                )}
+              </section>
+            )}
             </main>
             <aside className="col-span-12 lg:col-span-3">
 

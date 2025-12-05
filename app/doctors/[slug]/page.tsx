@@ -12,6 +12,7 @@ import {
   MapPin,
   Building2,
   Calendar,
+  ChevronRightIcon,
   Bed,
   Heart,
   ChevronLeft,
@@ -381,11 +382,11 @@ const Breadcrumb = ({ doctorName }: { doctorName: string }) => (
           <Home className="w-4 h-4" />
           Home
         </Link>
-        <span>/</span>
-        <Link href="/hospitals?view=doctors" className="hover:text-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-400/50 rounded-xs">
+         <ChevronRightIcon className="w-4 h-4" aria-hidden />
+        <Link href="/search?view=doctors" className="hover:text-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-400/50 rounded-xs">
           Doctors
         </Link>
-        <span>/</span>
+         <ChevronRightIcon className="w-4 h-4" aria-hidden />
         <span className="text-gray-900 font-medium">{doctorName}</span>
       </div>
     </div>
@@ -470,8 +471,8 @@ const BranchCard = ({ branch }: { branch: any }) => {
   const branchNameDisplay = branch.isMain ? `${branch.branchName} (Main)` : branch.branchName
   const branchSlug = generateSlug(branch.branchName)
   const linkHref = branch.isMain
-    ? `/hospitals/branches/${hospitalSlug}-${branchSlug}`
-    : `/hospitals/branches/${hospitalSlug}-${branchSlug}`
+    ? `/search/hospitals/${branchSlug}`
+    : `/search/hospitals/${branchSlug}`
 
   const specialties = useMemo(() => {
     const specSet = new Set<string>()
@@ -889,7 +890,7 @@ const SimilarDoctorsList = ({
   // --- UPDATED CITY REDIRECT LOGIC ---
   const handleCityOptionSelect = useCallback((id: string) => {
     // Start with the base URL
-    let url = `/hospitals?view=doctors`
+    let url = `/search?view=doctors`
 
     // 1. Append the selected city (id is the cityName, which should be in lowercase for the URL)
     url += `&city=${encodeURIComponent(id.toLowerCase())}`
@@ -1144,7 +1145,7 @@ export default function DoctorDetail({ params }: { params: Promise<{ slug: strin
         const hospital = allHospitals.find(h => h._id === hospitalId)
         if (hospital) {
           const hospitalSlug = generateSlug(hospital.hospitalName)
-          router.push(`/hospitals/${hospitalSlug}`)
+          router.push(`/search/${hospitalSlug}`)
         }
       } else {
         const [hospitalId, branchId] = selectedId.split('-')
@@ -1154,7 +1155,7 @@ export default function DoctorDetail({ params }: { params: Promise<{ slug: strin
           if (branch && hospital) {
             const hospitalSlug = generateSlug(hospital.hospitalName)
             const branchSlug = generateSlug(branch.branchName)
-            router.push(`/hospitals/${hospitalSlug}/branch/${branchSlug}`)
+            router.push(`/search/${hospitalSlug}/branch/${branchSlug}`)
           }
         }
       }

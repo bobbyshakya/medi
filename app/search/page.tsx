@@ -781,7 +781,7 @@ const useHospitalsData = () => {
       }
     })
     const newQueryString = params.length > 0 ? "?" + params.join("&") : ""
-    const targetUrlPath = `/hospitals${newQueryString}`
+    const targetUrlPath = `/search${newQueryString}`
     const currentSearch = searchParams.toString()
     const currentUrl = pathname + (currentSearch ? `?${currentSearch}` : "")
     if (currentUrl !== targetUrlPath) {
@@ -1134,7 +1134,7 @@ const FilterSidebar = ({ filters, showFilters, setShowFilters, clearFilters, upd
 // =============================================================================
 
 const HospitalCard = ({ branch }: { branch: BranchType & { hospitalName: string; hospitalLogo: string | null; hospitalId: string } }) => {
-  const slug = generateSlug(`${branch.hospitalName} ${branch.branchName}`)
+  const slug = generateSlug(`${branch.branchName}`)
   const imageUrl = getWixImageUrl(branch.branchImage)
   const primaryCity = branch.city?.[0]?.cityName || ""
   const primaryState = branch.city?.[0]?.state || ""
@@ -1143,7 +1143,7 @@ const HospitalCard = ({ branch }: { branch: BranchType & { hospitalName: string;
   const accreditationLogoUrl = getWixImageUrl(branch.accreditation?.[0]?.image)
 
   return (
-    <Link href={`/hospitals/branches/${slug}`} className="block">
+    <Link href={`/search/hospitals/${slug}`} className="block">
       <article className="group bg-white rounded-xs shadow-xs transition-all duration-300 overflow-hidden cursor-pointer h-full flex flex-col hover:shadow-sm border border-gray-100">
         <div className="relative h-48 overflow-hidden bg-gray-50">
           {hospitalLogoUrl && (
@@ -1219,30 +1219,55 @@ const HospitalCard = ({ branch }: { branch: BranchType & { hospitalName: string;
 }
 
 const DoctorCard = ({ doctor }: { doctor: ExtendedDoctorType }) => {
-  const specialization = Array.isArray(doctor.specialization)
-    ? doctor.specialization
-      .map((s) =>
-        typeof s === "object" && s !== null
-          ? (s as any).name || (s as any).title || ""
-          : s
-      )
-      .filter(Boolean)
-      .join(", ")
-    : [doctor.specialization].filter(Boolean).join(", ");
+  // Helper to safely extract the name/title from a specialization object or return the string
+  const getSpecializationName = (s: Specialization): string => {
+    if (typeof s === "object" && s !== null) {
+      return (s as any).name || (s as any).title || "";
+    }
+    return String(s);
+  };
+
+  // 1. Convert specialization data into a clean array of names
+  const specializationArray = useMemo(() => {
+    return (Array.isArray(doctor.specialization) ? doctor.specialization : [doctor.specialization])
+      .map(getSpecializationName)
+      .filter(Boolean);
+  }, [doctor.specialization]);
+
+  // 2. Determine the display string: Primary specialization + Count (+N)
+  const specializationDisplay = useMemo(() => {
+    if (specializationArray.length === 0) {
+      return "Specialty not specified";
+    }
+
+    const primary = specializationArray[0];
+    const remainingCount = specializationArray.length - 1;
+
+    if (remainingCount > 0) {
+      // Example: "Cardiology +1"
+      return `${primary} +${remainingCount} Specialties`;
+    }
+
+    // Example: "Cardiology"
+    return primary;
+  }, [specializationArray]);
+  // --- END Specialization Logic ---
+
 
   const slug = generateSlug(`${doctor.doctorName}`);
   const imageUrl = getWixImageUrl(doctor.profileImage);
 
-  // ⭐ FIXED: Branch count logic + clean display
+  // ⭐ FIXED: Branch count logic + clean display (Kept your existing location logic)
   const primaryLocationDisplay = useMemo(() => {
     const locations = doctor.filteredLocations || doctor.locations;
 
-    // If no locations → fallback
     if (!locations || locations.length === 0) {
       return "Location not specified";
     }
 
     // Always pick first location (index 0)
+    // NOTE: Your original code used locations[1] || locations[0], which might be a bug 
+    // if you always intend to show the FIRST location (index 0). I kept your original logic here.
     const first = locations[1] || locations[0];
 
     const branch = first.branchName ? ` ${first.branchName}` : "";
@@ -1273,7 +1298,7 @@ const DoctorCard = ({ doctor }: { doctor: ExtendedDoctorType }) => {
               src={imageUrl}
               alt={doctor.doctorName}
               className="object-cover object-top w-full h-full group-hover:scale-105 transition-transform duration-500"
-              onError={(e) => { e.currentTarget.style.display = "none" }}
+              onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none" }}
             />
           ) : (
             <div className="absolute inset-0 flex items-center justify-center">
@@ -1289,7 +1314,7 @@ const DoctorCard = ({ doctor }: { doctor: ExtendedDoctorType }) => {
               {doctor.doctorName}
             </h2>
             <p className="text-sm text-gray-900 font-normal flex items-center gap-2 line-clamp-1">
-              {specialization}
+              {specializationDisplay} {/* --- UPDATED SPECIALIST DISPLAY --- */}
             </p>
           </header>
 
@@ -1360,7 +1385,7 @@ const TreatmentCard = ({ treatment }: { treatment: ExtendedTreatmentType }) => {
 
         <div className="p-3 flex-1 flex flex-col space-y-1">
           <header className="space-y-2 flex-1 min-h-0">
-            <h2 className="text-base font-medium leading-tight line-clamp-1 py-2 text-gray-900 group-hover:text-gray-800 transition-colors">
+            <h2 className="text-base font-medium leading-tight line-clamp-1 my-2 text-gray-900 group-hover:text-gray-800 transition-colors">
               {treatment.name}
             </h2>
 
@@ -1389,7 +1414,7 @@ const TreatmentCard = ({ treatment }: { treatment: ExtendedTreatmentType }) => {
 // LAYOUT COMPONENTS
 // =============================================================================
 
-const ViewToggle = ({ view, setView }: { view: "hospitals" | "doctors" | "treatments", setView: (view: "hospitals" | "doctors" | "treatments") => void }) => (
+const ViewToggle = ({ view, setView }: { view: "search-healthcare" | "doctors" | "treatments", setView: (view: "hospitals" | "doctors" | "treatments") => void }) => (
   <div className="flex bg-white  rounded-xs shadow-xs mx-auto lg:mx-0 max-w-md ">
     <button
       onClick={() => setView("hospitals")}
@@ -1418,37 +1443,37 @@ const ViewToggle = ({ view, setView }: { view: "hospitals" | "doctors" | "treatm
 const Sorting = ({ sortBy, setSortBy }: { sortBy: "all" | "popular" | "az" | "za", setSortBy: (sortBy: "all" | "popular" | "az" | "za") => void }) => (
   // Assuming you use Heroicons or a similar library
 
-// ... inside your component
-<div className="flex items-center gap-3">
-  <label className="text-sm text-gray-700 hidden sm:block font-normal">Sort by:</label>
-  
-  {/* 👇 Start of the custom wrapper for the select and icon */}
-  <div className="relative">
-    <select
-      value={sortBy}
-      onChange={(e) => setSortBy(e.target.value as "all" | "popular" | "az" | "za")}
-      className="
+  // ... inside your component
+  <div className="flex items-center gap-3">
+    <label className="text-sm text-gray-700 hidden sm:block font-normal">Sort by:</label>
+
+    {/* 👇 Start of the custom wrapper for the select and icon */}
+    <div className="relative">
+      <select
+        value={sortBy}
+        onChange={(e) => setSortBy(e.target.value as "all" | "popular" | "az" | "za")}
+        className="
         border border-gray-200 rounded-xs px-4 py-2 text-sm focus:ring-1 
         focus:ring-gray-100 focus:border-gray-300 bg-white shadow-xs 
         pr-8 cursor-pointer text-gray-700
         appearance-none  /* 👈 This hides the default OS arrow */
       "
-    >
-      <option value="all">All (A to Z)</option>
-      <option value="popular">Popular</option>
-      <option value="az">A to Z</option>
-      <option value="za">Z to A</option>
-    </select>
-    
-    {/* 👇 The custom down arrow icon */}
-    {/* Note: It's absolutely positioned to the right and centered vertically */}
-    <ChevronDownIcon 
-        className="absolute right-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-470 pointer-events-none" 
-        aria-hidden="true" 
-    />
+      >
+        <option value="all">All (A to Z)</option>
+        <option value="popular">Popular</option>
+        <option value="az">A to Z</option>
+        <option value="za">Z to A</option>
+      </select>
+
+      {/* 👇 The custom down arrow icon */}
+      {/* Note: It's absolutely positioned to the right and centered vertically */}
+      <ChevronDownIcon
+        className="absolute right-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-470 pointer-events-none"
+        aria-hidden="true"
+      />
+    </div>
+    {/* 👆 End of the custom wrapper */}
   </div>
-  {/* 👆 End of the custom wrapper */}
-</div>
 )
 
 const ResultsHeader = ({
@@ -1489,12 +1514,14 @@ const MobileFilterButton = ({ setShowFilters }: { setShowFilters: (show: boolean
 const BreadcrumbNav = () => (
   <nav aria-label="Breadcrumb" className="container border-y border-gray-200 bg-gray-50 mx-auto px-4 sm:px-6 lg:px-8">
     <ol className="flex items-center px-2 md:px-0 space-x-1 py-2 text-base text-gray-500 font-normal">
+
       <li>
         <Link href="/" className="flex items-center hover:text-gray-700 transition-colors">
           <Home className="w-4 h-4 mr-1 text-gray-400" />
           Home
         </Link>
       </li>
+     
       <li>
         <span className="mx-1">/</span>
       </li>
@@ -1608,7 +1635,7 @@ const RenderContent = ({
   const items = view === "hospitals" ? filteredBranches : view === "doctors" ? filteredDoctors : filteredTreatments
 
   return (
-    <div className="grid grid-cols-1 mt-4 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    <div className="grid grid-cols-1 my-4 mb-10 md:grid-cols-2 lg:grid-cols-3 gap-4">
       {items.map((item) => (
         <div key={item.baseId || item._id} className="h-full">
           {view === "hospitals" ? (
@@ -1657,7 +1684,7 @@ function HospitalsPageContent() {
         topSpanText="Premium Healthcare Services"
         title="Access Specialist Care Right From Your Home."
         description={`
-        <p>Our virtual clinic offers **24/7 access** to board-certified physicians.</p>
+        <p>Our virtual clinic offers <strong>24/7 access</strong> to board-certified physicians.</p>
         <p>Book a consultation in minutes and get the care you need.</p>
       `}
 
@@ -1666,13 +1693,13 @@ function HospitalsPageContent() {
           {
             text: 'Book an Appointment',
             link: '/booking',
-         
+
             isPrimary: true, // This will be the main, bold red button
           },
           {
             text: 'Call Us',
             link: 'tel:1234567890',
-          
+
             isPrimary: false, // This will be the secondary, border button
           },
         ]}

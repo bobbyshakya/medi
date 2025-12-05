@@ -103,12 +103,21 @@ const SearchDropdown = ({
   const filteredOptions = useMemo(() => {
     if (!value) return options.slice(0, 6)
     
-    const lower = value.toLowerCase()
+    const lower = value.toLowerCase().trim()
+    if (!lower) return options.slice(0, 6) // Handle case where trimming makes it empty
+    
+    // **NEW CHANGE: Update search logic to match the start of any word in the name**
     return options
-      .filter(option => 
-        option.name.toLowerCase().includes(lower) || 
-        option.label.toLowerCase().includes(lower)
-      )
+      .filter(option => {
+        const optionNameLower = option.name.toLowerCase()
+        const words = optionNameLower.split(/\s+/) // Split by spaces
+
+        // Check if the query matches the start of any word in the name
+        const matchesWordStart = words.some(word => word.startsWith(lower))
+
+        // Also keep the simple check for label (e.g., 'Doctor')
+        return matchesWordStart || option.label.toLowerCase().startsWith(lower)
+      })
       .slice(0, 8)
   }, [value, options])
 
@@ -143,7 +152,7 @@ const SearchDropdown = ({
           value={value}
           onChange={(e) => { onChange(e.target.value); setIsOpen(true); }}
           onFocus={() => setIsOpen(true)}
-          placeholder={placeholder}
+          placeholder="Search by Hospital, Doctor, treatment"
           className="w-full pl-7 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900 placeholder-gray-500 text-sm"
           autoComplete="off" 
         />
@@ -270,24 +279,8 @@ const BranchFilter = ({ allHospitals, initialSearch = "" }: BranchFilterProps) =
         options.push({ id, name, type: 'treatment', label: 'Treatment' })
       })
 
-      // Add cities
-      const cities = new Map<string, string>()
-      allHospitals.forEach(hospital => {
-        hospital.branches?.forEach((branch: BranchData) => {
-          if (branch.city) {
-            const cityList = Array.isArray(branch.city) ? branch.city : [branch.city]
-            cityList.forEach((city: any) => {
-              const name = extractProperName(city)
-              const id = city?._id || generateSlug(name)
-              if (name !== 'Unknown') cities.set(id, name)
-            })
-          }
-        })
-      })
-      cities.forEach((name, id) => {
-        options.push({ id, name, type: 'city', label: 'City' })
-      })
-
+      // **City search filter logic remains REMOVED**
+      
       // Add branches
       allHospitals.forEach(hospital => {
         hospital.branches?.forEach((branch: BranchData) => {
@@ -317,25 +310,47 @@ const BranchFilter = ({ allHospitals, initialSearch = "" }: BranchFilterProps) =
     const option = availableOptions.find(o => o.id === id && o.type === type)
     if (!option) return
 
-    setQuery(option.name)
+    // Keep query temporarily for URL generation, but clear it after navigation
     const slug = generateSlug(option.name)
+    let url: string = ''
 
     switch (type) {
       case 'doctor':
-        router.push(`/doctors/${slug}`)
+        url = `/doctors/${slug}`
         break
       case 'specialty':
+        url = `/search/?view=doctors&specialization=${encodeURIComponent(slug)}`
+        break
       case 'treatment':
-        router.push(`/hospitals/?view=doctors&specialization=${encodeURIComponent(slug)}`)
+        url = `/search/?view=doctors&treatment=${encodeURIComponent(slug)}`
         break
       case 'city':
-        router.push(`/hospitals/?city=${encodeURIComponent(option.name)}`)
+        // This case will not be hit if city options are removed, but kept for type completeness.
+        url = `/search/?city=${encodeURIComponent(option.name)}`
         break
       case 'branch':
-        router.push(`/hospitals/?branch=${encodeURIComponent(slug)}`)
+        // Find the branch and hospital names from allHospitals data
+        let branchName = option.name
+        let hospitalName = ''
+        for (const hospital of allHospitals) {
+          const foundBranch = hospital.branches?.find(b => b._id === id)
+          if (foundBranch) {
+            branchName = foundBranch.branchName || option.name
+            hospitalName = hospital.hospitalName || ''
+            break
+          }
+        }
+        url = `/search/hospitals/${generateSlug(branchName)}`
         break
     }
-  }, [availableOptions, router])
+    
+    // 1. Navigate to the new URL
+    router.push(url)
+    
+    // 2. Clear the input field for a fresh search when user returns/stays
+    setQuery("")
+
+  }, [availableOptions, router, allHospitals])
 
   const clearSearch = () => {
     setQuery("")
@@ -360,6 +375,7 @@ const BranchFilter = ({ allHospitals, initialSearch = "" }: BranchFilterProps) =
 
     // Fallback search
     router.push(`/search?q=${encodeURIComponent(trimmedQuery)}`)
+    setQuery("") // Clear query after general fallback search
   }
 
   return (
@@ -368,7 +384,7 @@ const BranchFilter = ({ allHospitals, initialSearch = "" }: BranchFilterProps) =
         <SearchDropdown
           value={query}
           onChange={setQuery}
-          placeholder="Search by name, city, treatment, or specialty..."
+          placeholder="Search by Hospital, Doctor, treatment"
           options={availableOptions}
           onOptionSelect={handleOptionSelect}
           onClear={clearSearch}

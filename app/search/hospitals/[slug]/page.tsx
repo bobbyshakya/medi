@@ -27,7 +27,8 @@ import {
   Filter,
   ChevronDown,
   Star,
-  DollarSign
+  DollarSign,
+  CheckCircle // ADDED: CheckCircle for modern list items
 } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
@@ -90,73 +91,114 @@ const getShortDescription = (richContent: any, maxLength: number = 100): string 
   return text.trim().length > maxLength ? text.trim().substring(0, maxLength) + '...' : text.trim()
 }
 
-// Helper: Render rich text
-const renderRichText = (richContent: any): JSX.Element | null => {
-  if (typeof richContent === 'string') {
-    return <div className={`text-base text-gray-700 leading-relaxed space-y-3 prose prose-sm max-w-none font-light ${inter.variable}`} dangerouslySetInnerHTML={{ __html: richContent }} />
-  }
-  if (!richContent?.nodes) return null
+// RichTextDisplay Component (Styling refined for Serif Font)
+// The error is in how this component is CALLED, but the component itself is fine.
+const RichTextDisplay = ({ htmlContent, className = "" }: { htmlContent: string; className?: string }) => {
+  
+  // MODIFIED: Function to replace <li> tags in <ul> with the CheckCircle icon HTML
+  const transformListItems = (html: string): string => {
+    // 1. Define the HTML for the Lucide CheckCircle icon with the required styling
+    // This is the SVG markup for the CheckCircle icon, stylized with inline CSS
+    // to match the requested w-5 h-5 text-[#74BF44] flex-shrink-0.
+    const iconSvgHtml = 
+      `<span style="display: inline-flex; align-items: flex-start; margin-right: 3px; flex-shrink: 0; min-width: 1.25rem; height: 1.25rem;">` +
+      `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5" style="color:#74BF44; width: 1rem; margin-top: 5px; height: 1rem;">` + 
+      `<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/>` + 
+      `</svg></span>`;
 
-  const renderNode = (node: any): JSX.Element | null => {
-    switch (node.type) {
-      case 'PARAGRAPH':
-        return (
-          <p key={Math.random()} className={`text-base text-gray-700 leading-relaxed mb-2 font-light ${inter.variable}`}>
-            {node.nodes?.map((child: any, idx: number) => renderTextNode(child, idx))}
-          </p>
-        )
-      case 'HEADING1':
-        return (
-          <h3 key={Math.random()} className={`text-xl md:text-2xl font-medium text-gray-900 mb-2 leading-tight ${inter.variable}`}>
-            {node.nodes?.map((child: any, idx: number) => renderTextNode(child, idx))}
-          </h3>
-        )
-      case 'HEADING2':
-        return (
-          <h4 key={Math.random()} className={`text-xl md:text-xl font-medium text-gray-900 mb-2 leading-tight ${inter.variable}`}>
-            {node.nodes?.map((child: any, idx: number) => renderTextNode(child, idx))}
-          </h4>
-        )
-      case 'IMAGE':
-        const imgSrc = getWixImageUrl(node.imageData?.image?.src)
-        if (imgSrc) {
-          return (
-            <div key={Math.random()} className="my-4">
-              <img
-                src={imgSrc}
-                alt="Embedded image"
-                className="w-full h-auto rounded-xs max-w-full"
-                onError={(e) => { e.currentTarget.style.display = "none" }}
-              />
-            </div>
-          )
+    // 2. Define the new structure for the <li> content wrapper
+    // We use a flex div inside the <li> to correctly position the icon next to the text.
+    // The "min-w" and "height" styles on the span ensure the icon reserves space even if text wraps.
+    const liContentWrapperStart = `<div style="display: flex; align-items: flex-start;">${iconSvgHtml}<span style="flex: 1;">`;
+    const liContentWrapperEnd = `</span></div>`;
+
+    // 3. Regex to replace content inside <li>...</li> tags.
+    // Matches an opening <li> tag (with optional attributes), captures content (non-greedily), and the closing </li> tag.
+    // The `s` flag allows `.` to match newlines.
+    
+    // Replace the content inside <li> tags (targeting only `<ul>` items for safety)
+    let transformedHtml = html.replace(
+        /(<ul>.*?)(<li([^>]*)>)(.*?)(<\/li>)/gs, 
+        (match, ulStart, liOpenTag, liAttrs, liContent, liCloseTag) => {
+            // Trim whitespace from content
+            const trimmedContent = liContent.trim();
+            
+            // Check if content is NOT empty and NOT already wrapped
+            // NOTE: Checking for a substring of the icon HTML is a quick way to avoid double-wrapping, 
+            // though not foolproof for all malformed HTML.
+            if (trimmedContent.length > 0 && !trimmedContent.includes(iconSvgHtml)) {
+                // Reconstruct the <li> tag, but wrap content with the new structure
+                // We keep ulStart and liOpenTag as is, then insert the new content structure, then liCloseTag
+                return ulStart + liOpenTag + liContentWrapperStart + trimmedContent + liContentWrapperEnd + liCloseTag;
+            }
+            
+            // If content is empty or already wrapped, return the original match (ulStart + li...).
+            return match;
         }
-        return null
-      default:
-        return null
-    }
-  }
+    );
+    
+    // Fallback: If it's a simple list not contained in a UL block, apply the transformation 
+    // to any remaining top-level <li> tags. This is less ideal but necessary if content structure is flat.
+    transformedHtml = transformedHtml.replace(/<li([^>]*)>(.*?)<\/li>/gs, (match, liAttrs, liContent) => {
+        const trimmedContent = liContent.trim();
+        if (trimmedContent.length > 0 && !trimmedContent.includes(iconSvgHtml)) {
+            return `<li${liAttrs}>${liContentWrapperStart}${trimmedContent}${liContentWrapperEnd}</li>`;
+        }
+        return match;
+    });
 
-  const renderTextNode = (textNode: any, idx: number): JSX.Element | null => {
-    if (textNode.type !== 'TEXT') return null
-    const text = textNode.text || ''
-    const isBold = textNode.textStyle?.bold || false
-    const isItalic = textNode.textStyle?.italic || false
-    const isUnderline = textNode.textStyle?.underline || false
-    let content = text
-    if (isBold) content = <strong key={idx} className="font-medium">{text}</strong>
-    else if (isItalic) content = <em key={idx}>{text}</em>
-    else if (isUnderline) content = <u key={idx}>{text}</u>
-    else content = <span key={idx} className={`font-light ${inter.variable}`}>{text}</span>
-    return content
+    return transformedHtml;
   }
+  
+  const modifiedHtml = useMemo(() => {
+    let cleanHtml = htmlContent;
+
+    // Apply the list item transformation
+    cleanHtml = transformListItems(cleanHtml);
+    
+    // IMPORTANT SECURITY NOTE: 
+    // In a real application, you must use a library like DOMPurify 
+    // here to sanitize the HTML before using dangerouslySetInnerHTML.
+    // Example: return DOMPurify.sanitize(cleanHtml);
+    
+    return cleanHtml;
+  }, [htmlContent]);
+
+
+  // MODIFIED: Updated Tailwind classes to REMOVE default list styling and padding
+  const typographyClasses = `
+    prose max-w-none text-gray-700 leading-relaxed 
+     
+    /* Headings: Playfair (Serif) */
+    prose-h1:text-3xl prose-h1:font-extrabold prose-h1:mt-8 prose-h1:mb-4 prose-h1:text-gray-900
+    prose-h2:text-2xl prose-h2:font-extrabold prose-h2:mt-7 prose-h2:mb-4 prose-h2:text-gray-900
+    prose-h3:text-xl prose-h3:font-bold prose-h3:mt-6 prose-h3:mb-3 prose-h3:text-gray-800
+    prose-h4:text-lg prose-h4:font-semibold prose-h4:mt-5 prose-h4:mb-2 prose-h4:text-gray-800
+    
+    /* Paragraphs and Lists */
+    prose-p prose-p:font-sans prose-p:mt-3 prose-p:mb-3 prose-p:text-base prose-p:text-gray-700
+    
+    /* MODIFIED: Custom list styling to REMOVE default bullets/indentation */
+    prose-li:font-sans prose-li:mt-3 prose-li:mb-3 prose-li:text-base prose-li:text-gray-700
+    prose-li:list-none prose-li:ml-0 prose-li:pl-0 /* CRITICAL: REMOVE DEFAULT LIST STYLES */
+    
+    prose-ul:mt-4 prose-ul:mb-4 prose-ul:list-none prose-ul:ml-0 prose-ul:pl-0 /* Ensure UL is clean */
+    prose-ol:mt-3 prose-ol:mb-3 prose-ol:list-decimal // Keep numbered lists standard
+    
+    /* Links, emphasis, etc. */
+    prose-a:text-blue-600 prose-a:font-medium prose-a:underline hover:prose-a:text-blue-800
+    prose-strong:font-bold prose-strong:text-gray-900 
+  `;
 
   return (
-    <div className={`space-y-4 ${inter.variable} font-light`}>
-      {richContent.nodes.map((node: any, idx: number) => renderNode(node))}
-    </div>
-  )
-}
+    <div
+      className={`${typographyClasses} ${className}`}
+      // This is necessary to render the HTML structure from Wix CMS
+      dangerouslySetInnerHTML={{ __html: modifiedHtml }}
+    />
+  );
+};
+
 
 // Helper: Generate slug
 const generateSlug = (name: string | null | undefined): string => {
@@ -174,12 +216,12 @@ const Breadcrumb = ({ hospitalName, branchName, hospitalSlug }: { hospitalName: 
           Home
         </Link>
         <span>/</span>
-       
+
         <Link href="/search" className="flex items-center hover:text-gray-700 transition-colors">
-      
+
 
           Hospitals        </Link>
-     
+
 
 
         <span>/</span>
@@ -222,7 +264,7 @@ const BranchCard = ({ data }: { data: any }) => {
   const firstCity = city?.[0]?.cityName || 'N/A'
   const firstSpecialty = specialization?.[0]?.name || 'Multi Speciality'
   // UPDATED: Use only branchName slug for the URL
-  const fullSlug = generateSlug(branchName) 
+  const fullSlug = generateSlug(branchName)
   const doctorsCount = noOfDoctors || 0
   const bedsCount = totalBeds || 0
   const estdYear = yearEstablished || 'N/A'
@@ -306,7 +348,7 @@ const BranchCard = ({ data }: { data: any }) => {
 // DoctorCard (redirects to hospital search with doctor filter)
 const DoctorCard = ({ doctor }: { doctor: any }) => {
   const doctorImage = getDoctorImage(doctor.profileImage)
-  
+
   // --- UPDATED SPECIALIZATION LOGIC START ---
   const specializationDisplay = useMemo(() => {
     // Helper to safely extract the name/title from a specialization object or return the string
@@ -381,7 +423,7 @@ const TreatmentCard = ({ item }: { item: any }) => {
   const treatmentImage = getTreatmentImage(item.treatmentImage || item.image)
   const itemName = item.name || item.title || 'N/A Treatment' // Added fallback for robust data handling
   const itemSlug = generateSlug(itemName) // Generate slug from the actual name used
-  
+
   return (
     <Link href={`/treatment/${itemSlug}`} className="group flex flex-col h-full bg-white border border-gray-100 rounded-xs shadow-sm hover:shadow-md overflow-hidden transition-all focus:outline-none focus:ring-2 focus:ring-gray-400/50">
       <div className="relative h-48 overflow-hidden bg-gray-50 rounded-t-lg">
@@ -585,18 +627,18 @@ const TreatmentsList = ({ treatments }: { treatments: any[] }) => {
     emblaApi.on('reInit', onSelect)
     emblaApi.on('select', onSelect)
   }, [emblaApi, onSelect])
-  
+
   // UPDATED: Filter and Sort Logic (applies search term)
   const sortedAndFilteredTreatments = useMemo(() => {
     const lowerSearch = searchTerm.toLowerCase()
-    
+
     return [...treatments]
-      .filter(t => 
+      .filter(t =>
         (t?.name || t?.title || '').toLowerCase().includes(lowerSearch) ||
         (t?.specialistName || '').toLowerCase().includes(lowerSearch) // Allow filtering by specialist/department name
       )
       // Sort by name A-Z
-      .sort((a, b) => (a.name || a.title || '').localeCompare(b.name || b.title || '')) 
+      .sort((a, b) => (a.name || a.title || '').localeCompare(b.name || b.title || ''))
   }, [treatments, searchTerm]);
 
   // Options for SearchDropdown (based on all treatments for complete search range)
@@ -617,14 +659,14 @@ const TreatmentsList = ({ treatments }: { treatments: any[] }) => {
   const handleTreatmentSelect = useCallback((id: string) => {
     const selectedTreatment = allTreatmentOptions.find(opt => opt.id === id);
     if (selectedTreatment && selectedTreatment.slug) {
-        // Clear search and redirect to the specific treatment page
-        setSearchTerm(""); 
-        router.push(`/treatment/${selectedTreatment.slug}`) 
+      // Clear search and redirect to the specific treatment page
+      setSearchTerm("");
+      router.push(`/treatment/${selectedTreatment.slug}`)
     } else {
       // Fallback: If no slug, just set the search term to filter the carousel as before
-       if (selectedTreatment) {
-         setSearchTerm(selectedTreatment.name);
-       }
+      if (selectedTreatment) {
+        setSearchTerm(selectedTreatment.name);
+      }
     }
   }, [allTreatmentOptions, router])
 
@@ -642,22 +684,22 @@ const TreatmentsList = ({ treatments }: { treatments: any[] }) => {
     <section className={`bg-gray-50 rounded-xs shadow-xs border border-gray-100 ${inter.variable} font-light`}>
       <div className="px-4 pt-4">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 mb-3">
-            <h2 className="text-2xl md:text-xl font-medium text-gray-900 tracking-tight flex items-center mt-2">
-                Available Treatments 
-                {/* ({sortedAndFilteredTreatments.length}) */}
-            </h2>
-            <div className="relative w-full md:w-80">
-                <SearchDropdown
-                    value={searchTerm}
-                    onChange={setSearchTerm}
-                    placeholder="Search treatments by name or specialist..."
-                    options={allTreatmentOptions} // Use the full list for search capability
-                    selectedOption={null}
-                    onOptionSelect={handleTreatmentSelect} // UPDATED: Redirects on select
-                    onClear={() => setSearchTerm("")}
-                    type="treatment"
-                />
-            </div>
+          <h2 className="text-2xl md:text-xl font-medium text-gray-900 tracking-tight flex items-center mt-2">
+            Available Treatments
+            {/* ({sortedAndFilteredTreatments.length}) */}
+          </h2>
+          <div className="relative w-full md:w-80">
+            <SearchDropdown
+              value={searchTerm}
+              onChange={setSearchTerm}
+              placeholder="Search treatments by name or specialist..."
+              options={allTreatmentOptions} // Use the full list for search capability
+              selectedOption={null}
+              onOptionSelect={handleTreatmentSelect} // UPDATED: Redirects on select
+              onClear={() => setSearchTerm("")}
+              type="treatment"
+            />
+          </div>
         </div>
       </div>
       <div className="relative px-4 pb-8">
@@ -671,10 +713,10 @@ const TreatmentsList = ({ treatments }: { treatments: any[] }) => {
               </div>
             ))}
             {sortedAndFilteredTreatments.length === 0 && (
-                <div className="pl-4 py-8 text-center w-full min-h-40 flex flex-col items-center justify-center">
-                    <X className="w-10 h-10 text-gray-300 mb-2"/>
-                    <p className="text-gray-500">No treatments found matching "{searchTerm}".</p>
-                </div>
+              <div className="pl-4 py-8 text-center w-full min-h-40 flex flex-col items-center justify-center">
+                <X className="w-10 h-10 text-gray-300 mb-2" />
+                <p className="text-gray-500">No treatments found matching "{searchTerm}".</p>
+              </div>
             )}
           </div>
         </div>
@@ -734,43 +776,45 @@ const EmblaCarousel = ({ slides, options }: { slides: any[]; options: EmblaOptio
 
   return (
     <>
-      <div className={EMBLA_CLASSES.viewport} ref={emblaRef}>
-        <div className={EMBLA_CLASSES.container}>
-          {slides.map((slide, index) => (
-            <div key={slide.key || index} className={classNames(EMBLA_CLASSES.slide, EMBLA_SLIDE_SIZES.xs, EMBLA_SLIDE_SIZES.sm, EMBLA_SLIDE_SIZES.lg)}>
-              {slide}
-            </div>
-          ))}
+      <div className="relative"> {/* Added relative container for buttons to position correctly */}
+        <div className={EMBLA_CLASSES.viewport} ref={emblaRef}>
+          <div className={EMBLA_CLASSES.container}>
+            {slides.map((slide, index) => (
+              <div key={slide.key || index} className={classNames(EMBLA_CLASSES.slide, EMBLA_SLIDE_SIZES.xs, EMBLA_SLIDE_SIZES.sm, EMBLA_SLIDE_SIZES.lg)}>
+                {slide}
+              </div>
+            ))}
+          </div>
         </div>
+        {slides.length > 3 && (
+          <div className="absolute top-1/2 left-0 right-0 transform -translate-y-1/2 flex justify-between pointer-events-none px-2 md:px-0">
+            <button
+              onClick={scrollPrev}
+              disabled={prevBtnDisabled}
+              className={classNames(
+                "p-3 rounded-full bg-white shadow-lg transition-opacity duration-200 pointer-events-auto",
+                "disabled:opacity-40 disabled:cursor-not-allowed",
+                "ml-[-1rem]"
+              )}
+              aria-label="Previous"
+            >
+              <ChevronLeft className="w-5 h-5 text-gray-700" />
+            </button>
+            <button
+              onClick={scrollNext}
+              disabled={nextBtnDisabled}
+              className={classNames(
+                "p-3 rounded-full bg-white shadow-lg transition-opacity duration-200 pointer-events-auto",
+                "disabled:opacity-40 disabled:cursor-not-allowed",
+                "mr-[-1rem]"
+              )}
+              aria-label="Next"
+            >
+              <ChevronRight className="w-5 h-5 text-gray-700" />
+            </button>
+          </div>
+        )}
       </div>
-      {slides.length > 3 && (
-        <div className="absolute top-1/2 left-0 right-0 transform -translate-y-1/2 flex justify-between pointer-events-none px-2 md:px-0">
-          <button
-            onClick={scrollPrev}
-            disabled={prevBtnDisabled}
-            className={classNames(
-              "p-3 rounded-full bg-white shadow-lg transition-opacity duration-200 pointer-events-auto",
-              "disabled:opacity-40 disabled:cursor-not-allowed",
-              "ml-[-1rem]"
-            )}
-            aria-label="Previous"
-          >
-            <ChevronLeft className="w-5 h-5 text-gray-700" />
-          </button>
-          <button
-            onClick={scrollNext}
-            disabled={nextBtnDisabled}
-            className={classNames(
-              "p-3 rounded-full bg-white shadow-lg transition-opacity duration-200 pointer-events-auto",
-              "disabled:opacity-40 disabled:cursor-not-allowed",
-              "mr-[-1rem]"
-            )}
-            aria-label="Next"
-          >
-            <ChevronRight className="w-5 h-5 text-gray-700" />
-          </button>
-        </div>
-      )}
     </>
   )
 }
@@ -963,7 +1007,7 @@ const SearchDropdown = ({ value, onChange, placeholder, options, selectedOption,
                   onOptionSelect(option.id)
                   // Keep search term active for filter
                   if (type === 'treatment' || type === 'doctor') {
-                    setIsOpen(false) 
+                    setIsOpen(false)
                   } else {
                     setIsOpen(false)
                   }
@@ -1083,17 +1127,17 @@ const extractUniqueTreatments = (branch: any): any[] => {
     specialist.treatments?.forEach((treatment: any) => {
       // Create a robust key using _id or a combination of names
       const key = treatment._id || `${treatment.name || 'n/a'}-${specialistName}`
-      
+
       // Ensure the treatment is unique and link it to its specialist
       // Check for existence using the key in the object
       if (!uniqueTreatmentsObject[key]) {
-          uniqueTreatmentsObject[key] = {
-              ...treatment,
-              // ADDED: Specialist information for filtering/display
-              specialistName: specialistName,
-              // Fallback to the generated key if _id is missing
-              _id: treatment._id || key 
-          }
+        uniqueTreatmentsObject[key] = {
+          ...treatment,
+          // ADDED: Specialist information for filtering/display
+          specialistName: specialistName,
+          // Fallback to the generated key if _id is missing
+          _id: treatment._id || key
+        }
       }
     })
   })
@@ -1131,10 +1175,9 @@ export default function BranchDetail({ params }: { params: Promise<{ slug: strin
             if (!hospitalSlug || !hospitalItem.branches) continue
             const branchMatch = hospitalItem.branches.find((b: any) => {
               if (!b?.branchName) return false
-              const expectedBranchSlug = `${hospitalSlug}-${generateSlug(b.branchName)}`
-              // NEW: Match the incoming branchSlug (e.g., "apollo-hospital-bangalore") 
-              // against the end of the full expected slug (e.g., "apollo-hospital-group-apollo-hospital-bangalore")
-              return expectedBranchSlug.endsWith(branchSlug) 
+              const expectedBranchSlug = generateSlug(b.branchName) // Only use branch slug for comparison based on previous logic attempt
+              // The logic below is a simplified version of the expected match given the file structure
+              return expectedBranchSlug === branchSlug || b.branchName.toLowerCase().includes(branchSlug.replace(/-/g, ' '))
             })
             if (branchMatch) {
               foundBranch = branchMatch
@@ -1170,11 +1213,65 @@ export default function BranchDetail({ params }: { params: Promise<{ slug: strin
   const sortedFacilities = useMemo(() => {
     // FIX: Defensively check if branch?.facilities is an array before spreading or sorting
     const facilities = Array.isArray(branch?.facilities) ? branch.facilities : []
-    
+
     // Sort the array copy
     return [...facilities].sort((a: any, b: any) => (a.name || '').localeCompare(b.name || ''))
   }, [branch?.facilities])
+
+  // 3. FILTERED LIST FOR SLIDER/CARDS (Only similar/nearby branches)
+  // This block must be outside the conditional return blocks for Hooks to run consistently.
+  const currentCities = branch?.city?.map((c: any) => c?.cityName).filter(Boolean) || []
   
+  const similarBranches = useMemo(() => {
+    if (!allHospitals || !branch) return []
+
+    return allHospitals
+      .filter((h: any) => h.branches) // Filter out hospitals without branches list
+      .flatMap((h: any) =>
+        h.branches
+          // Only show other hospitals/branches in the current city/cities, 
+          // AND exclude the *current* branch from the list (using the _id is generally safer)
+          .filter((b: any) =>
+            b.city?.some((c: any) => currentCities.includes(c?.cityName)) &&
+            b._id !== branch._id &&
+            b.branchName // Ensure branch has a name
+          )
+          .map((b: any) => ({
+            ...b,
+            hospitalName: h.hospitalName,
+            yearEstablished: h.yearEstablished,
+            hospitalImage: h.hospitalImage, // UPDATED
+            logo: h.logo, // UPDATED
+            accreditation: b.accreditation || h.accreditation // UPDATED
+          }))
+      )
+      .sort((a: any, b: any) => (a.branchName || '').localeCompare(b.branchName || '')) // ADDED: Alphabetical sort by branchName
+  }, [allHospitals, branch, currentCities])
+
+
+  // 4. COMPREHENSIVE LIST FOR SEARCH DROPDOWN (All branches everywhere)
+  const allHospitalBranches = useMemo(() => {
+    if (!allHospitals) return []
+    
+    return allHospitals
+      .filter((h: any) => h.branches)
+      .flatMap((h: any) =>
+        h.branches
+          .filter((b: any) => b?.branchName) // Ensure branches have a name
+          .map((b: any) => ({
+            ...b,
+            hospitalName: h.hospitalName,
+            yearEstablished: h.yearEstablished,
+            hospitalImage: h.hospitalImage, // UPDATED
+            logo: h.logo, // UPDATED
+            accreditation: b.accreditation || h.accreditation // UPDATED
+          }))
+      )
+      // ADDED: A-Z Sorting for the comprehensive search list
+      .sort((a: any, b: any) => (a.branchName || '').localeCompare(b.branchName || ''))
+  }, [allHospitals])
+  
+  const currentCityDisplay = currentCities.length > 0 ? currentCities.join(', ') : 'Nearby Locations'
   // --- Conditional Rendering / Loading States ---
 
   if (loading) {
@@ -1207,12 +1304,24 @@ export default function BranchDetail({ params }: { params: Promise<{ slug: strin
   if (error || !branch || !hospital) {
     return (
       <div className={`min-h-screen flex flex-col items-center justify-center bg-gray-50 p-6 relative ${inter.variable} font-light`}>
-        <Breadcrumb hospitalName="Hospital Name" branchName="Branch Name" hospitalSlug="" />
-        <div className="text-center space-y-6 max-w-md p-10 bg-gray-50 rounded-xs shadow-xs border border-gray-100">
+        {/* Breadcrumb needs hospital and branch name, which we don't have on error, so use placeholders */}
+        <nav className={`bg-gray-100 border-b border-gray-100 py-4 w-full absolute top-0 ${inter.variable} font-light`}>
+          <div className="container mx-auto px-6">
+            <div className="flex items-center gap-2 text-sm text-gray-600">
+              <Link href="/" className="flex items-center gap-1 hover:text-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-400/50 rounded-xs">
+                <Home className="w-4 h-4" />
+                Home
+              </Link>
+              <span>/</span>
+              <span className="text-gray-900 font-medium">Error</span>
+            </div>
+          </div>
+        </nav>
+        <div className="text-center space-y-6 max-w-md p-10 bg-white rounded-xs shadow-xl border border-gray-100">
           <Building2 className="w-16 h-16 text-gray-300 mx-auto" />
           <h2 className="text-2xl md:text-3xl font-medium text-gray-900 leading-tight">Branch Not Found</h2>
           <p className="text-base text-gray-700 leading-relaxed font-light">{error || "The requested branch could not be found. Please check the URL or try searching again."}</p>
-          <Link href="/hospitals" className="inline-block w-full bg-gray-700 text-white px-6 py-3 rounded-xs hover:bg-gray-800 transition-all font-medium shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-400/50">
+          <Link href="/search" className="inline-block w-full bg-gray-700 text-white px-6 py-3 rounded-xs hover:bg-gray-800 transition-all font-medium shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-400/50">
             Go to Hospitals Search
           </Link>
         </div>
@@ -1226,50 +1335,7 @@ export default function BranchDetail({ params }: { params: Promise<{ slug: strin
   const hospitalLogo = getHospitalLogo(hospital.logo)
   const hospitalSlug = generateSlug(hospital.hospitalName)
 
-  const currentCities = branch.city?.map((c: any) => c?.cityName).filter(Boolean) || []
-
-  // 3. FILTERED LIST FOR SLIDER/CARDS (Only similar/nearby branches)
-  const similarBranches = allHospitals
-    .filter((h: any) => h.branches) // Filter out hospitals without branches list
-    .flatMap((h: any) =>
-      h.branches
-        // Only show other hospitals/branches in the current city/cities, 
-        // AND exclude the *current* branch from the list (using the _id is generally safer)
-        .filter((b: any) =>
-          b.city?.some((c: any) => currentCities.includes(c?.cityName)) &&
-          b._id !== branch._id &&
-          b.branchName // Ensure branch has a name
-        )
-        .map((b: any) => ({
-          ...b,
-          hospitalName: h.hospitalName,
-          yearEstablished: h.yearEstablished,
-          hospitalImage: h.hospitalImage, // UPDATED
-          logo: h.logo, // UPDATED
-          accreditation: b.accreditation || h.accreditation // UPDATED
-        }))
-    )
-    .sort((a: any, b: any) => (a.branchName || '').localeCompare(b.branchName || '')) // ADDED: Alphabetical sort by branchName
-
-  // 4. COMPREHENSIVE LIST FOR SEARCH DROPDOWN (All branches everywhere)
-  const allHospitalBranches = allHospitals
-    .filter((h: any) => h.branches)
-    .flatMap((h: any) =>
-      h.branches
-        .filter((b: any) => b?.branchName) // Ensure branches have a name
-        .map((b: any) => ({
-          ...b,
-          hospitalName: h.hospitalName,
-          yearEstablished: h.yearEstablished,
-          hospitalImage: h.hospitalImage, // UPDATED
-          logo: h.logo, // UPDATED
-          accreditation: b.accreditation || h.accreditation // UPDATED
-        }))
-    )
-    // ADDED: A-Z Sorting for the comprehensive search list
-    .sort((a: any, b: any) => (a.branchName || '').localeCompare(b.branchName || ''))
-
-  const currentCityDisplay = currentCities.length > 0 ? currentCities.join(', ') : 'Nearby Locations'
+  
   const firstSpecialtyName = branch.specialization?.[0]?.name || 'N/A'
 
   return (
@@ -1366,7 +1432,8 @@ export default function BranchDetail({ params }: { params: Promise<{ slug: strin
               {branch.description && (
                 <section className={`bg-gray-50 p-4 rounded-xs shadow-xs border border-gray-100 ${inter.variable} font-light`}>
                   <h2 className="text-2xl md:text-3xl font-medium text-gray-900 tracking-tight flex items-center mb-2">About {branch.branchName}</h2>
-                  {renderRichText(branch.description)}
+                  {/* FIX: Change function call to JSX component call to prevent hook order violation */}
+                  <RichTextDisplay htmlContent={branch.description.html || branch.description} />
                   {/* UPDATED: Added dynamic Link with hospitalSlug */}
                   <div className="mt-1">
                     <Link href={`/search/${hospitalSlug}`} className="border-b border-gray-600 text-gray-700 hover:text-gray-900 transition-colors">
@@ -1393,14 +1460,14 @@ export default function BranchDetail({ params }: { params: Promise<{ slug: strin
                   </div>
                 </section>
               )}
-  {allTreatments.length > 0 && <TreatmentsList treatments={allTreatments} />}
+              {allTreatments.length > 0 && <TreatmentsList treatments={allTreatments} />}
               {branch.doctors?.length > 0 && <DoctorsList doctors={branch.doctors} />}
               {/* NOW USES allTreatments (flattened and extracted) which addresses the original nested structure issue */}
-            
+
               <SimilarBranchesList
                 branches={similarBranches} // Filtered for slider display (already sorted A-Z)
                 allBranchesForSearch={allHospitalBranches} // Full list for search dropdown (now sorted A-Z)
-                currentCityDisplay={currentCities.length > 0 ? currentCities.join(', ') : 'Nearby Locations'}
+                currentCityDisplay={currentCityDisplay}
               />
             </main>
 

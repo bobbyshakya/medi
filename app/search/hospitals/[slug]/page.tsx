@@ -260,7 +260,7 @@ const SpecialtiesList = ({ specialties }: { specialties: any[] }) => {
 
 // BranchCard (UPDATED: Redesigned to match the provided image: hospital image top, accreditation badge top right, small logo bottom left, title as hospital + branch, subtitle city + specialty, blue stats boxes)
 const BranchCard = ({ data }: { data: any }) => {
-  const { branchName, city, specialization, noOfDoctors, totalBeds, hospitalName, yearEstablished, hospitalImage, accreditation, logo } = data;
+  const { branchName, city, specialization, noOfDoctors, totalBeds, hospitalName, yearEstablished, branchImage, accreditation, logo } = data;
   const firstCity = city?.[0]?.cityName || 'N/A'
   const firstSpecialty = specialization?.[0]?.name || 'Multi Speciality'
   // UPDATED: Use only branchName slug for the URL
@@ -268,7 +268,7 @@ const BranchCard = ({ data }: { data: any }) => {
   const doctorsCount = noOfDoctors || 0
   const bedsCount = totalBeds || 0
   const estdYear = yearEstablished || 'N/A'
-  const hospitalImg = getHospitalImage(hospitalImage)
+  const hospitalImg = getHospitalImage(branchImage)
   const hospitalLogo = getHospitalLogo(logo)
   const accImage = accreditation?.[0] ? getWixImageUrl(accreditation[0].image) : null
 
@@ -294,7 +294,7 @@ const BranchCard = ({ data }: { data: any }) => {
             <img
               src={accImage}
               alt="Accreditation badge"
-              className="w-10 h-10 object-contain rounded-full shadow-lg"
+              className="w-7 h-7 object-contain rounded-full shadow-lg"
               onError={(e) => { e.currentTarget.style.display = "none" }}
             />
           </div>

@@ -135,11 +135,11 @@ body {
   @apply text-xl md:text-2xl font-semibold text-[#241d1f] leading-tight;
 }
 
-/* .bg-banner {
+.bg-banner {
   background-image: url('/bannner.jpg');
   background-size: cover;
   background-position: center;
-} */
+}
 
 .bg-shadow-1 {
   background: #000;

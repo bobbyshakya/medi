@@ -513,7 +513,7 @@ const BranchCard = ({ branch }: { branch: any }) => {
             <img
               src={accImage}
               alt="Accreditation badge"
-              className="w-10 h-10 object-contain rounded-full shadow-lg"
+              className="w-7 h-7 object-contain rounded-full shadow-lg"
               onError={(e) => { e.currentTarget.style.display = "none" }}
             />
           </div>

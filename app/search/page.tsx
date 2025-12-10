@@ -1505,8 +1505,8 @@ const HospitalCard = ({ branch }: { branch: BranchType & { hospitalName: string;
         </div>
 
         <div className="p-3 flex-1 flex flex-col space-y-2">
-          <header className="space-y-1">
-            <h2 className="md:text-lg text-2xl font-medium leading-tight line-clamp-2 text-gray-900 group-hover:text-gray-800 transition-colors">
+          <header className="space-y-1 md:h-16">
+            <h2 className="md:text-lg text-2xl  font-medium leading-tight line-clamp-2 text-gray-900 group-hover:text-gray-800 transition-colors">
               {branch.branchName}
             </h2>
             <div className="flex items-center text-lg md:text-sm text-gray-700 font-normal">
@@ -1637,7 +1637,7 @@ const DoctorCard = ({ doctor }: { doctor: ExtendedDoctorType }) => {
            
           </header>
 
-          <div className="space-y-2 flex gap-x-2">
+          <div className="flex gap-x-2">
              <p className=" text-base md:text-sm text-gray-900 font-normal flex items-center gap-2 line-clamp-1">
               {specializationDisplay} {/* --- UPDATED SPECIALIST DISPLAY --- */}
             </p>

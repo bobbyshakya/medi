@@ -1391,9 +1391,9 @@ export default function DoctorDetail({ params }: { params: Promise<{ slug: strin
       <div className={`min-h-screen bg-white ${inter.variable} font-light`}>
         <HeroSkeleton />
         <Breadcrumb doctorName="Doctor Name" />
-        <section className="py-10 relative z-10">
+        <section className="py-10 w-full relative z-10">
           <div className="container mx-auto px-6">
-            <div className="grid lg:grid-cols-12 gap-8">
+            <div className="md:grid lg:grid-cols-12 gap-8">
               <main className="lg:col-span-9 space-y-4">
                 <AboutSkeleton />
                 <CarouselSkeleton type="treatments" />
@@ -1432,99 +1432,157 @@ export default function DoctorDetail({ params }: { params: Promise<{ slug: strin
   return (
     <div className={`min-h-screen bg-white ${inter.variable} font-light`}>
 
-      <section className="relative w-full h-[70vh] bg-gradient-to-br from-gray-50 to-white overflow-hidden">
+    <section className="relative w-full min-h-[85vh] overflow-hidden bg-white">
 
-        <div className="absolute inset-0 opacity-30">
-          <div className="absolute inset-0 bg-[linear-gradient(rgba(0,0,0,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(0,0,0,0.05)_1px,transparent_1px)] bg-[size:40px_40px]" />
+  {/* MOBILE FULL BACKGROUND IMAGE */}
+  {doctorImage && (
+    <div className="absolute inset-0 md:hidden">
+      <img
+        src={doctorImage}
+        alt={doctor.doctorName}
+        className="w-full h-full object-cover object-top"
+      />
+
+      {/* Mobile gradient for readability */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
+    </div>
+  )}
+
+  {/* DESKTOP RIGHT-SIDE IMAGE */}
+  {doctorImage && (
+    <div className="hidden md:block absolute right-0 top-0 w-[50%] h-full">
+      <div className="relative w-full h-full">
+        <div className="absolute inset-0 bg-white rounded-l-lg shadow-lg overflow-hidden border border-gray-100">
+          <img
+            src={doctorImage}
+            alt={doctor.doctorName}
+            className="w-full h-full object-cover"
+            onError={(e) => (e.currentTarget.style.display = "none")}
+          />
         </div>
 
-        {doctorImage && (
-          <div className="absolute right-0 top-1/2 -translate-y-1/2 w-[50%] h-full">
-            <div className="relative w-full h-full">
-              <div className="absolute inset-0 bg-white rounded-l-xs shadow-xs overflow-hidden border border-gray-100">
-                <img
-                  src={doctorImage}
-                  alt={doctor.doctorName}
-                  className="w-full h-full object-cover transform hover:scale-105 transition-transform duration-500"
-                  onError={(e) => (e.currentTarget.style.display = "none")}
-                />
-              </div>
-
-              <div className="absolute left-5 bottom-5 bg-white shadow-xs border border-gray-100 text-gray-800 px-4 py-2 rounded-xs">
-                <div className="flex items-center gap-2 text-sm">
-                  <Award className="w-4 h-4 text-green-600" />
-                  Verified Professional
-                </div>
-              </div>
-            </div>
+        {/* Verified Badge */}
+        <div className="absolute left-5 bottom-5 bg-white shadow-md border border-gray-100 text-gray-800 px-4 py-2 rounded-md">
+          <div className="flex items-center gap-2 text-sm">
+            <Award className="w-4 h-4 text-green-600" />
+            Verified Professional
           </div>
-        )}
+        </div>
+      </div>
+    </div>
+  )}
 
-        <div className="relative z-10 flex items-end h-full">
-          <div className="container mx-auto w-full">
+  {/* MAIN CONTENT */}
+  <div className="
+      relative z-10 
+      flex h-full 
+      items-end md:items-center
+    "
+  >
+    <div className="container mx-auto w-full px-5 md:px-0">
 
-            <div className="space-y-8">
-              <div className="flex items-center mb-10 gap-3">
-                <div className="relative">
-                  <div className="w-30 h-30 bg-white rounded-xs shadow-xs border border-gray-100 p-1">
-                    {doctorImage ? (
-                      <img
-                        src={doctorImage}
-                        alt={`${doctor.doctorName} profile`}
-                        className="rounded-xs object-cover w-full h-full"
-                        onError={(e) => (e.currentTarget.style.display = "none")}
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-gray-100 rounded-xs">
-                        <Stethoscope className="w-8 h-8 text-gray-400" />
-                      </div>
-                    )}
-                  </div>
-                </div>
+      {/* WRAPPER — text stays at bottom */}
+      <div
+        className="
+          w-full 
+          max-w-xl 
+          pb-12 md:pb-0 
+          space-y-6 md:space-y-10
 
-                <div className="space-y-1 mb-0">
-                  <h1 className="text-4xl font-bold text-gray-900 leading-tight">
-                    Dr. {doctor.doctorName}
-                  </h1>
+          /* MOBILE bottom alignment */
+          md:relative md:bottom-auto
+        "
+      >
 
-                  <div className="flex flex-wrap gap-x-1">
-                    {specializationDisplay.slice(0, 4).map((spec: any) => (
-                      <span
-                        key={spec._id}
-                        className=" text-gray-700 text-sm "
-                      >
-                        {spec.name},
-                      </span>
-                    ))}
-                    {specializationDisplay.length > 4 && (
-                      <span className="text-gray-700 text-sm">
-                        +{specializationDisplay.length - 4} more
-                      </span>
-                    )}
-                    <div className="text-gray-700 text-sm">
+        {/* TOP ROW — DOCTOR IMAGE + TEXT */}
+        <div
+          className="
+            flex gap-4 md:gap-6 items-center
 
-                      {doctor.experienceYears || '5'}+ Years Experience
-                    </div>
-                  </div>
-                  <h2 className="text-sm text-gray-700 font-medium">
-                    {doctor.qualification || 'MBBS, MD'}
-                  </h2>
-                </div>
+            /* MOBILE text color & bottom look */
+            text-white md:text-gray-900
+          "
+        >
+
+          {/* SMALL PROFILE PICTURE */}
+          <div
+            className="
+              w-20 h-20 md:w-28 md:h-28
+              bg-white/90 md:bg-white
+              backdrop-blur-md
+              rounded-lg shadow-lg border border-gray-100 p-1
+              flex-shrink-0
+            "
+          >
+            {doctorImage ? (
+              <img
+                src={doctorImage}
+                alt="doctor-profile"
+                className="rounded-lg object-cover w-full h-full"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center bg-gray-100 rounded-lg">
+                <Stethoscope className="w-8 h-8 text-gray-400" />
               </div>
+            )}
+          </div>
 
+          {/* TEXT CONTENT */}
+          <div className="space-y-1 md:space-y-3">
+
+            {/* NAME */}
+            <h1 className="text-3xl md:text-4xl font-semibold leading-tight">
+              Dr. {doctor.doctorName}
+            </h1>
+
+            {/* SPECIALIZATIONS + EXPERIENCE */}
+            <div className="flex flex-wrap gap-1 md:gap-2 text-sm md:text-base">
+
+              {specializationDisplay.slice(0, 3).map((spec: any) => (
+                <span key={spec._id}>{spec.name},</span>
+              ))}
+
+              {specializationDisplay.length > 3 && (
+                <span>+{specializationDisplay.length - 3} more</span>
+              )}
+
+              <span className="font-medium">• {doctor.experienceYears || "5"}+ yrs exp.</span>
             </div>
+
+            {/* QUALIFICATION */}
+            <h2 className="text-sm md:text-lg opacity-90">
+              {doctor.qualification || "MBBS, MD"}
+            </h2>
           </div>
         </div>
 
-        <div className="absolute bottom-0 left-0 w-full h-1 bg-gray-200 " />
+        {/* MOBILE BADGES */}
+        <div className="md:hidden flex gap-3 pt-2">
+          <span className="px-4 py-2 bg-white/90 backdrop-blur-md rounded-md text-[13px] text-gray-900 shadow-md border border-gray-200">
+            <Award className="w-4 h-4 inline-block text-green-600 mr-1" />
+            Verified
+          </span>
 
-      </section>
+          <span className="px-4 py-2 bg-white/90 backdrop-blur-md rounded-md text-[13px] text-gray-900 shadow-md border border-gray-200">
+            Trusted Doctor
+          </span>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  {/* Bottom Divider (Desktop Only) */}
+  <div className="hidden md:block absolute bottom-0 left-0 w-full h-[2px] bg-gray-200" />
+
+</section>
+
 
       <Breadcrumb doctorName={doctor.doctorName} />
 
-      <section className="py-10 relative z-10">
+      <section className="py-10 w-full relative z-10">
         <div className="container mx-auto px-6">
-          <div className="grid lg:grid-cols-12 gap-8">
+          <div className="md:grid lg:grid-cols-12 gap-8">
             <main className="lg:col-span-9 space-y-4">
               {doctor.aboutDoctor && (
                 <section className={`bg-gray-50 p-5 rounded-xs shadow-xs border border-gray-100 ${inter.variable} font-light`}>

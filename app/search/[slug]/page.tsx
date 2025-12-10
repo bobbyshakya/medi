@@ -182,7 +182,7 @@ const AccreditationPill = ({ acc, logoOnly = false }: { acc: AccreditationType, 
     // Logo-only design for Hero Section (Top Right)
     return (
       <div
-        className="w-10 h-10 bg-white p-1 rounded-full shadow-lg flex items-center justify-center border border-gray-100 transition-transform hover:scale-110 tooltip"
+        className="w-10 h-10 m-2 bg-white p-1 rounded-full shadow-lg flex items-center justify-center border border-gray-100 transition-transform hover:scale-110 tooltip"
         title={acc.title}
         aria-label={`Accreditation: ${acc.title}`}
       >
@@ -246,8 +246,8 @@ const HeroSection = ({ hospital, accreditations }: { hospital: HospitalWithBranc
       <div className="absolute top-4 left-6 right-6 z-10 flex justify-end items-start container mx-auto">
         {/* Accreditation Badges */}
         {accreditations.length > 0 && (
-          <div className="flex flex-col items-end gap-2 p-3">
-            <div className="flex flex-wrap justify-end gap-2">
+          <div className="md:flex flex-col items-end gap-2 p-3">
+            <div className="md:flex flex-wrap justify-end gap-2">
               {/* Using logoOnly=true and displaying up to 5 unique accreditations */}
               {accreditations.slice(0, 5).map((acc: AccreditationType) => (
                 <AccreditationPill key={acc._id} acc={acc} logoOnly={true} />
@@ -278,10 +278,10 @@ const HeroSection = ({ hospital, accreditations }: { hospital: HospitalWithBranc
           )}
           <div className="pt-1">
             {/* MODIFIED: Changed font size/weight to better match original code/modern aesthetic */}
-            <h1 className={`text-3xl md:text-5xl font-extrabold text-white leading-tight drop-shadow-2xl  font-serif`}>
+            <h1 className={`text-3xl md:text-5xl font-semibold text-white leading-tight drop-shadow-2xl  `}>
               {hospital.hospitalName}
             </h1>
-            <div className="flex flex-wrap items-center gap-x-6 gap-y-2 mt-2">
+            <div className="flex flex-wrap items-center gap-x-6 gap-y-2 mt-1">
               {/* {hospital.city && (
                 <div className={`flex items-center gap-2 text-xl font-medium text-gray-200 drop-shadow-lg`}>
                   <MapPin className="w-5 h-5 text-red-400" />

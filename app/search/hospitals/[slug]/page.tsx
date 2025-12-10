@@ -1373,7 +1373,7 @@ export default function BranchDetail({ params }: { params: Promise<{ slug: strin
         )}
         <div className="absolute bottom-0 left-0 right-0 z-10 md:pb-12 pb-5 text-white">
           <div className="container mx-auto md:px-6 space-y-3">
-            <div className="md:flex gap-x-4 items-center">
+            <div className="md:flex md:gap-x-4 items-center">
               {hospitalLogo && (
                 <div className="relative w-16 h-auto md:h-16 bg-white md:rounded-full p-2 shadow-lg flex-shrink-0">
                   <img
@@ -1384,7 +1384,7 @@ export default function BranchDetail({ params }: { params: Promise<{ slug: strin
                   />
                 </div>
               )}
-              <div className="flex-1">
+              <div className="flex-1 mt-3 md:mt-0">
                 <h1 className="text-2xl md:text-4xl font-medium text-white mb-1 leading-tight">{branch.branchName}</h1>
                 <div className="flex flex-wrap gap-x-2 mt-0 text-lg md:text-white/80">
                   {branch.specialization?.slice(0, 3).map((spec: any) => <span key={spec._id}>{spec.name} Speciality</span>)}
@@ -1395,7 +1395,7 @@ export default function BranchDetail({ params }: { params: Promise<{ slug: strin
             <div className="flex flex-wrap md:ml-5 gap-3 mt-2">
               {branch.address && (
                 <span className="flex items-center gap-2 text-lg md:text-sm md:text-white/90">
-                  <div className="md:w-4 w-5 h-5 md:h-4" >
+                  <div className="md:w-4 md:block hidden w-5 h-5 md:h-4" >
                     <MapPin className="md:w-4 w-8 h-8 md:h-4" />
                   </div>
                   <div className="ml-2">

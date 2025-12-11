@@ -364,7 +364,7 @@ export default function ContactForm() {
             ))}
         </div>
 
-        <div className="p-6">
+        <div className="md:p-6 p-2">
           <form onSubmit={onSubmit} className="space-y-4" noValidate>
             <div className="grid gap-4">
               <Input name="name" value={form.name} onChange={onChange} placeholder="Enter Your Full Name" required />

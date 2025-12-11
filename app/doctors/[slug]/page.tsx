@@ -48,14 +48,15 @@ const inter = Inter({
 
 const EMBLA_CLASSES = {
   container: "embla__container flex touch-pan-y", // REMOVED ml-[-1rem]
-  slide: "embla__slide flex-[0_0_auto] min-w-0 pl-4",
+  slide: "embla__slide flex-[0_0_auto] min-w-0 md:pl-4",
   viewport: "overflow-hidden"
 }
 
 const EMBLA_SLIDE_SIZES = {
-  xs: "w-full",
-  sm: "sm:w-1/2",
-  lg: "lg:w-1/3",
+  // MODIFIED: 'xs' (mobile) now always takes w-full, which means one card per view
+  xs: "w-full", // Mobile: 1 card per view
+  sm: "sm:w-1/2", // Small devices: 2 cards per view (original)
+  lg: "lg:w-1/3", // Large devices: 3 cards per view (original)
 }
 
 const getWixImageUrl = (imageStr: string | null | undefined): string | null => {
@@ -382,11 +383,11 @@ const Breadcrumb = ({ doctorName }: { doctorName: string }) => (
           <Home className="w-4 h-4" />
           Home
         </Link>
-         <ChevronRightIcon className="w-4 h-4" aria-hidden />
+        <ChevronRightIcon className="w-4 h-4" aria-hidden />
         <Link href="/search?view=doctors" className="hover:text-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-400/50 rounded-xs">
           Doctors
         </Link>
-         <ChevronRightIcon className="w-4 h-4" aria-hidden />
+        <ChevronRightIcon className="w-4 h-4" aria-hidden />
         <span className="text-gray-900 font-medium">{doctorName}</span>
       </div>
     </div>
@@ -424,9 +425,9 @@ const DoctorCard = ({ doctor }: { doctor: any }) => {
         )}
       </div>
       <div className={`p-3 flex-1 flex flex-col ${inter.variable} font-light`}>
-        <h3 className="text-base font-medium text-gray-900 leading-tight mb-1 line-clamp-1">{doctor.doctorName}</h3>
+        <h3 className="md:text-base text-2xl font-medium text-gray-900 leading-tight mb-1 line-clamp-1">{doctor.doctorName}</h3>
         <div className="gap-1">
-          <p className="text-gray-800 text-sm flex items-center">{specializationDisplay},</p>
+          <p className="text-gray-800 text-base md:text-sm flex items-center">{specializationDisplay},</p>
           {doctor.experienceYears && (
             <p className="text-gray-800 text-sm flex items-center">
               {doctor.experienceYears} years of exp
@@ -532,25 +533,25 @@ const BranchCard = ({ branch }: { branch: any }) => {
 
       <div className={`p-3 flex-1 flex flex-col justify-between ${inter.variable} font-light relative`}>
         <div className="mb-1">
-          <h3 className="text-base font-medium text-gray-900 leading-tight">{branchNameDisplay}</h3>
+          <h3 className="md:text-base text-2xl font-medium text-gray-900 leading-tight">{branchNameDisplay}</h3>
         </div>
 
         <div className="mb-2">
-          <p className="text-sm text-gray-600">{`${firstCityName}, ${firstSpecialty} Speciality`}</p>
+          <p className="text-base md:text-sm text-gray-600">{`${firstCityName}, ${firstSpecialty} Speciality`}</p>
         </div>
 
         <div className="grid grid-cols-3 gap-2">
           <div className="text-center p-2 bg-gray-50 rounded-xs border border-gray-100">
-            <p className="text-sm font-medium text-gray-700">{doctorsCount}+</p>
-            <p className="text-sm text-gray-700">Doctors</p>
+            <p className="text-base md:text-sm font-medium text-gray-700">{doctorsCount}+</p>
+            <p className="text-base md:text-sm text-gray-700">Doctors</p>
           </div>
           <div className="text-center p-2 bg-gray-50 rounded-xs border border-gray-100">
-            <p className="text-sm font-medium text-gray-700">{bedsCount}+</p>
-            <p className="text-sm text-gray-700">Beds</p>
+            <p className="text-base md:text-sm font-medium text-gray-700">{bedsCount}+</p>
+            <p className="text-base md:text-sm text-gray-700">Beds</p>
           </div>
           <div className="text-center p-2 bg-gray-50 rounded-xs border border-gray-100">
-            <p className="text-sm font-medium text-gray-700">{estdYear}</p>
-            <p className="text-sm text-gray-700">Est.</p>
+            <p className="text-base md:text-sm font-medium text-gray-700">{estdYear}</p>
+            <p className="text-base md:text-sm text-gray-700">Est.</p>
           </div>
         </div>
       </div>
@@ -591,19 +592,22 @@ const PrimarySpecialtyAndTreatments = ({
 
   if (relatedTreatments.length === 0) return null
 
+  // MODIFIED: Use EMBLA_SLIDE_SIZES.xs (w-full) for mobile, sm:w-1/2 for small, and lg:w-1/3 for large.
+  const slideSizeClasses = `${EMBLA_SLIDE_SIZES.xs} ${EMBLA_SLIDE_SIZES.sm} ${EMBLA_SLIDE_SIZES.lg}`;
+
   return (
     <section className={`bg-gray-50 rounded-xs shadow-xs border border-gray-100 ${inter.variable} font-light`}>
-      <div className="px-4 pt-4">
-        <h2 className="text-2xl md:text-xl font-medium text-gray-900 ml-4 tracking-tight mb-3 flex items-center gap-3">
-       
+      <div className="md:px-4 px-2 pt-4">
+        <h2 className="text-2xl md:text-xl font-medium text-gray-900 md:ml-4 tracking-tight mb-3 flex items-center gap-3">
+
           Primary Specialties &amp; Treatments ({relatedTreatments.length})
         </h2>
       </div>
-      <div className="relative px-4 pb-8">
+      <div className="relative px-2 md:px-4 pb-8">
         <div className={EMBLA_CLASSES.viewport} ref={emblaRef}>
           <div className={EMBLA_CLASSES.container}>
             {relatedTreatments.map((item: any, index: number) => (
-              <div key={item._id || index} className={`${EMBLA_CLASSES.slide} ${EMBLA_SLIDE_SIZES.lg}`}>
+              <div key={item._id || index} className={`${EMBLA_CLASSES.slide} ${slideSizeClasses}`}>
                 <TreatmentCard item={item} />
               </div>
             ))}
@@ -613,7 +617,7 @@ const PrimarySpecialtyAndTreatments = ({
           <div className="absolute top-1/2 left-0 right-0 transform -translate-y-1/2 flex justify-between pointer-events-none px-6"> {/* Changed px-2 md:px-0 to px-6 */}
             <button
               onClick={scrollPrev}
-           
+
               className={classNames(
                 "p-3 rounded-full bg-white shadow-lg transition-opacity duration-200 pointer-events-auto",
                 "disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer",
@@ -625,7 +629,7 @@ const PrimarySpecialtyAndTreatments = ({
             </button>
             <button
               onClick={scrollNext}
-        
+
               className={classNames(
                 "p-3 rounded-full bg-white shadow-lg transition-opacity duration-200 pointer-events-auto",
                 "disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer",
@@ -716,7 +720,7 @@ const AffiliatedBranchesList = ({
   if (filteredBranches.length === 0) {
     return (
       <section className={`bg-gray-50 p-4 rounded-xs shadow-xs border border-gray-100 text-center ${inter.variable} font-light`}>
-        <div className="px-4 pt-4">
+        <div className="md:px-4 px-2 pt-4">
           <h2 className="text-2xl md:text-xl font-medium text-gray-900 ml-4 tracking-tight mb-6 flex items-center gap-3 justify-center">
             <Building2 className="w-7 h-7" />
             Affiliated Branches
@@ -728,19 +732,22 @@ const AffiliatedBranchesList = ({
     )
   }
 
+  // MODIFIED: Use EMBLA_SLIDE_SIZES.xs (w-full) for mobile, sm:w-1/2 for small, and lg:w-1/3 for large.
+  const slideSizeClasses = `${EMBLA_SLIDE_SIZES.xs} ${EMBLA_SLIDE_SIZES.sm} ${EMBLA_SLIDE_SIZES.lg}`;
+
   return (
     <section className={`bg-gray-50 rounded-xs shadow-xs border border-gray-100 ${inter.variable} font-light`}>
-      <div className="px-4 pt-4">
-        <h2 className="text-2xl md:text-xl font-medium text-gray-900 ml-4 mb-3 tracking-tight flex items-center gap-3">
+      <div className="md:px-4 px-2 pt-4">
+        <h2 className="text-2xl md:text-xl font-medium text-gray-900 md:ml-4 mb-3 tracking-tight flex items-center gap-3">
 
           Affiliated Branches ({filteredBranches.length})
         </h2>
       </div>
-      <div className="relative px-4 pb-8">
+      <div className="relative px-2 md:px-4 pb-8">
         <div className={EMBLA_CLASSES.viewport} ref={emblaRef}>
           <div className={EMBLA_CLASSES.container}>
             {filteredBranches.map((branch: any, index: number) => (
-              <div key={branch._id || index} className={`${EMBLA_CLASSES.slide} ${EMBLA_SLIDE_SIZES.lg}`}>
+              <div key={branch._id || index} className={`${EMBLA_CLASSES.slide} ${slideSizeClasses}`}>
                 <BranchCard branch={branch} />
               </div>
             ))}
@@ -894,7 +901,7 @@ const SimilarDoctorsList = ({
 
     // 1. Append the selected city (id is the cityName, which should be in lowercase for the URL)
     url += `&city=${encodeURIComponent(id.toLowerCase())}`
-    
+
     // 2. Append the current doctor's primary specialization (specializationQuery prop)
     if (specializationQuery) {
       // specializationQuery now holds the specialization slug (e.g., 'cardiologist')
@@ -926,7 +933,7 @@ const SimilarDoctorsList = ({
   if (filteredDoctors.length === 0) {
     return (
       <section className={`bg-gray-50 p-4 rounded-xs shadow-xs border border-gray-100 text-center ${inter.variable} font-light`}>
-        <div className="px-4 pt-4">
+        <div className="md:px-4 px-2 pt-4">
           <h2 className="text-2xl md:text-xl font-medium text-gray-900 ml-4 tracking-tight mb-6 flex items-center gap-3 justify-center">
             <Users className="w-7 h-7" />
             Similar Doctors
@@ -938,12 +945,15 @@ const SimilarDoctorsList = ({
     )
   }
 
+  // MODIFIED: Use EMBLA_SLIDE_SIZES.xs (w-full) for mobile, sm:w-1/2 for small, and lg:w-1/3 for large.
+  const slideSizeClasses = `${EMBLA_SLIDE_SIZES.xs} ${EMBLA_SLIDE_SIZES.sm} ${EMBLA_SLIDE_SIZES.lg}`;
+
   return (
     <section className={`bg-gray-50 rounded-xs shadow-xs border border-gray-100 ${inter.variable} font-light`}>
-      <div className="px-4 pt-4">
+      <div className="md:px-4 px-2 pt-4">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-3">
-          <h2 className="text-2xl md:text-xl font-medium text-gray-900 ml-4 tracking-tight flex items-center gap-3 flex-1">
-    
+          <h2 className="text-2xl md:text-xl font-medium text-gray-900 md:ml-4 tracking-tight flex items-center gap-3 flex-1">
+
             Similar Doctors ({filteredDoctors.length})
           </h2>
           <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto"> {/* Added flex container for filters */}
@@ -974,11 +984,11 @@ const SimilarDoctorsList = ({
           </div>
         </div>
       </div>
-      <div className="relative px-4 pb-8">
+      <div className="relative px-2 md:px-4 pb-8">
         <div className={EMBLA_CLASSES.viewport} ref={emblaRef}>
           <div className={EMBLA_CLASSES.container}>
             {filteredDoctors.map((doctor: any, index: number) => (
-              <div key={doctor.baseId || index} className={`${EMBLA_CLASSES.slide} ${EMBLA_SLIDE_SIZES.lg}`}>
+              <div key={doctor.baseId || index} className={`${EMBLA_CLASSES.slide} ${slideSizeClasses}`}>
                 <DoctorCard doctor={doctor} />
               </div>
             ))}
@@ -1219,7 +1229,7 @@ export default function DoctorDetail({ params }: { params: Promise<{ slug: strin
   const primarySpecializationQueryValue = useMemo(() => {
     if (!specializationDisplay.length) return '';
     const primarySpec = specializationDisplay[0];
-    
+
     // Always return the proper name (slugified) for a cleaner, human-readable URL parameter.
     return generateSlug(primarySpec.name);
   }, [specializationDisplay]);
@@ -1432,150 +1442,135 @@ export default function DoctorDetail({ params }: { params: Promise<{ slug: strin
   return (
     <div className={`min-h-screen bg-white ${inter.variable} font-light`}>
 
-    <section className="relative w-full min-h-[85vh] overflow-hidden bg-white">
+      <section className="relative w-full md:min-h-[85vh] min-h-[55vh] overflow-hidden bg-white">
 
-  {/* MOBILE FULL BACKGROUND IMAGE */}
-  {doctorImage && (
-    <div className="absolute inset-0 md:hidden">
-      <img
-        src={doctorImage}
-        alt={doctor.doctorName}
-        className="w-full h-full object-cover object-top"
-      />
+        {/* MOBILE FULL BACKGROUND IMAGE */}
+        {doctorImage && (
+          <div className="absolute inset-0 md:hidden">
+            <img
+              src={doctorImage}
+              alt={doctor.doctorName}
+              className="w-full h-full object-cover object-top"
+            />
 
-      {/* Mobile gradient for readability */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
-    </div>
-  )}
-
-  {/* DESKTOP RIGHT-SIDE IMAGE */}
-  {doctorImage && (
-    <div className="hidden md:block absolute right-0 top-0 w-[50%] h-full">
-      <div className="relative w-full h-full">
-        <div className="absolute inset-0 bg-white rounded-l-lg shadow-lg overflow-hidden border border-gray-100">
-          <img
-            src={doctorImage}
-            alt={doctor.doctorName}
-            className="w-full h-full object-cover"
-            onError={(e) => (e.currentTarget.style.display = "none")}
-          />
-        </div>
-
-        {/* Verified Badge */}
-        <div className="absolute left-5 bottom-5 bg-white shadow-md border border-gray-100 text-gray-800 px-4 py-2 rounded-md">
-          <div className="flex items-center gap-2 text-sm">
-            <Award className="w-4 h-4 text-green-600" />
-            Verified Professional
+            {/* Mobile gradient for readability */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
           </div>
-        </div>
-      </div>
-    </div>
-  )}
+        )}
 
-  {/* MAIN CONTENT */}
-  <div className="
-      relative z-10 
-      flex h-full 
-      items-end md:items-center
-    "
-  >
-    <div className="container mx-auto w-full px-5 md:px-0">
-
-      {/* WRAPPER — text stays at bottom */}
-      <div
-        className="
-          w-full 
-          max-w-xl 
-          pb-12 md:pb-0 
-          space-y-6 md:space-y-10
-
-          /* MOBILE bottom alignment */
-          md:relative md:bottom-auto
-        "
-      >
-
-        {/* TOP ROW — DOCTOR IMAGE + TEXT */}
-        <div
-          className="
-            flex gap-4 md:gap-6 items-center
-
-            /* MOBILE text color & bottom look */
-            text-white md:text-gray-900
-          "
-        >
-
-          {/* SMALL PROFILE PICTURE */}
-          <div
-            className="
-              w-20 h-20 md:w-28 md:h-28
-              bg-white/90 md:bg-white
-              backdrop-blur-md
-              rounded-lg shadow-lg border border-gray-100 p-1
-              flex-shrink-0
-            "
-          >
-            {doctorImage ? (
-              <img
-                src={doctorImage}
-                alt="doctor-profile"
-                className="rounded-lg object-cover w-full h-full"
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center bg-gray-100 rounded-lg">
-                <Stethoscope className="w-8 h-8 text-gray-400" />
+        {/* DESKTOP RIGHT-SIDE IMAGE */}
+        {doctorImage && (
+          <div className="hidden md:block absolute right-0 top-0 w-[50%] h-full">
+            <div className="relative w-full h-full">
+              <div className="absolute inset-0 bg-white rounded-l-lg shadow-lg overflow-hidden border border-gray-100">
+                <img
+                  src={doctorImage}
+                  alt={doctor.doctorName}
+                  className="w-full h-full object-cover"
+                  onError={(e) => (e.currentTarget.style.display = "none")}
+                />
               </div>
-            )}
-          </div>
 
-          {/* TEXT CONTENT */}
-          <div className="space-y-1 md:space-y-3">
-
-            {/* NAME */}
-            <h1 className="text-3xl md:text-4xl font-semibold leading-tight">
-              Dr. {doctor.doctorName}
-            </h1>
-
-            {/* SPECIALIZATIONS + EXPERIENCE */}
-            <div className="flex flex-wrap gap-1 md:gap-2 text-sm md:text-base">
-
-              {specializationDisplay.slice(0, 3).map((spec: any) => (
-                <span key={spec._id}>{spec.name},</span>
-              ))}
-
-              {specializationDisplay.length > 3 && (
-                <span>+{specializationDisplay.length - 3} more</span>
-              )}
-
-              <span className="font-medium">• {doctor.experienceYears || "5"}+ yrs exp.</span>
+              {/* Verified Badge */}
+              <div className="absolute left-5 bottom-5 bg-white shadow-md border border-gray-100 text-gray-800 px-4 py-2 rounded-md">
+                <div className="flex items-center gap-2 text-sm">
+                  <Award className="w-4 h-4 text-green-600" />
+                  Verified Professional
+                </div>
+              </div>
             </div>
+          </div>
+        )}
 
-            {/* QUALIFICATION */}
-            <h2 className="text-sm md:text-lg opacity-90">
-              {doctor.qualification || "MBBS, MD"}
-            </h2>
+        {/* MAIN CONTENT - POSITIONED AT BOTTOM */}
+        <div className="
+    absolute bottom-0 left-0 right-0 z-10
+    flex items-end
+  ">
+          <div className="container mx-auto w-full px-5 md:px-0">
+
+            {/* CONTENT WRAPPER - Aligns content at bottom */}
+            <div className="
+        w-full max-w-xl
+        pb-8 md:pb-12 
+        space-y-6 md:space-y-8
+      ">
+
+              {/* TOP ROW — DOCTOR IMAGE + TEXT */}
+              <div className="
+          flex gap-4 md:gap-6 items-center
+          text-white md:text-gray-900
+        ">
+
+                {/* SMALL PROFILE PICTURE */}
+                <div className="
+            w-20 h-20 md:w-28 md:h-28
+            bg-white/90 md:bg-white
+            backdrop-blur-md
+            rounded-lg shadow-lg border border-gray-100 p-1
+            flex-shrink-0
+          ">
+                  {doctorImage ? (
+                    <img
+                      src={doctorImage}
+                      alt="doctor-profile"
+                      className="rounded-lg object-cover w-full h-full"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center bg-gray-100 rounded-lg">
+                      <Stethoscope className="w-8 h-8 text-gray-400" />
+                    </div>
+                  )}
+                </div>
+
+                {/* TEXT CONTENT */}
+                <div className="space-y-1 md:space-y-3">
+
+                  {/* NAME */}
+                  <h1 className="text-3xl md:text-4xl font-semibold leading-tight">
+                    Dr. {doctor.doctorName}
+                  </h1>
+
+                  {/* SPECIALIZATIONS + EXPERIENCE */}
+                  <div className="flex flex-wrap gap-1 md:gap-2 text-sm md:text-base">
+                    {specializationDisplay.slice(0, 3).map((spec: any) => (
+                      <span key={spec._id}>{spec.name},</span>
+                    ))}
+
+                    {specializationDisplay.length > 3 && (
+                      <span>+{specializationDisplay.length - 3} more</span>
+                    )}
+
+                    <span className="font-medium">• {doctor.experienceYears || "5"}+ yrs exp.</span>
+                  </div>
+
+                  {/* QUALIFICATION */}
+                  <h2 className="text-sm md:text-lg opacity-90">
+                    {doctor.qualification || "MBBS, MD"}
+                  </h2>
+                </div>
+              </div>
+
+              {/* MOBILE BADGES */}
+              <div className="md:hidden flex gap-3">
+                <span className="px-4 py-2 bg-white/90 backdrop-blur-md rounded-md text-[13px] text-gray-900 shadow-md border border-gray-200">
+                  <Award className="w-4 h-4 inline-block text-green-600 mr-1" />
+                  Verified
+                </span>
+
+                <span className="px-4 py-2 bg-white/90 backdrop-blur-md rounded-md text-[13px] text-gray-900 shadow-md border border-gray-200">
+                  Trusted Doctor
+                </span>
+              </div>
+
+            </div>
           </div>
         </div>
 
-        {/* MOBILE BADGES */}
-        <div className="md:hidden flex gap-3 pt-2">
-          <span className="px-4 py-2 bg-white/90 backdrop-blur-md rounded-md text-[13px] text-gray-900 shadow-md border border-gray-200">
-            <Award className="w-4 h-4 inline-block text-green-600 mr-1" />
-            Verified
-          </span>
+        {/* Bottom Divider (Desktop Only) */}
+        <div className="hidden md:block absolute bottom-0 left-0 w-full h-[2px] bg-gray-200" />
 
-          <span className="px-4 py-2 bg-white/90 backdrop-blur-md rounded-md text-[13px] text-gray-900 shadow-md border border-gray-200">
-            Trusted Doctor
-          </span>
-        </div>
-
-      </div>
-    </div>
-  </div>
-
-  {/* Bottom Divider (Desktop Only) */}
-  <div className="hidden md:block absolute bottom-0 left-0 w-full h-[2px] bg-gray-200" />
-
-</section>
+      </section>
 
 
       <Breadcrumb doctorName={doctor.doctorName} />
@@ -1585,9 +1580,9 @@ export default function DoctorDetail({ params }: { params: Promise<{ slug: strin
           <div className="md:grid lg:grid-cols-12 gap-8">
             <main className="lg:col-span-9 space-y-4">
               {doctor.aboutDoctor && (
-                <section className={`bg-gray-50 p-5 rounded-xs shadow-xs border border-gray-100 ${inter.variable} font-light`}>
+                <section className={`bg-gray-50 p-2 md:p-5 rounded-xs shadow-xs border border-gray-100 ${inter.variable} font-light`}>
                   <h2 className="text-2xl md:text-xl font-medium text-gray-900  tracking-tight mb-2 flex items-center gap-3">
-              
+
                     About {doctor.doctorName}
                   </h2>
                   <div className="space-y-4">
@@ -1635,7 +1630,7 @@ export default function DoctorDetail({ params }: { params: Promise<{ slug: strin
             </main>
 
             <aside className="lg:col-span-3 space-y-8">
-             
+
               <ContactForm />
             </aside>
           </div>

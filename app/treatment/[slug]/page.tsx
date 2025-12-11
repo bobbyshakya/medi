@@ -804,34 +804,34 @@ const BranchesOfferingTreatmentCarousel = ({ branches, treatmentName, emblaRef, 
                   <div className={`p-3 flex flex-col space-y-0 justify-between ${inter.variable} font-extralight relative`}>
                     {/* Title: Branch Name */}
                     <div className="mb-1">
-                      <h3 className="text-base font-medium text-[#241d1f] leading-tight line-clamp-2">{displayTitle}</h3>
+                      <h3 className="text-2xl md:text-base font-medium text-[#241d1f] leading-tight line-clamp-2">{displayTitle}</h3>
                     </div>
 
                     {/* Subtitle: City, Specialty */}
                     <div className="mb-2">
-                      <p className="text-sm text-[#241d1f]/80 line-clamp-1">{`${firstCity}, ${firstSpecialty} Speciality`}</p>
+                      <p className="text-base md:text-sm text-[#241d1f]/80 line-clamp-1">{`${firstCity}, ${firstSpecialty} Speciality`}</p>
                     </div>
 
                     {/* Matching Doctors for Treatment */}
                     {branch.matchingDoctors.length > 0 && (
                       <div className="mb-2">
-                        <p className="text-sm text-[#241d1f]/70 font-medium">Matching Doctors: {branch.matchingDoctors.length}</p>
+                        <p className="text-base md:text-sm text-[#241d1f]/70 font-medium">Matching Doctors: {branch.matchingDoctors.length}</p>
                       </div>
                     )}
 
                     {/* Stats Row: Estd, Beds, Doctors - Adapted with green accents */}
                     <div className="grid grid-cols-3 gap-2">
                       <div className="text-center p-2 bg-gray-50 rounded-sm border border-gray-100">
-                        <p className="text-sm font-medium text-[#241d1f]">{estdYear}</p>
-                        <p className="text-sm text-[#241d1f]">Estd.</p>
+                        <p className="text-base md:text-sm font-medium text-[#241d1f]">{estdYear}</p>
+                        <p className="text-base md:text-sm text-[#241d1f]">Estd.</p>
                       </div>
                       <div className="text-center p-2 bg-gray-50 rounded-sm border border-gray-100">
-                        <p className="text-sm font-medium text-[#241d1f]">{bedsCount}+</p>
-                        <p className="text-sm text-[#241d1f]">Beds</p>
+                        <p className="text-base md:text-sm font-medium text-[#241d1f]">{bedsCount}+</p>
+                        <p className="text-base md:text-sm text-[#241d1f]">Beds</p>
                       </div>
                       <div className="text-center p-2 bg-gray-50 rounded-sm border border-gray-100">
-                        <p className="text-sm font-medium text-[#241d1f]">{doctorsCount}+</p>
-                        <p className="text-sm text-[#241d1f]">Doctors</p>
+                        <p className="text-base md:text-sm font-medium text-[#241d1f]">{doctorsCount}+</p>
+                        <p className="text-base md:text-sm text-[#241d1f]">Doctors</p>
                       </div>
                     </div>
                   </div>
@@ -1147,7 +1147,7 @@ export default function TreatmentPage({ params }: TreatmentPageProps) {
           <div className="w-full h-full bg-gradient-to-br from-gray-200 via-gray-300 to-gray-200" />
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent z-0" />
-        <div className="absolute bottom-0 left-0 w-full z-10 px-4 pb-12 text-white">
+        <div className="absolute bottom-0 left-0 w-full z-10 md:px-4 pb-12 text-white">
           <div className="container mx-auto space-y-4">
             <h1 className={`text-3xl md:text-4xl lg:text-5xl font-extralight leading-tight ${inter.variable}`}>
               {treatment.name}
@@ -1167,7 +1167,7 @@ export default function TreatmentPage({ params }: TreatmentPageProps) {
         <div className="container mx-auto px-4">
           <div className=" grid md:grid-cols-12 gap-8">
             <main className="space-y-4 col-span-12 lg:col-span-9" >
-              <section className={`bg-white rounded-sm border border-gray-100 p-4 mb-4 shadow-xs transition-all ${inter.variable} font-extralight`}>
+              <section className={`bg-white rounded-sm border border-gray-100 p-2 md:p-4 mb-4 shadow-xs transition-all ${inter.variable} font-extralight`}>
                
                 <div>
                   {/* FIXED: Called RichTextDisplay as a JSX tag to follow Rules of Hooks */}
@@ -1205,7 +1205,7 @@ export default function TreatmentPage({ params }: TreatmentPageProps) {
               </section>
 
               {allBranches.length > 0 && (
-                <section className="space-y-4 bg-white rounded-sm border border-gray-100 p-4  shadow-xs">
+                <section className="space-y-4 bg-white rounded-sm border border-gray-100 p-2 md:p-4  shadow-xs">
                   <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                     <h3 className={`text-xl font-medium text-[#241d1f] ${inter.variable}`}>Hospitals Offering {treatment.name} </h3>
                     <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">

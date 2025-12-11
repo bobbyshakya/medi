@@ -312,32 +312,32 @@ const BranchCard = ({ data }: { data: any }) => {
       </div>
 
       {/* Content */}
-      <div className={`p-3 flex-1 flex flex-col justify-between ${inter.variable} font-light relative`}>
+      <div className={`p-3 md:flex-1 flex flex-col justify-between ${inter.variable} font-light relative`}>
         {/* Small Hospital Logo Bottom Left */}
 
         {/* Title: Only Branch Name (UPDATED: Removed group/hospital name) */}
         <div className="mb-1">
-          <h3 className="text-base font-medium text-gray-900 leading-tight">{branchName}</h3>
+          <h3 className="text-2xl md:text-base font-medium text-gray-900 leading-tight">{branchName}</h3>
         </div>
 
         {/* Subtitle: City, Specialty */}
         <div className="mb-2">
-          <p className="text-sm text-gray-600">{`${firstCity}, ${firstSpecialty} Speciality`}</p>
+          <p className="text-lg md:text-sm text-gray-600">{`${firstCity}, ${firstSpecialty} Speciality`}</p>
         </div>
 
         {/* Stats Row: Doctors, Beds, Est. - Blue themed boxes */}
         <div className="grid grid-cols-3 gap-2">
           <div className="text-center p-2 bg-gray-50 rounded-xs border border-gray-100">
-            <p className="text-sm font-medium text-gray-700">{estdYear}</p>
-            <p className="text-sm text-gray-700">Estd.</p>
+            <p className="md:text-sm text-base font-medium text-gray-700">{estdYear}</p>
+            <p className="md:text-sm text-base text-gray-700">Estd.</p>
           </div>
           <div className="text-center p-2 bg-gray-50 rounded-xs border border-gray-100">
-            <p className="text-sm font-medium text-gray-700">{bedsCount}+</p>
-            <p className="text-sm text-gray-700">Beds</p>
+            <p className="md:text-sm text-base font-medium text-gray-700">{bedsCount}+</p>
+            <p className="md:text-sm text-base text-gray-700">Beds</p>
           </div>
           <div className="text-center p-2 bg-gray-50 rounded-xs border border-gray-100">
-            <p className="text-sm font-medium text-gray-700">{doctorsCount}+</p>
-            <p className="text-sm text-gray-700">Doctors</p>
+            <p className="md:text-sm text-base font-medium text-gray-700">{doctorsCount}+</p>
+            <p className="md:text-sm text-base text-gray-700">Doctors</p>
           </div>
         </div>
       </div>
@@ -400,7 +400,7 @@ const DoctorCard = ({ doctor }: { doctor: any }) => {
         )}
       </div>
       <div className={`p-3 flex-1 flex flex-col ${inter.variable} font-light`}>
-        <h3 className="text-2xl md:text-base font-medium text-gray-900 leading-tight mb-1 line-clamp-1">{doctor.doctorName}</h3>
+        <h3 className="text-2xl md:text-2xl md:text-base font-medium text-gray-900 leading-tight mb-1 line-clamp-1">{doctor.doctorName}</h3>
         <div className=" gap-1">
           <p className="text-gray-700 text-base md:text-sm flex items-center ">{specializationDisplay}</p>
           {doctor.experienceYears && (
@@ -443,7 +443,7 @@ const TreatmentCard = ({ item }: { item: any }) => {
       </div>
       <div className="p-4 flex-1 flex flex-col  font-light">
         {/* Use itemName for display */}
-        <h3 className="text-2xl md:text-base font-medium text-gray-900 leading-tight mb-1 line-clamp-1">{itemName}</h3>
+        <h3 className="text-2xl md:text-2xl md:text-base font-medium text-gray-900 leading-tight mb-1 line-clamp-1">{itemName}</h3>
         {/* ADDED: Display specialist/department for context */}
         {/* {item.specialistName && (
             <p className="text-sm text-gray-700 mt-1 line-clamp-1">Specialist: {item.specialistName}</p>
@@ -532,7 +532,7 @@ const DoctorsList = ({ doctors }: { doctors: any[] }) => {
 
   if (!doctors?.length) {
     return (
-      <div className={`bg-gray-50 p-4 rounded-xs shadow-xs border border-gray-100 text-center ${inter.variable} font-light`}>
+      <div className={`bg-gray-50 md:p-4 p-2 rounded-xs shadow-xs border border-gray-100 text-center ${inter.variable} font-light`}>
         <Stethoscope className="w-12 h-12 text-gray-300 mx-auto mb-3" />
         <p className="text-gray-500 text-sm">No doctors available at this branch</p>
       </div>
@@ -541,7 +541,7 @@ const DoctorsList = ({ doctors }: { doctors: any[] }) => {
 
   return (
     <section className={`bg-gray-50 rounded-xs shadow-xs border border-gray-100 ${inter.variable} font-light`}>
-      <div className="px-4 pt-4">
+      <div className="md:px-4 px-2 pt-4">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 mb-3">
           <h2 className="text-2xl md:text-xl font-medium text-gray-900 tracking-tight flex items-center mt-2">
             Our Specialist Doctors
@@ -562,7 +562,7 @@ const DoctorsList = ({ doctors }: { doctors: any[] }) => {
       </div>
 
       {/* UPDATED: Embla Carousel Implementation uses sortedDoctors */}
-      <div className="relative px-4 pb-8">
+      <div className="relative px-2 md:px-4 pb-8">
         <div className={EMBLA_CLASSES.viewport} ref={emblaRef}>
           <div className={EMBLA_CLASSES.container}>
             {sortedDoctors.map((doctor) => (
@@ -673,7 +673,7 @@ const TreatmentsList = ({ treatments }: { treatments: any[] }) => {
 
   if (!treatments?.length) {
     return (
-      <div className={`bg-gray-50 p-4 rounded-xs shadow-xs border border-gray-100 text-center ${inter.variable} font-light`}>
+      <div className={`bg-gray-50 md:p-4 p-2 rounded-xs shadow-xs border border-gray-100 text-center ${inter.variable} font-light`}>
         <Scissors className="w-12 h-12 text-gray-300 mx-auto mb-3" />
         <p className="text-gray-500 text-sm">No treatments available at this branch</p>
       </div>
@@ -682,7 +682,7 @@ const TreatmentsList = ({ treatments }: { treatments: any[] }) => {
 
   return (
     <section className={`bg-gray-50 rounded-xs shadow-xs border border-gray-100 ${inter.variable} font-light`}>
-      <div className="px-4 pt-4">
+      <div className="md:px-4 px-2 pt-4">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 mb-3">
           <h2 className="text-2xl md:text-xl font-medium text-gray-900 tracking-tight flex items-center mt-2">
             Available Treatments
@@ -702,7 +702,7 @@ const TreatmentsList = ({ treatments }: { treatments: any[] }) => {
           </div>
         </div>
       </div>
-      <div className="relative px-4 pb-8">
+      <div className="relative px-2 md:px-4 pb-8">
         <div className={EMBLA_CLASSES.viewport} ref={emblaRef}>
           <div className={EMBLA_CLASSES.container}>
             {/* Use sortedAndFilteredTreatments for A-Z display and filter */}
@@ -867,7 +867,7 @@ const SimilarBranchesList = ({ branches, allBranchesForSearch, currentCityDispla
 
   if (!branches?.length && !allBranchesForSearch?.length) {
     return (
-      <div className={`bg-gray-50 p-4 rounded-xs shadow-xs border border-gray-100 text-center ${inter.variable} font-light`}>
+      <div className={`bg-gray-50 md:p-4 p-2 rounded-xs shadow-xs border border-gray-100 text-center ${inter.variable} font-light`}>
         <Hospital className="w-12 h-12 text-gray-300 mx-auto mb-3" />
         <p className="text-gray-500 text-sm">No other hospitals available in {currentCityDisplay}</p>
       </div>
@@ -876,7 +876,7 @@ const SimilarBranchesList = ({ branches, allBranchesForSearch, currentCityDispla
 
   return (
     <section className={`bg-gray-50 rounded-xs shadow-xs border border-gray-100 ${inter.variable} font-light`}>
-      <div className="px-4 py-4">
+      <div className=" px-2 md:px-4 py-4">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-0">
           <h2 className="text-2xl md:text-xl font-medium mt-2 text-gray-900 tracking-tight flex items-center">
 
@@ -899,7 +899,7 @@ const SimilarBranchesList = ({ branches, allBranchesForSearch, currentCityDispla
         </div>
       </div>
       {branches?.length > 0 ? (
-        <div className="relative px-4 pb-8">
+        <div className="relative px-2 md:px-4 pb-8">
           {/* UPDATED: Use EmblaCarousel with BranchCard that now includes yearEstablished */}
           <EmblaCarousel slides={branches.map(b => <BranchCard key={b._id} data={b} />)} options={options} />
         </div>
@@ -1066,7 +1066,7 @@ const AboutSkeleton = () => (
 )
 
 const CarouselSkeleton = ({ type }: { type: string }) => (
-  <div className={`bg-gray-50 p-4 rounded-xs shadow-xs border border-gray-100 animate-pulse ${inter.variable} font-light`}>
+  <div className={`bg-gray-50 md:p-4 p-2 rounded-xs shadow-xs border border-gray-100 animate-pulse ${inter.variable} font-light`}>
     <div className="h-8 bg-gray-300 rounded w-48 mb-6" />
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
       {Array.from({ length: 3 }).map((_, i) => <div key={i} className="h-60 bg-gray-200 rounded-xs" />)}
@@ -1075,7 +1075,7 @@ const CarouselSkeleton = ({ type }: { type: string }) => (
 )
 
 const FacilitiesSkeleton = () => (
-  <div className={`bg-gray-50 p-4 rounded-xs shadow-xs border border-gray-100 animate-pulse ${inter.variable} font-light`}>
+  <div className={`bg-gray-50 md:p-4 p-2 rounded-xs shadow-xs border border-gray-100 animate-pulse ${inter.variable} font-light`}>
     <div className="h-8 bg-gray-300 rounded w-48 mb-6" />
     <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
       {Array.from({ length: 6 }).map((_, i) => (
@@ -1398,7 +1398,7 @@ export default function BranchDetail({ params }: { params: Promise<{ slug: strin
                   <div className="md:w-4 md:block hidden w-5 h-5 md:h-4" >
                     <MapPin className="md:w-4 w-8 h-8 md:h-4" />
                   </div>
-                  <div className="ml-2">
+                  <div className="md:ml-2">
                     {branch.address}
                   </div>
                 </span>
@@ -1420,9 +1420,9 @@ export default function BranchDetail({ params }: { params: Promise<{ slug: strin
         <div className="container mx-auto px-4 md:px-6">
           <div className="md:grid lg:grid-cols-12 col-grid-2 g-4 md:gap-8">
             <main className="lg:col-span-9 col-span-1  space-y-4">
-              <div className={`bg-gray-50 p-4 rounded-xs shadow-xs border border-gray-100 ${inter.variable} font-light`}>
+              <div className={`bg-gray-50 md:p-4 p-2 rounded-xs shadow-xs border border-gray-100 ${inter.variable} font-light`}>
                 <h2 className="text-2xl md:text-xl font-medium text-gray-900 tracking-tight flex items-center  mb-3">Quick Overview</h2>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4">
                   {/* Confirmed: This uses the hospital group's established year */}
                   <StatCard icon={Calendar} value={branch.yearEstablished || 'N/A'} label="Established" showPlus={false} />
                   <StatCard icon={Heart} value={firstSpecialtyName} label="Specialty" showPlus={false} />
@@ -1434,7 +1434,7 @@ export default function BranchDetail({ params }: { params: Promise<{ slug: strin
               </div>
 
               {branch.description && (
-                <section className={`bg-gray-50 p-4 rounded-xs shadow-xs w-full border border-gray-100 ${inter.variable} font-light`}>
+                <section className={`bg-gray-50 md:p-4 p-2 rounded-xs shadow-xs w-full border border-gray-100 ${inter.variable} font-light`}>
                   {/* <h2 className="text-2xl md:text-3xl font-medium text-gray-900 tracking-tight flex items-center mb-2">About {branch.branchName}</h2> */}
                   {/* FIX: Change function call to JSX component call to prevent hook order violation */}
                   <RichTextDisplay htmlContent={branch.description.html || branch.description} />
@@ -1449,7 +1449,7 @@ export default function BranchDetail({ params }: { params: Promise<{ slug: strin
 
               {/* UPDATED: Use sortedFacilities array */}
               {sortedFacilities.length > 0 && (
-                <section className={`bg-gray-50 p-4  rounded-xs shadow-xs border border-gray-100 ${inter.variable} font-light`}>
+                <section className={`bg-gray-50 md:p-4 p-2  rounded-xs shadow-xs border border-gray-100 ${inter.variable} font-light`}>
                   <h2 className="text-2xl md:text-3xl font-medium text-gray-900 tracking-tight mb-8 flex items-center gap-3">
                     <Building2 className="w-7 h-7" />
                     Key Facilities

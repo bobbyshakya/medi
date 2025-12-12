@@ -1,3 +1,4 @@
+// components/HospitalBanner.tsx
 'use client';
 
 import { FaArrowRight, FaPhoneAlt } from 'react-icons/fa';
@@ -21,7 +22,7 @@ interface BannerProps {
   title: string;
   description: string; // HTML string for rich text
   // CTA Props
-  ctas: CtaButton[];
+  ctas?: CtaButton[]; // FIX 1: Made ctas optional
   children?: React.ReactNode;
   // NOTE: mainImageSrc, mainImageAlt, mainImageClass, layoutType are REMOVED as requested.
 }
@@ -34,14 +35,13 @@ export default function CleanHeroBanner({
   bannerBgImageMobile,
   title,
   description,
-  ctas,
+  ctas = [], // FIX 2: Provide a default empty array for robustness
   topSpanText,
   children,
 }: BannerProps) {
 
-  // Default to a distinct primary CTA style
+  // The logic now safely calls .find() on an array (either the passed array or [])
   const primaryCta = ctas.find(cta => cta.isPrimary) || ctas[0];
-  // Default to a distinct secondary CTA style
   const secondaryCta = ctas.find(cta => !cta.isPrimary && cta !== primaryCta);
 
   // Helper function to render a CTA button
@@ -71,7 +71,7 @@ export default function CleanHeroBanner({
           fill
           priority
           quality={90}
-          className="object-cover  hidden md:block object-center"
+          className="object-cover  hidden md:block object-center"
           sizes="100vw"
         />
         <Image
@@ -94,8 +94,8 @@ export default function CleanHeroBanner({
 
           {/* Main Content Area */}
           <div className="absolute inset-0 md:hidden
-  bg-gradient-to- from-white/60 via-black/10 to-black/70
-  backdrop-blur-xs">
+ bg-gradient-to- from-white/60 via-black/10 to-black/70
+ backdrop-blur-xs">
           </div>
 
           <div className='mb-5 pt-5 relative z-30 px-4'>

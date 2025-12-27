@@ -11,6 +11,7 @@ import 'slick-carousel/slick/slick-theme.css';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import ScrollableTitle from '@/components/ScrollableTitle';
 
 // Hospital interface
 interface Hospital {
@@ -145,58 +146,68 @@ const truncateText = (text: string, maxLength = 120): string => {
 };
 
 // Hospital Card Component
-const HospitalCard = ({ hospital, onOpenModal }: { hospital: Hospital; onOpenModal: () => void }) => (
-  <div className="flex-1">
-    <Card className="overflow-hidden hover:shadow-lg shadow-none transition-all duration-300 group border border-gray-200 md:border-gray-100 h-full flex flex-col">
-      <div className="relative h-48 overflow-hidden">
-        <Image
-          src={hospital.image || '/placeholder.svg?height=200&width=400'}
-          alt={hospital.name}
-          fill
-          className="object-cover group-hover:scale-105 transition-transform duration-300"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
-        {/* <div className="absolute top-3 right-3">
-          <Badge className="bg-white/95 text-gray-900 shadow-sm backdrop-blur-sm">
-            <Star className="h-3 w-3 mr-1 fill-yellow-400 text-yellow-400" />
-            {hospital.rating}
-          </Badge>
-        </div> */}
-      </div>
+const HospitalCard = ({ hospital, onOpenModal }: { hospital: Hospital; onOpenModal: () => void }) => {
+  const [isHovered, setIsHovered] = useState(false)
 
-      <CardHeader className="pb-1 p-4 pb-2">
-        <div className="flex items-end space-x-3 mb-0">
-          {/* <div className="w-8 h-8 bg-white rounded-lg shadow-sm flex items-center justify-center">
-            <Image
-              src={hospital.logo || '/placeholder.svg?height=32&width=32'}
-              alt={hospital.name}
-              width={24}
-              height={24}
-              className="object-contain"
-            />
+  return (
+    <div className="flex-1">
+      <Card
+        className="overflow-hidden hover:shadow-lg shadow-none transition-all duration-300 group border border-gray-200 md:border-gray-100 h-full flex flex-col"
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+      >
+        <div className="relative h-48 overflow-hidden">
+          <Image
+            src={hospital.image || '/placeholder.svg?height=200&width=400'}
+            alt={hospital.name}
+            fill
+            className="object-cover group-hover:scale-105 transition-transform duration-300"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
+          {/* <div className="absolute top-3 right-3">
+            <Badge className="bg-white/95 text-gray-900 shadow-sm backdrop-blur-sm">
+              <Star className="h-3 w-3 mr-1 fill-yellow-400 text-yellow-400" />
+              {hospital.rating}
+            </Badge>
           </div> */}
-          <CardTitle className="title-text py-0 my-0">{hospital.name}</CardTitle>
         </div>
-        <CardDescription className="flex items-center description-1 mt-3">
-          <MapPin className="h-5 w-5 mr-1 text-[#E22026] flex-shrink-0" />
-          <span className="truncate">{hospital.location}</span>
-        </CardDescription>
-      </CardHeader>
 
-      <CardContent className="pt-0 px-4 flex flex-col flex-grow my-0">
-        <p className="text-[#241d1f] text-[19px] md:text-base mb-2 text-left leading-relaxed flex-grow">{hospital.description}</p>
+        <CardHeader className="pb-1 p-4 pb-2">
+          <div className="flex items-end space-x-3 mb-0">
+            {/* <div className="w-8 h-8 bg-white rounded-lg shadow-sm flex items-center justify-center">
+              <Image
+                src={hospital.logo || '/placeholder.svg?height=32&width=32'}
+                alt={hospital.name}
+                width={24}
+                height={24}
+                className="object-contain"
+              />
+            </div> */}
+            <CardTitle className="title-text py-0 my-0">
+              <ScrollableTitle text={hospital.name} isHovered={isHovered} />
+            </CardTitle>
+          </div>
+          <CardDescription className="flex items-center description-1 mt-3">
+            <MapPin className="h-5 w-5 mr-1 text-[#E22026] flex-shrink-0" />
+            <span className="truncate">{hospital.location}</span>
+          </CardDescription>
+        </CardHeader>
 
-        <Button
-          onClick={onOpenModal}
-          variant="ghost"
-          className="text-base border border-gray-200 text-center px-0 justify-center text-[#241d1f] cursor-pointer "
-        >
-          Enquire Now
-        </Button>
-      </CardContent>
-    </Card>
-  </div>
-);
+        <CardContent className="pt-0 px-4 flex flex-col flex-grow my-0">
+          <p className="text-[#241d1f] text-[19px] md:text-base mb-2 text-left leading-relaxed flex-grow">{hospital.description}</p>
+
+          <Button
+            onClick={onOpenModal}
+            variant="ghost"
+            className="text-base border border-gray-200 text-center px-0 justify-center text-[#241d1f] cursor-pointer "
+          >
+            Enquire Now
+          </Button>
+        </CardContent>
+      </Card>
+    </div>
+  )
+}
 
 // Custom Arrow Components
 const CustomPrevArrow = ({ onClick }: { onClick?: () => void }) => (

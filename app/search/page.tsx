@@ -94,7 +94,7 @@ interface ExtendedDoctorType extends DoctorType {
     hospitalId: string;
     branchName?: string;
     branchId?: string;
-    cities: CityType[] | null
+    cities: CityType[]
   }[];
   departments: DepartmentType[];
   filteredLocations?: {
@@ -161,7 +161,7 @@ interface ApiResponse {
   total: number
 }
 
-type FilterKey = "city" | "treatment" | "specialization" | "department" | "doctor" | "branch"
+type FilterKey = "city" | "state" | "treatment" | "specialization" | "department" | "doctor" | "branch" | "location"
 
 interface FilterValue {
   id: string;
@@ -171,11 +171,13 @@ interface FilterValue {
 interface FilterState {
   view: "hospitals" | "doctors" | "treatments"
   city: FilterValue
+  state: FilterValue
   treatment: FilterValue
   specialization: FilterValue
   department: FilterValue
   doctor: FilterValue
   branch: FilterValue
+  location: FilterValue
   sortBy: "all" | "popular" | "az" | "za"
 }
 
@@ -196,17 +198,14 @@ const enforceOnePrimaryFilter = (key: FilterKey, prevFilters: FilterState, newFi
   let newFilters = { ...prevFilters, [key]: newFilterValue }
   const primaryKeys: FilterKey[] = ['doctor', 'treatment', 'branch']
 
-  if (primaryKeys.includes(key) && (newFilterValue.id || newFilterValue.query)) {
+  if (primaryKeys.includes(key as any) && (newFilterValue.id || newFilterValue.query)) {
     primaryKeys.forEach(primaryKey => {
       if (primaryKey !== key) {
         newFilters = { ...newFilters, [primaryKey]: { id: "", query: "" } }
       }
     })
 
-    if (key === 'doctor' || key === 'treatment' || key === 'branch') {
-      if (key !== 'department') newFilters = { ...newFilters, department: { id: "", query: "" } }
-      if (key !== 'specialization') newFilters = { ...newFilters, specialization: { id: "", query: "" } }
-    }
+    newFilters = { ...newFilters, department: { id: "", query: "" }, specialization: { id: "", query: "" } }
   }
   return newFilters
 }
@@ -225,8 +224,9 @@ const matchesSpecialization = (specialization: any, id: string, text: string) =>
 }
 
 const getMatchingBranches = (hospitals: HospitalType[], filters: FilterState, allExtendedTreatments: ExtendedTreatmentType[]) => {
-  const { city, specialization, branch, department, treatment } = filters
+  const { city, state, specialization, branch, department, treatment } = filters
   const lowerCity = city.query.toLowerCase()
+  const lowerState = state.query.toLowerCase()
   const lowerSpec = specialization.query.toLowerCase()
   const lowerBranch = branch.query.toLowerCase()
   const lowerDept = department.query.toLowerCase()
@@ -247,6 +247,7 @@ const getMatchingBranches = (hospitals: HospitalType[], filters: FilterState, al
     .flatMap((h) => h.branches.map((b) => ({ ...b, hospitalName: h.hospitalName, hospitalLogo: h.logo, hospitalId: h._id })))
     .filter((b) => {
       if ((city.id || lowerCity) && !b.city.some((c) => (city.id && c._id === city.id) || (lowerCity && (c.cityName ?? '').toLowerCase().includes(lowerCity)))) return false
+      if ((state.id || lowerState) && !b.city.some((c) => (state.id && c.state === state.id) || (lowerState && (c.state ?? '').toLowerCase().includes(lowerState)))) return false
       if ((branch.id || lowerBranch) && !(branch.id === b._id) && !(lowerBranch && (b.branchName ?? '').toLowerCase().includes(lowerBranch))) return false
 
       if (treatment.id || lowerTreatment) {
@@ -287,10 +288,13 @@ const getAllExtendedDoctors = (hospitals: HospitalType[]): ExtendedDoctorType[] 
       const baseId = item._id
 
       const doctorDepartments: DepartmentType[] = []
-      item.specialization?.forEach((spec: any) => {
-        spec.department?.forEach((dept: DepartmentType) => {
-          doctorDepartments.push(dept)
-        })
+      const specs = Array.isArray(item.specialization) ? item.specialization : item.specialization ? [item.specialization] : []
+      specs.forEach((spec: any) => {
+        if (typeof spec === 'object' && spec?.department) {
+          spec.department.forEach((dept: DepartmentType) => {
+            doctorDepartments.push(dept)
+          })
+        }
       })
       const uniqueDepartments = Array.from(new Map(doctorDepartments.map(dept => [dept._id, dept])).values())
 
@@ -414,11 +418,13 @@ const useHospitalsData = () => {
     return {
       view: initialView,
       city: getFilterState("city"),
+      state: getFilterState("state"),
       treatment: getFilterState("treatment"),
       specialization: getFilterState("specialization"),
       department: getFilterState("department"),
       doctor: getFilterState("doctor"),
       branch: getFilterState("branch"),
+      location: getFilterState("location"),
       sortBy: "all",
     }
   })
@@ -443,11 +449,13 @@ const useHospitalsData = () => {
     setFilters(prev => ({
       ...prev,
       city: { id: "", query: "" },
+      state: { id: "", query: "" },
       treatment: { id: "", query: "" },
       specialization: { id: "", query: "" },
       department: { id: "", query: "" },
       doctor: { id: "", query: "" },
       branch: { id: "", query: "" },
+      location: { id: "", query: "" },
       sortBy: "all",
     }))
   }, [])
@@ -470,7 +478,6 @@ const useHospitalsData = () => {
     fetchData()
   }, [])
 
-  const allBranches = useMemo(() => allHospitals.flatMap((h) => h.branches), [allHospitals])
   const allExtendedDoctors = useMemo(() => getAllExtendedDoctors(allHospitals), [allHospitals])
   const allExtendedTreatments = useMemo(() => getAllExtendedTreatments(allHospitals), [allHospitals])
 
@@ -485,8 +492,6 @@ const useHospitalsData = () => {
     }
 
     let branches = getMatchingBranches(allHospitals, genericBranchFilters, allExtendedTreatments)
-    const filteredBranchesIds = new Set(branches.map(b => b._id))
-    const filteredHospitalIds = new Set(branches.map(b => b.hospitalId))
 
     let matchingBranchIds: string[] | null = null
     if (currentFilters.branch.id || currentFilters.branch.query) {
@@ -502,6 +507,18 @@ const useHospitalsData = () => {
           loc.cities.some(c =>
             (currentFilters.city.id && c._id === currentFilters.city.id) ||
             (lowerCityQuery && (c.cityName ?? '').toLowerCase().includes(lowerCityQuery))
+          )
+        )
+      )
+    }
+
+    if (currentFilters.state.id || currentFilters.state.query) {
+      const lowerStateQuery = currentFilters.state.query.toLowerCase()
+      doctors = doctors.filter(d =>
+        d.locations.some(loc =>
+          loc.cities.some(c =>
+            (currentFilters.state.id && c.state === currentFilters.state.id) ||
+            (lowerStateQuery && (c.state ?? '').toLowerCase().includes(lowerStateQuery))
           )
         )
       )
@@ -540,9 +557,12 @@ const useHospitalsData = () => {
       }
 
       if (matchingSpecialtyNamesForDoctors.size > 0) {
-        const deptMatch = (d: ExtendedDoctorType) => (d.specialization || []).some((spec: any) =>
-          (spec.department || []).some((dept: any) => matchingSpecialtyNamesForDoctors.has(dept.name.toLowerCase()))
-        )
+        const deptMatch = (d: ExtendedDoctorType) => {
+          const specs = Array.isArray(d.specialization) ? d.specialization : d.specialization ? [d.specialization] : []
+          return specs.some((spec: any) =>
+            (spec.department || []).some((dept: any) => matchingSpecialtyNamesForDoctors.has(dept.name.toLowerCase()))
+          )
+        }
         if (matchingLocationKeysForDoctors && matchingLocationKeysForDoctors.size > 0) {
           doctors = doctors.filter(d =>
             d.locations.some(loc => matchingLocationKeysForDoctors!.has(`${loc.hospitalId}-${loc.branchId || 'no-branch'}`)) && deptMatch(d)
@@ -565,6 +585,13 @@ const useHospitalsData = () => {
             (lower && (c.cityName ?? '').toLowerCase().includes(lower))
           )
         }
+        if (currentFilters.state.id || currentFilters.state.query) {
+          const lower = currentFilters.state.query.toLowerCase()
+          match = match && loc.cities.some((c: CityType) =>
+            (currentFilters.state.id && c.state === currentFilters.state.id) ||
+            (lower && (c.state ?? '').toLowerCase().includes(lower))
+          )
+        }
         if (matchingLocationKeysForDoctors) {
           match = match && matchingLocationKeysForDoctors.has(`${loc.hospitalId}-${loc.branchId || 'no-branch'}`)
         }
@@ -585,6 +612,18 @@ const useHospitalsData = () => {
           loc.cities.some(c =>
             (currentFilters.city.id && c._id === currentFilters.city.id) ||
             (lowerCityQuery && (c.cityName ?? '').toLowerCase().includes(lowerCityQuery))
+          )
+        )
+      )
+    }
+
+    if (currentFilters.state.id || currentFilters.state.query) {
+      const lowerStateQuery = currentFilters.state.query.toLowerCase()
+      treatments = treatments.filter(t =>
+        t.branchesAvailableAt.some(loc =>
+          loc.cities.some(c =>
+            (currentFilters.state.id && c.state === currentFilters.state.id) ||
+            (lowerStateQuery && (c.state ?? '').toLowerCase().includes(lowerStateQuery))
           )
         )
       )
@@ -635,6 +674,13 @@ const useHospitalsData = () => {
             (lower && (c.cityName ?? '').toLowerCase().includes(lower))
           )
         }
+        if (currentFilters.state.id || currentFilters.state.query) {
+          const lower = currentFilters.state.query.toLowerCase()
+          match = match && loc.cities.some((c: CityType) =>
+            (currentFilters.state.id && c.state === currentFilters.state.id) ||
+            (lower && (c.state ?? '').toLowerCase().includes(lower))
+          )
+        }
         if (matchingBranchIds) {
           match = match && matchingBranchIds.includes(loc.branchId || '')
         }
@@ -674,7 +720,7 @@ const useHospitalsData = () => {
   }, [allHospitals, allExtendedDoctors, allExtendedTreatments, filters])
 
   const getUniqueOptions = useCallback((
-    field: "city" | "treatments" | "doctors" | "specialization" | "departments" | "branch",
+    field: FilterKey,
     contextBranches: (BranchType & { hospitalName: string, hospitalLogo: string | null, hospitalId: string })[],
     contextDoctors: ExtendedDoctorType[],
     contextTreatments: ExtendedTreatmentType[],
@@ -686,7 +732,7 @@ const useHospitalsData = () => {
         contextBranches.forEach(b => {
           (b.city || []).forEach((item: any) => {
             const id = item._id
-            const name = `${item.cityName}${item.state ? `, ${item.state}` : ''}`
+            const name = item.cityName
             if (id && name) map.set(id, name)
           })
         })
@@ -695,7 +741,7 @@ const useHospitalsData = () => {
           (d.filteredLocations || d.locations).forEach(loc => {
             loc.cities.forEach(c => {
               const id = c._id
-              const name = `${c.cityName}${c.state ? `, ${c.state}` : ''}`
+              const name = c.cityName
               if (id && name) map.set(id, name)
             })
           })
@@ -705,7 +751,37 @@ const useHospitalsData = () => {
           (t.filteredBranchesAvailableAt || t.branchesAvailableAt).forEach(loc => {
             loc.cities.forEach(c => {
               const id = c._id
-              const name = `${c.cityName}${c.state ? `, ${c.state}` : ''}`
+              const name = c.cityName
+              if (id && name) map.set(id, name)
+            })
+          })
+        })
+      }
+    } else if (field === "state") {
+      if (filters.view === 'hospitals') {
+        contextBranches.forEach(b => {
+          (b.city || []).forEach((item: any) => {
+            const id = item.state
+            const name = item.state
+            if (id && name) map.set(id, name)
+          })
+        })
+      } else if (filters.view === 'doctors') {
+        contextDoctors.forEach(d => {
+          (d.filteredLocations || d.locations).forEach(loc => {
+            loc.cities.forEach(c => {
+              const id = c.state
+              const name = c.state
+              if (id && name) map.set(id, name)
+            })
+          })
+        })
+      } else if (filters.view === 'treatments') {
+        contextTreatments.forEach(t => {
+          (t.filteredBranchesAvailableAt || t.branchesAvailableAt).forEach(loc => {
+            loc.cities.forEach(c => {
+              const id = c.state
+              const name = c.state
               if (id && name) map.set(id, name)
             })
           })
@@ -713,19 +789,20 @@ const useHospitalsData = () => {
       }
     } else if (field === "branch") {
       contextBranches.forEach(b => b._id && b.branchName && map.set(b._id, b.branchName))
-    } else if (field === "doctors") {
+    } else if (field === "doctor") {
       contextDoctors.forEach(d => {
         if (d.baseId && d.doctorName) map.set(d.baseId, d.doctorName)
       })
-    } else if (field === "treatments") {
+    } else if (field === "treatment") {
       contextTreatments.forEach(t => {
         if (t._id && t.name) map.set(t._id, t.name)
       })
     } else if (field === "specialization") {
       contextDoctors.forEach(d => {
-        (d.specialization || []).forEach((spec: any) => {
-          const id = spec._id
-          const name = spec.name || spec.title
+        const specs = Array.isArray(d.specialization) ? d.specialization : d.specialization ? [d.specialization] : []
+        specs.forEach(spec => {
+          const id = typeof spec === 'object' ? spec._id : spec
+          const name = typeof spec === 'object' ? (spec.name || spec.title) : spec
           if (id && name) map.set(id, name)
         })
       })
@@ -737,6 +814,31 @@ const useHospitalsData = () => {
           if (id && name) map.set(id, name)
         })
       })
+    } else if (field === "location") {
+      const cityMap = new Map<string, string>()
+      const stateMap = new Map<string, string>()
+
+      const addCitiesAndStates = (cities: CityType[]) => {
+        cities.forEach(c => {
+          if (c._id && c.cityName) cityMap.set(c._id, c.cityName)
+          if (c.state) stateMap.set(c.state, c.state)
+        })
+      }
+
+      if (filters.view === 'hospitals') {
+        contextBranches.forEach(b => addCitiesAndStates(b.city || []))
+      } else if (filters.view === 'doctors') {
+        contextDoctors.forEach(d => {
+          (d.filteredLocations || d.locations).forEach(loc => addCitiesAndStates(loc.cities))
+        })
+      } else if (filters.view === 'treatments') {
+        contextTreatments.forEach(t => {
+          (t.filteredBranchesAvailableAt || t.branchesAvailableAt).forEach(loc => addCitiesAndStates(loc.cities))
+        })
+      }
+
+      cityMap.forEach((name, id) => map.set(`city:${id}`, ` ${name}`))
+      stateMap.forEach((name, id) => map.set(`state:${id}`, ` ${name}`))
     }
 
     return Array.from(map, ([id, name]) => ({ id, name })).sort((a, b) => a.name.localeCompare(b.name))
@@ -744,11 +846,13 @@ const useHospitalsData = () => {
 
   const availableOptions = useMemo(() => ({
     city: getUniqueOptions("city", filteredBranches, filteredDoctors, filteredTreatments),
-    treatment: getUniqueOptions("treatments", filteredBranches, filteredDoctors, filteredTreatments),
+    state: getUniqueOptions("state", filteredBranches, filteredDoctors, filteredTreatments),
+    treatment: getUniqueOptions("treatment", filteredBranches, filteredDoctors, filteredTreatments),
     specialization: getUniqueOptions("specialization", filteredBranches, filteredDoctors, filteredTreatments),
     department: getUniqueOptions("department", filteredBranches, filteredDoctors, filteredTreatments),
-    doctor: getUniqueOptions("doctors", filteredBranches, filteredDoctors, filteredTreatments),
+    doctor: getUniqueOptions("doctor", filteredBranches, filteredDoctors, filteredTreatments),
     branch: getUniqueOptions("branch", filteredBranches, filteredDoctors, filteredTreatments),
+    location: getUniqueOptions("location", filteredBranches, filteredDoctors, filteredTreatments),
   }), [getUniqueOptions, filteredBranches, filteredDoctors, filteredTreatments])
 
   const currentCount = useMemo(() => {
@@ -760,7 +864,11 @@ const useHospitalsData = () => {
   const getFilterValueDisplay = useCallback((filterKey: FilterKey, currentFilters: FilterState, currentAvailableOptions: typeof availableOptions): string | null => {
     const filter = currentFilters[filterKey]
     if (filter.id) {
-      return currentAvailableOptions[filterKey].find(o => o.id === filter.id)?.name || filter.id
+      if (filterKey === 'location') {
+        const opt = currentAvailableOptions.location.find(o => o.id === filter.id)
+        return opt ? opt.name.replace(/^(City|State): /, '') : filter.id
+      }
+      return currentAvailableOptions[filterKey as keyof typeof currentAvailableOptions]?.find(o => o.id === filter.id)?.name || filter.id
     }
     if (filter.query) {
       return filter.query
@@ -772,7 +880,7 @@ const useHospitalsData = () => {
     const params: string[] = []
     if (filters.view !== "hospitals") params.push(`view=${filters.view}`)
     const activeKeys: FilterKey[] = getVisibleFiltersByView(filters.view);
-    ['branch', 'city', 'specialization', 'treatment', 'doctor', 'department'].forEach(keyStr => {
+    ['branch', 'city', 'state', 'specialization', 'treatment', 'doctor', 'department', 'location'].forEach(keyStr => {
       const key = keyStr as FilterKey
       if (activeKeys.includes(key) || filters[key].id || filters[key].query) {
         const display = getFilterValueDisplay(key, filters, availableOptions)
@@ -793,43 +901,45 @@ const useHospitalsData = () => {
   useEffect(() => {
     if (loading || allHospitals.length === 0) return;
 
-    const resolveToId = <T extends { _id: string; name: string }>(key: FilterKey, allItems: T[], getName: (item: T) => string) => {
+    const resolveToId = function<T>(key: FilterKey, allItems: T[], getId: (item: T) => string, getName: (item: T) => string) {
       const filter = filters[key];
       if (filter.query && !filter.id) {
         const exact = allItems.find(item => generateSlug(getName(item)) === filter.query);
         if (exact) {
-          updateSubFilter(key, 'id', exact._id);
+          updateSubFilter(key, 'id', getId(exact));
           updateSubFilter(key, 'query', '');
         }
       }
     };
 
     // treatment
-    resolveToId('treatment', allExtendedTreatments, t => t.name);
+    resolveToId('treatment', allExtendedTreatments, t => t._id, t => t.name);
 
     // doctor
-    resolveToId('doctor', allExtendedDoctors, d => d.doctorName);
+    resolveToId('doctor', allExtendedDoctors, d => d.baseId, d => d.doctorName);
 
     // branch
     const allBranchesFlat = allHospitals.flatMap(h => h.branches.map(b => ({ ...b, _id: b._id, name: b.branchName })));
-    resolveToId('branch', allBranchesFlat, b => b.name);
+    resolveToId('branch', allBranchesFlat, b => b._id, b => b.name);
 
     // city
     const allCitiesList = allHospitals.flatMap(h => h.branches.flatMap(b => b.city));
     const uniqueCities = Array.from(new Map(allCitiesList.map(c => [c._id, c])).values());
-    if (filters.city.query && !filters.city.id) {
-      const exactCity = uniqueCities.find(c => generateSlug(c.cityName) === filters.city.query);
-      if (exactCity) {
-        updateSubFilter('city', 'id', exactCity._id);
-        updateSubFilter('city', 'query', '');
-      }
-    }
+    resolveToId('city', uniqueCities, c => c._id, c => c.cityName);
+
+    // state
+    const allStatesList = allHospitals.flatMap(h => h.branches.flatMap(b => b.city.map(c => c.state).filter(Boolean)));
+    const uniqueStates = Array.from(new Set(allStatesList)) as string[];
+    resolveToId('state', uniqueStates, s => s, s => s);
 
     // specialization
     if (filters.specialization.query && !filters.specialization.id) {
-      const allSpecs = allExtendedDoctors.flatMap(d => (d.specialization || []).filter((s: any) => s?._id && (s.name || s.title)));
+      const allSpecs = allExtendedDoctors.flatMap(d => {
+        const specs = Array.isArray(d.specialization) ? d.specialization : d.specialization ? [d.specialization] : []
+        return specs.filter((s: any) => s?._id && (s.name || s.title))
+      });
       const exactSpec = allSpecs.find((s: any) => generateSlug(s.name || s.title || '') === filters.specialization.query);
-      if (exactSpec) {
+      if (exactSpec && typeof exactSpec === 'object' && exactSpec._id) {
         updateSubFilter('specialization', 'id', exactSpec._id);
         updateSubFilter('specialization', 'query', '');
       }
@@ -878,6 +988,7 @@ interface FilterDropdownProps {
   options: OptionType[]
   // Added a placeholder 'mobile' prop to suppress linter error on mobile
   mobile?: boolean
+  className?: string
 }
 
 const FilterDropdown = React.memo(({ placeholder, filterKey, filters, updateSubFilter, options }: FilterDropdownProps) => {
@@ -887,7 +998,11 @@ const FilterDropdown = React.memo(({ placeholder, filterKey, filters, updateSubF
 
   const query = useMemo(() => {
     if (filter.id) {
-      return options.find(o => o.id === filter.id)?.name || filter.query || ""
+      const opt = options.find(o => o.id === filter.id)
+      if (opt) {
+        return opt.name.replace(/^(City|State): /, '')
+      }
+      return filter.query || ""
     }
     return filter.query
   }, [filter.id, filter.query, options])
@@ -911,21 +1026,57 @@ const FilterDropdown = React.memo(({ placeholder, filterKey, filters, updateSubF
   }
 
   const handleOptionSelect = (id: string, name: string) => {
-    updateSubFilter(filterKey, "id", id)
-    updateSubFilter(filterKey, "query", "")
+    if (filterKey === 'location') {
+      if (id.startsWith('city:')) {
+        const cityId = id.split(':')[1]
+        updateSubFilter('city', 'id', cityId)
+        updateSubFilter('city', 'query', '')
+        updateSubFilter('location', 'id', id)
+        updateSubFilter('location', 'query', '')
+      } else if (id.startsWith('state:')) {
+        const stateId = id.split(':')[1]
+        updateSubFilter('state', 'id', stateId)
+        updateSubFilter('state', 'query', '')
+        updateSubFilter('location', 'id', id)
+        updateSubFilter('location', 'query', '')
+      }
+    } else {
+      updateSubFilter(filterKey, "id", id)
+      updateSubFilter(filterKey, "query", "")
+    }
     setShowOptions(false)
   }
 
   const handleClear = () => {
-    updateSubFilter(filterKey, "id", "")
-    updateSubFilter(filterKey, "query", "")
+    if (filterKey === 'location') {
+      updateSubFilter('city', 'id', '')
+      updateSubFilter('city', 'query', '')
+      updateSubFilter('state', 'id', '')
+      updateSubFilter('state', 'query', '')
+      updateSubFilter('location', 'id', '')
+      updateSubFilter('location', 'query', '')
+    } else {
+      updateSubFilter(filterKey, "id", "")
+      updateSubFilter(filterKey, "query", "")
+    }
     setShowOptions(false)
   }
 
   const handleFocus = () => {
-    if (filter.id) {
-      updateSubFilter(filterKey, "id", "")
-      updateSubFilter(filterKey, "query", "")
+    if (filterKey === 'location') {
+      if (filter.id) {
+        updateSubFilter('city', 'id', '')
+        updateSubFilter('city', 'query', '')
+        updateSubFilter('state', 'id', '')
+        updateSubFilter('state', 'query', '')
+        updateSubFilter('location', 'id', '')
+        updateSubFilter('location', 'query', '')
+      }
+    } else {
+      if (filter.id) {
+        updateSubFilter(filterKey, "id", "")
+        updateSubFilter(filterKey, "query", "")
+      }
     }
     setShowOptions(true)
   }
@@ -1010,7 +1161,7 @@ const FilterSidebar = ({
     }
   }, [filters.view])
 
-  const visibleFilterKeys = useMemo(() => getVisibleFiltersByView(filters.view).filter(key => key !== 'city'), [filters.view])
+  const visibleFilterKeys = useMemo(() => getVisibleFiltersByView(filters.view).filter(key => key !== 'city' && key !== 'state') as FilterKey[], [filters.view])
   const activeFilterKey = useMemo(() => {
     if (filters.view === 'hospitals') return 'Hospitals'
     if (filters.view === 'doctors') return 'Doctors'
@@ -1019,7 +1170,8 @@ const FilterSidebar = ({
 
   const hasAppliedFilters = useMemo(() =>
     filterOptions.some(opt => getFilterValueDisplay(opt.value, filters, availableOptions)) ||
-    (filters.city.id || filters.city.query),
+    (filters.city.id || filters.city.query) ||
+    (filters.state.id || filters.state.query),
     [filters, availableOptions, filterOptions, getFilterValueDisplay]
   )
 
@@ -1042,12 +1194,13 @@ const FilterSidebar = ({
   }, [filters, availableOptions, visibleFilterKeys])
 
   const cityValue = getFilterValueDisplay('city', filters, availableOptions)
+  const stateValue = getFilterValueDisplay('state', filters, availableOptions)
 
   // Refs for auto-scroll
   const filterContentRef = useRef<HTMLDivElement>(null)
   const activeFilterRef = useRef<HTMLDivElement>(null)
   const [keyboardVisible, setKeyboardVisible] = useState(false)
-  const scrollTimeoutRef = useRef<NodeJS.Timeout>()
+  const scrollTimeoutRef = useRef<number | null>(null)
 
   // Track keyboard visibility on mobile
   useEffect(() => {
@@ -1082,7 +1235,7 @@ const FilterSidebar = ({
   const scrollToActiveFilter = () => {
     if (!activeFilterRef.current || !filterContentRef.current) return
 
-    clearTimeout(scrollTimeoutRef.current)
+    if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current)
 
     scrollTimeoutRef.current = setTimeout(() => {
       const filterElement = activeFilterRef.current
@@ -1105,7 +1258,7 @@ const FilterSidebar = ({
           behavior: 'smooth'
         })
       }
-    }, 100) // Small delay to ensure keyboard is fully opened
+    }, 100) as unknown as number // Small delay to ensure keyboard is fully opened
   }
 
   // Handle filter focus for auto-scroll
@@ -1191,7 +1344,7 @@ const FilterSidebar = ({
               <div className="flex items-center justify-between mb-3">
                 <h4 className="text-sm font-medium text-gray-900">Applied</h4>
                 <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
-                  {filterOptions.filter(opt => getFilterValueDisplay(opt.value, filters, availableOptions)).length + (cityValue ? 1 : 0)}
+                  {filterOptions.filter(opt => getFilterValueDisplay(opt.value, filters, availableOptions)).length + (cityValue ? 1 : 0) + (stateValue ? 1 : 0)}
                 </span>
               </div>
               <div className="space-y-2">
@@ -1220,13 +1373,30 @@ const FilterSidebar = ({
                 {cityValue && (
                   <div className="flex items-center justify-between group">
                     <div className="flex items-center gap-2 min-w-0 flex-1">
-                      <span className="text-xs text-gray-500">City/State</span>
+                      <span className="text-xs text-gray-500">City</span>
                       <span className="text-sm text-gray-900 font-medium truncate">{cityValue}</span>
                     </div>
                     <button
                       onClick={() => {
                         updateSubFilter('city', "id", "")
                         updateSubFilter('city', "query", "")
+                      }}
+                      className="opacity-0 group-hover:opacity-100 p-1 text-gray-400 hover:text-gray-600 transition-opacity"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                )}
+                {stateValue && (
+                  <div className="flex items-center justify-between group">
+                    <div className="flex items-center gap-2 min-w-0 flex-1">
+                      <span className="text-xs text-gray-500">State</span>
+                      <span className="text-sm text-gray-900 font-medium truncate">{stateValue}</span>
+                    </div>
+                    <button
+                      onClick={() => {
+                        updateSubFilter('state', "id", "")
+                        updateSubFilter('state', "query", "")
                       }}
                       className="opacity-0 group-hover:opacity-100 p-1 text-gray-400 hover:text-gray-600 transition-opacity"
                     >
@@ -1379,6 +1549,20 @@ const FilterSidebar = ({
                         </button>
                       </div>
                     )}
+                    {stateValue && (
+                      <div className="inline-flex items-center gap-1.5 bg-gray-50 text-gray-700 px-3 py-2 rounded-full text-sm">
+                        <span className="font-medium">{stateValue}</span>
+                        <button
+                          onClick={() => {
+                            updateSubFilter('state', "id", "")
+                            updateSubFilter('state', "query", "")
+                          }}
+                          className="text-gray-500 hover:text-gray-700"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
@@ -1457,11 +1641,9 @@ const ScrollableTitle = ({ text, className, isHovered }: { text: string; classNa
   const textRef = useRef<HTMLSpanElement>(null);
   const [isOverflowing, setIsOverflowing] = useState(false);
   const [animationDuration, setAnimationDuration] = useState('0s');
-  // Removed internal isHovered state
 
   useEffect(() => {
     const checkOverflow = () => {
-      // Must use requestAnimationFrame for reliable measurements if component is mounted/re-rendered quickly
       const rAF = window.requestAnimationFrame(() => {
         if (containerRef.current && textRef.current) {
           const containerWidth = containerRef.current.clientWidth;
@@ -1469,7 +1651,6 @@ const ScrollableTitle = ({ text, className, isHovered }: { text: string; classNa
 
           if (textWidth > containerWidth) {
             setIsOverflowing(true);
-            // Calculate duration: Longer text = longer duration (slower scroll speed)
             const duration = textWidth / 50;
             setAnimationDuration(`${Math.max(duration, 5)}s`);
           } else {
@@ -1487,32 +1668,48 @@ const ScrollableTitle = ({ text, className, isHovered }: { text: string; classNa
     return () => window.removeEventListener('resize', checkOverflow);
   }, [text]);
 
-  // Combine conditions for the active animation state, using the prop
+  // Check if we're on mobile
+  const [isMobile, setIsMobile] = useState(false);
+  
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  // On mobile: show 2 lines (no hover effects)
+  if (isMobile) {
+    return (
+      <div className={`${className} line-clamp-2`}>
+        {text}
+      </div>
+    );
+  }
+
+  // On desktop: use original marquee logic
   const isMarqueeActive = isOverflowing && isHovered;
 
   return (
-    // 1. Container: Always hides overflow, used for measurement.
     <div
       ref={containerRef}
       className={`relative w-full overflow-hidden ${className}`}
-    // Removed onMouseEnter/onMouseLeave
     >
-      {/* 2. Content Wrapper */}
       <div
         className={`whitespace-nowrap inline-block ${!isMarqueeActive ? 'truncate w-full' : ''}`}
         style={{
-          // Apply animation only when active
           animation: isMarqueeActive ? `marquee ${animationDuration} linear infinite` : 'none',
-          // Ensure it starts from the correct position when not active
           transform: 'translateX(0)',
         }}
       >
-        {/* The first text element for content and measurement */}
         <span ref={textRef} className="inline-block pr-8">
           {text}
         </span>
 
-        {/* Duplicate text for seamless looping marquee effect, only rendered when marquee is active */}
         {isMarqueeActive && (
           <span className="inline-block pr-8">
             {text}
@@ -1586,7 +1783,7 @@ const HospitalCard = ({ branch }: { branch: BranchType & { hospitalName: string;
         <div className="p-3 flex-1 flex flex-col space-y-2">
           <header className="md:space-y-1">
             {/* Branch Name */}
-            <h2 className="w-full h-6 text-2xl md:mb-0 mb-2 md:text-lg font-medium leading-snug text-gray-800 transition-colors">
+            <h2 className="w-full md:h-6 text-2xl md:mb-0 mb-2 md:text-lg font-medium leading-snug text-gray-800 transition-colors">
               <ScrollableTitle
                 text={branch.branchName}
                 isHovered={isHovered}
@@ -1739,7 +1936,7 @@ const DoctorCard = ({ doctor }: { doctor: ExtendedDoctorType }) => {
 
           </div>
 
-          <div className="flex gap-x-2 mb-2 mb:mb-0">
+          <div className="flex gap-x-2 mb-2 md:mt-0 mt-2 mb:mb-0">
             <p className=" text-lg md:text-sm text-gray-900 font-normal flex items-center gap-2 line-clamp-1">
               {specializationDisplay}
             </p>
@@ -1830,7 +2027,7 @@ const TreatmentCard = ({ treatment }: { treatment: ExtendedTreatmentType }) => {
 
         <div className="p-3 flex-1 flex flex-col md:space-y-1">
           <header className="space-y-2 flex-1 min-h-0">
-            <h2 className="md:text-base text-2xl font-medium leading-[20px] text-gray-900 transition-colors">
+            <h2 className="md:text-base text-2xl py-2 md:py-0 font-medium leading-[20px] text-gray-900 transition-colors">
               <ScrollableTitle text={treatment.name} isHovered={isHovered} /> {/* PASSED prop */}
             </h2>
 
@@ -2195,20 +2392,21 @@ function HospitalsPageContent() {
         ]}
 
         // Image
-        mainImageSrc="/images/doctor-telehealth.png" // Update this path
-        mainImageAlt="Doctor on a telehealth video call"
       />
       <BreadcrumbNav />
 
       <section className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
         <div className="flex flex-col md:flex-row gap-4">
           <FilterSidebar
+            loading={loading}
             filters={filters}
+            updateFilter={updateFilter}
             updateSubFilter={updateSubFilter}
             clearFilters={clearFilters}
             showFilters={showFilters}
             setShowFilters={setShowFilters}
             availableOptions={availableOptions}
+            currentCount={currentCount}
             getFilterValueDisplay={getFilterValueDisplay}
             filteredBranches={filteredBranches}
             filteredDoctors={filteredDoctors}
@@ -2220,11 +2418,11 @@ function HospitalsPageContent() {
               <div className="flex flex-col lg:flex-row lg:items-center  gap-4">
                 <ViewToggle view={filters.view} setView={setView} />
                 <FilterDropdown
-                  placeholder="Search by City/State Name"
-                  filterKey="city"
+                  placeholder="Search by City or State"
+                  filterKey="location"
                   filters={filters}
                   updateSubFilter={updateSubFilter}
-                  options={availableOptions.city}
+                  options={availableOptions.location}
                 />
               </div>
               <ResultsHeader

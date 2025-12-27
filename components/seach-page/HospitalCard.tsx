@@ -1,9 +1,11 @@
 "use client"
+import { useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import type { Hospital } from "@/types/hospital"
+import type { HospitalType as Hospital } from "@/types/hospital"
 import { getWixScaledToFillImageUrl, getWixImageUrl } from "@/lib/wixMedia"
 import { HospitalIcon, Phone, Globe, Mail } from "lucide-react"
 import { BranchesPreview } from "@/components/seach-page/branches"
+import ScrollableTitle from "@/components/ScrollableTitle"
 
 type Props = {
   hospital: Hospital
@@ -17,10 +19,15 @@ function getImageUrl(h: Hospital, width = 800, height = 500): string | null {
 }
 
 export function HospitalCard({ hospital }: Props) {
+  const [isHovered, setIsHovered] = useState(false)
   const cover = getImageUrl(hospital, 800, 500)
 
   return (
-    <Card className="overflow-hidden border-border bg-background text-foreground">
+    <Card
+      className="overflow-hidden border-border bg-background text-foreground"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
       {cover ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img
@@ -37,7 +44,7 @@ export function HospitalCard({ hospital }: Props) {
       )}
 
       <CardHeader className="space-y-1">
-        <CardTitle className="text-balance">{hospital.name}</CardTitle>
+        <CardTitle className="text-balance"><ScrollableTitle text={hospital.name} isHovered={isHovered} /></CardTitle>
         {hospital.city && <p className="text-sm text-muted-foreground">{hospital.city}</p>}
       </CardHeader>
 

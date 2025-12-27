@@ -1,8 +1,10 @@
+import { useState } from "react"
 import Link from "next/link"
 import { Card, CardContent, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Star, Stethoscope, MessageCircleMore, ExternalLink } from "lucide-react"
+import ScrollableTitle from "@/components/ScrollableTitle"
 
 export interface Doctor {
   _id: string
@@ -22,11 +24,16 @@ export interface Doctor {
 }
 
 export function DoctorCard({ doctor }: { doctor: Doctor }) {
+  const [isHovered, setIsHovered] = useState(false)
   const displayedSpecs = doctor.specializations.slice(0, 3)
   const hasMore = doctor.specializations.length > 3
 
   return (
-    <Card className="group relative bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-lg transition-shadow duration-300">
+    <Card
+      className="group relative bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-lg transition-shadow duration-300"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
       <CardContent className="p-6">
         {/* Header */}
         <div className="flex items-start gap-4">
@@ -47,7 +54,7 @@ export function DoctorCard({ doctor }: { doctor: Doctor }) {
           </div>
 
           <div className="flex-1 min-w-0">
-            <CardTitle className="text-lg font-semibold text-gray-900 truncate">{doctor.name}</CardTitle>
+            <CardTitle className="text-lg font-semibold text-gray-900"><ScrollableTitle text={doctor.name} isHovered={isHovered} /></CardTitle>
             <p className="text-sm text-gray-500 mt-1">{doctor.title || doctor.specialty}</p>
           </div>
 

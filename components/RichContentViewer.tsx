@@ -2,7 +2,7 @@
 
 import React from "react"
 import { media } from "@wix/sdk"
-import type { JSX } from "react/jsx-runtime" // Import JSX to resolve undeclared variable error
+import type { JSX } from "react/jsx-runtime"
 
 interface RicosContent {
   nodes: any[]
@@ -24,14 +24,19 @@ export function RicosRenderer({ content }: RicosRendererProps) {
     return null
   }
 
-  const renderNode = (node: any, index: number): React.ReactNode => {
+  const renderNode = (node: any, index: number, isInsideList = false): React.ReactNode => {
     if (!node) return null
 
     // Handle paragraph nodes
     if (node.type === "PARAGRAPH" || node.paragraphData) {
+      // If inside a list, we don't want the large margin-bottom that breaks the bullet layout
+      const pClassName = isInsideList 
+        ? "inline text-base md:text-lg text-[#241d1f] leading-relaxed" 
+        : "mb-6 text-base md:text-lg text-[#241d1f] leading-relaxed"
+
       return (
-        <p key={index} className="mb-6 text-base md:text-lg text-[#241d1f] leading-relaxed">
-          {node.nodes && renderNodes(node.nodes)}
+        <p key={index} className={pClassName}>
+          {node.nodes && renderNodes(node.nodes, isInsideList)}
           {node.textData && node.textData.text}
         </p>
       )
@@ -59,18 +64,17 @@ export function RicosRenderer({ content }: RicosRendererProps) {
     // Handle text nodes
     if (node.type === "TEXT" || node.textData) {
       const text = node.textData?.text || ""
-      let className = "text-base md:text-lg text-[#241d1f]"
+      let className = ""
 
-      // Handle text decorations
       if (node.textData?.decorations) {
-        const decorations = node.textData.decorations
+        const decorations = node.textData.decorations.map((d: any) => d.type || d)
         if (decorations.includes("BOLD")) className += " font-bold"
         if (decorations.includes("ITALIC")) className += " italic"
         if (decorations.includes("UNDERLINE")) className += " underline"
       }
 
       return (
-        <span key={index} className={className}>
+        <span key={index} className={className || undefined}>
           {text}
         </span>
       )
@@ -79,72 +83,55 @@ export function RicosRenderer({ content }: RicosRendererProps) {
     // Handle list nodes
     if (node.type === "BULLETED_LIST" || node.bulletedListData) {
       return (
-        <ul key={index} className="list-disc list-inside mb-6 space-y-2 ml-4">
-          {node.nodes && renderNodes(node.nodes)}
+        <ul key={index} className="list-disc ml-6 mb-6 space-y-2 text-[#241d1f]">
+          {node.nodes && renderNodes(node.nodes, true)}
         </ul>
       )
     }
 
     if (node.type === "ORDERED_LIST" || node.orderedListData) {
       return (
-        <ol key={index} className="list-decimal list-inside mb-6 space-y-2 ml-4">
-          {node.nodes && renderNodes(node.nodes)}
+        <ol key={index} className="list-decimal ml-6 mb-6 space-y-2 text-[#241d1f]">
+          {node.nodes && renderNodes(node.nodes, true)}
         </ol>
       )
     }
 
     if (node.type === "LIST_ITEM" || node.listItemData) {
       return (
-        <li key={index} className="text-base md:text-lg text-[#241d1f] leading-relaxed">
-          {node.nodes && renderNodes(node.nodes)}
+        <li key={index} className="text-base md:text-lg leading-relaxed pl-1">
+          {node.nodes && renderNodes(node.nodes, true)}
         </li>
       )
     }
 
+    // Handle image nodes
     if (node.type === "IMAGE" || node.imageData) {
       const imageSourceData = node.imageData?.image?.src || node.imageData?.containerData?.image?.src
       let imageSrc = ""
 
       if (imageSourceData && typeof imageSourceData === "object") {
-        if (imageSourceData.id) {
-          imageSrc = imageSourceData.id
-        } else if (imageSourceData.url) {
-          imageSrc = imageSourceData.url
-        }
+        imageSrc = imageSourceData.id || imageSourceData.url || ""
       } else if (typeof imageSourceData === "string") {
         imageSrc = imageSourceData
       }
 
       const alt = node.imageData?.altText || "Blog Image"
-      const width = node.imageData?.image?.width || node.imageData?.containerData?.width
-      const height = node.imageData?.image?.height || node.imageData?.containerData?.height
-
       let finalImageUrl = ""
 
       if (imageSrc) {
-        // Wix image IDs are typically in format: 9a90e8_4a7b68f4413e4667b8b55b25c5002f50~mv2.jpg
-        // Convert to: https://static.wixstatic.com/media/9a90e8_4a7b68f4413e4667b8b55b25c5002f50~mv2.jpg
-        if (imageSrc.startsWith("http://") || imageSrc.startsWith("https://")) {
+        if (imageSrc.startsWith("http")) {
           finalImageUrl = imageSrc
         } else if (imageSrc.startsWith("wix:image://")) {
-          // Handle wix:image:// protocol using Wix SDK
           try {
             const { url } = media.getImageUrl(imageSrc)
             finalImageUrl = url
-          } catch (error) {
-            // Fallback parsing method
+          } catch {
             const match = imageSrc.match(/wix:image:\/\/v1\/([^/]+)\//)
-            if (match && match[1]) {
-              finalImageUrl = `https://static.wixstatic.com/media/${match[1]}`
-            }
+            if (match) finalImageUrl = `https://static.wixstatic.com/media/${match[1]}`
           }
         } else {
-          const safeImageSrc = String(imageSrc)
-          if (!safeImageSrc.includes("/")) {
-            finalImageUrl = `https://static.wixstatic.com/media/${safeImageSrc}`
-          } else {
-            finalImageUrl = safeImageSrc
-          }
+          finalImageUrl = `https://static.wixstatic.com/media/${imageSrc}`
         }
       }
 
@@ -152,32 +139,12 @@ export function RicosRenderer({ content }: RicosRendererProps) {
         return (
           <div key={index} className="my-8">
             <img
-              src={finalImageUrl || "/placeholder.svg"}
+              src={finalImageUrl}
               alt={alt}
               className="w-full h-auto rounded-lg shadow-sm"
               loading="lazy"
-              onError={(e) => {
-                const target = e.target as HTMLImageElement
-                target.src = "/blog-abstract-design.png"
-              }}
             />
             {alt && alt !== "Blog Image" && <p className="text-sm text-gray-500 text-center mt-2 italic">{alt}</p>}
-          </div>
-        )
-      }
-    }
-
-    // Handle video nodes
-    if (node.type === "VIDEO" || node.videoData) {
-      const src = node.videoData?.video?.src || node.videoData?.src
-      const poster = node.videoData?.thumbnail?.url
-
-      if (src) {
-        return (
-          <div key={index} className="my-8">
-            <video controls poster={poster} className="w-full h-auto rounded-lg shadow-sm" src={src}>
-              Your browser does not support the video tag.
-            </video>
           </div>
         )
       }
@@ -200,25 +167,15 @@ export function RicosRenderer({ content }: RicosRendererProps) {
       )
     }
 
-    // Handle code block
-    if (node.type === "CODE_BLOCK" || node.codeBlockData) {
-      return (
-        <pre key={index} className="bg-gray-900 text-gray-100 p-6 rounded-lg overflow-x-auto my-6">
-          <code className="text-sm font-mono">{node.textData?.text || (node.nodes && renderNodes(node.nodes))}</code>
-        </pre>
-      )
-    }
-
+    // Handle Link
     if (node.type === "LINK" || node.linkData) {
       const href = node.linkData?.link?.url || "#"
       const target = node.linkData?.link?.target || "_self"
-
       return (
         <a
           key={index}
           href={href}
           target={target}
-          rel={target === "_blank" ? "noopener noreferrer" : undefined}
           className="text-blue-600 hover:text-blue-800 underline"
         >
           {node.nodes && renderNodes(node.nodes)}
@@ -226,17 +183,16 @@ export function RicosRenderer({ content }: RicosRendererProps) {
       )
     }
 
-    // Recursive rendering for nested nodes
     if (node.nodes && Array.isArray(node.nodes)) {
-      return <React.Fragment key={index}>{renderNodes(node.nodes)}</React.Fragment>
+      return <React.Fragment key={index}>{renderNodes(node.nodes, isInsideList)}</React.Fragment>
     }
 
     return null
   }
 
-  const renderNodes = (nodes: any[]): React.ReactNode[] => {
+  const renderNodes = (nodes: any[], isInsideList = false): React.ReactNode[] => {
     if (!Array.isArray(nodes)) return []
-    return nodes.map((node, index) => renderNode(node, index))
+    return nodes.map((node, index) => renderNode(node, index, isInsideList))
   }
 
   return <div className="rich-content-viewer">{renderNodes(nodes)}</div>

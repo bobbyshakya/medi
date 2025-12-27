@@ -1,6 +1,8 @@
 "use client"
+import { useState } from "react"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import ScrollableTitle from "@/components/ScrollableTitle"
 
 export interface TreatmentItem {
   _id: string
@@ -17,10 +19,15 @@ export interface TreatmentItem {
 }
 
 export default function TreatmentCard({ treatment }: { treatment: TreatmentItem }) {
+  const [isHovered, setIsHovered] = useState(false)
   const imageSrc = typeof treatment.image === "string" ? treatment.image : undefined
 
   return (
-    <Card className="bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-lg transition-shadow duration-300 overflow-hidden">
+    <Card
+      className="bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-lg transition-shadow duration-300 overflow-hidden"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
       {/* Image */}
       {imageSrc && (
         <div className="w-full h-44 overflow-hidden">
@@ -36,7 +43,7 @@ export default function TreatmentCard({ treatment }: { treatment: TreatmentItem 
 
       {/* Header */}
       <CardHeader className="px-5 pt-5 pb-3">
-        <CardTitle className="text-lg font-semibold text-gray-900 truncate">{treatment.name}</CardTitle>
+        <CardTitle className="text-lg font-semibold text-gray-900"><ScrollableTitle text={treatment.name} isHovered={isHovered} /></CardTitle>
         {treatment.category && <p className="text-sm text-gray-500 mt-1">{treatment.category}</p>}
       </CardHeader>
 

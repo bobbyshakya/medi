@@ -1,7 +1,6 @@
 "use client"
 import { useState, useEffect, useCallback, useMemo, useRef } from "react"
 import Image from "next/image"
-import type { HospitalWithBranchPreview } from "@/types/hospital"
 import {
   Building2,
   Calendar,
@@ -608,7 +607,7 @@ const extractUniqueTreatments = (branch: any): any[] => {
 
 export default function BranchDetail({ params }: { params: Promise<{ slug: string }> }) {
   const [branch, setBranch] = useState<any>(null)
-  const [hospital, setHospital] = useState<HospitalWithBranchPreview | null>(null)
+  const [hospital, setHospital] = useState<any>(null)
   const [allHospitals, setAllHospitals] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -621,30 +620,37 @@ export default function BranchDetail({ params }: { params: Promise<{ slug: strin
       try {
         const resolvedParams = await params
         const branchSlug = resolvedParams.slug
-        const res = await fetch('/api/hospitals')
-        if (!res.ok) throw new Error("Failed to fetch hospitals")
-        const data = await res.json()
-        if (data.items?.length > 0) {
-          let foundBranch = null
-          let foundHospital = null
-          for (const hospitalItem of data.items) {
-            if (!hospitalItem.hospitalName) continue
-            const branchMatch = hospitalItem.branches?.find((b: any) => {
-              if (!b?.branchName) return false
-              const expectedBranchSlug = generateSlug(b.branchName)
-              return expectedBranchSlug === branchSlug || b.branchName.toLowerCase().includes(branchSlug.replace(/-/g, ' '))
-            })
-            if (branchMatch) {
-              foundBranch = branchMatch
-              foundHospital = hospitalItem
-              break
-            }
+        const res = await fetch(`/api/hospitals/${branchSlug}`)
+        if (!res.ok) {
+          if (res.status === 404) {
+            setError("Branch not found. The URL might be incorrect or the branch does not exist.")
+          } else {
+            throw new Error("Failed to fetch hospital data")
           }
-          setAllHospitals(data.items)
-          setBranch(foundBranch)
-          setHospital(foundHospital)
-          if (!foundBranch || !foundHospital) setError("Branch not found. The URL might be incorrect or the branch does not exist.")
-        } else setError("No hospital data available.")
+          return
+        }
+        const hospitalData = await res.json()
+
+        // Find the branch within this hospital
+        let foundBranch = null
+        if (hospitalData.branches?.length > 0) {
+          foundBranch = hospitalData.branches.find((b: any) => {
+            if (!b?.branchName) return false
+            const expectedBranchSlug = generateSlug(b.branchName)
+            return expectedBranchSlug === branchSlug || b.branchName.toLowerCase().includes(branchSlug.replace(/-/g, ' '))
+          })
+        }
+
+        if (!foundBranch && hospitalData.branches?.length === 1) {
+          // If only one branch, use it (for standalone hospitals)
+          foundBranch = hospitalData.branches[0]
+        }
+
+        setHospital(hospitalData)
+        setBranch(foundBranch)
+        setAllHospitals([hospitalData]) // For similar hospitals logic
+
+        if (!foundBranch) setError("Branch not found within the hospital.")
       } catch (e) {
         setError(e instanceof Error ? e.message : "An unknown error occurred while fetching branch details")
       } finally {
@@ -654,28 +660,60 @@ export default function BranchDetail({ params }: { params: Promise<{ slug: strin
     fetchBranchData()
   }, [params])
 
-  const allTreatments = useMemo(() => extractUniqueTreatments(branch), [branch])
-  const sortedFacilities = useMemo(() => Array.isArray(branch?.facilities) ? [...branch.facilities].sort((a, b) => (a.name || '').localeCompare(b.name || '')) : [], [branch?.facilities])
+  const allTreatments = useMemo(() => branch ? extractUniqueTreatments(branch) : [], [branch])
+  const sortedFacilities = useMemo(() => {
+    if (!branch?.facilities || !Array.isArray(branch.facilities)) return []
+    return [...branch.facilities].sort((a, b) => (a.name || '').localeCompare(b.name || ''))
+  }, [branch?.facilities])
   const currentCity = branch?.city?.[0]?.cityName || null
 
-  const similarBranches = useMemo(() => {
-    if (!allHospitals || !branch || !currentCity) return []
-    return allHospitals
-      .filter(h => h.branches)
-      .flatMap(h => h.branches
-        .filter((b: any) => b.city?.some((c: any) => c?.cityName === currentCity) && b._id !== branch._id && b.branchName)
-        .map((b: any) => ({ ...b, hospitalName: h.hospitalName, yearEstablished: h.yearEstablished, logo: h.logo, accreditation: b.accreditation || h.accreditation }))
-      )
-      .sort((a, b) => (a.branchName || '').localeCompare(b.branchName || ''))
-  }, [allHospitals, branch, currentCity])
+  // For similar branches, since we only have one hospital now, we'll fetch additional data
+  const [similarBranches, setSimilarBranches] = useState<any[]>([])
+  const [allHospitalBranches, setAllHospitalBranches] = useState<any[]>([])
 
-  const allHospitalBranches = useMemo(() => allHospitals
-    .filter(h => h.branches)
-    .flatMap(h => h.branches
-      .filter((b: any) => b?.branchName)
-      .map((b: any) => ({ ...b, hospitalName: h.hospitalName, yearEstablished: h.yearEstablished, logo: h.logo, accreditation: b.accreditation || h.accreditation }))
-    )
-    .sort((a, b) => (a.branchName || '').localeCompare(b.branchName || '')), [allHospitals])
+  useEffect(() => {
+    if (currentCity && branch) {
+      // Fetch similar branches from the same city
+      fetch(`/api/hospitals?city=${encodeURIComponent(currentCity)}&minimal=true&pageSize=50`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.items) {
+            const similar = data.items
+              .filter((h: any) => h._id !== hospital?._id) // Exclude current hospital
+              .flatMap((h: any) => (h.branches || []).map((b: any) => ({ ...b, hospitalName: h.hospitalName, yearEstablished: h.yearEstablished, logo: h.logo, accreditation: b.accreditation || h.accreditation })))
+              .filter((b: any) => b.city?.some((c: any) => c?.cityName === currentCity) && b._id !== branch._id)
+              .sort((a: any, b: any) => (a.branchName || '').localeCompare(b.branchName || ''))
+            setSimilarBranches(similar.slice(0, 10)) // Limit to 10 for performance
+            setSimilarBranches(similar.slice(0, 10)) // Limit to 10 for performance
+          }
+        })
+        .catch(err => console.warn('Failed to fetch similar branches:', err))
+    }
+  }, [currentCity, branch, hospital?._id])
+
+  useEffect(() => {
+    if (currentCity) {
+      // Fetch all branches for search dropdown
+      fetch(`/api/hospitals?city=${encodeURIComponent(currentCity)}&minimal=true&pageSize=100`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.items) {
+            const allBranches = data.items
+              .flatMap((h: any) => (h.branches || []).map((b: any) => ({
+                ...b,
+                hospitalName: h.hospitalName,
+                yearEstablished: h.yearEstablished,
+                logo: h.logo,
+                accreditation: b.accreditation || h.accreditation
+              })))
+              .filter((b: any) => b?.branchName)
+              .sort((a: any, b: any) => (a.branchName || '').localeCompare(b.branchName || ''))
+            setAllHospitalBranches(allBranches)
+          }
+        })
+        .catch(err => console.warn('Failed to fetch all branches:', err))
+    }
+  }, [currentCity])
 
   const handleDoctorSelect = useCallback((id: string) => {
     const doctor = branch?.doctors?.find((d: any) => d._id === id)

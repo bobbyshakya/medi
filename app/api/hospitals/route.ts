@@ -1209,7 +1209,8 @@ async function getAllHospitals(
     department: string[]
   },
   searchQuery?: string,
-  includeStandalone: boolean = true
+  includeStandalone: boolean = true,
+  minimal: boolean = false
 ) {
   // Fetch regular hospitals from HospitalMaster
   const regularHospitalsQuery = wixClient.items
@@ -1361,7 +1362,14 @@ async function getAllHospitals(
   // Enrich regular hospitals
   let enrichedRegularHospitals: any[] = []
   if (regularHospitals.length > 0) {
-    enrichedRegularHospitals = await enrichHospitals(regularHospitals, filterIds)
+    if (minimal) {
+      enrichedRegularHospitals = regularHospitals.map(h => ({
+        _id: h._id,
+        hospitalName: getValue(h, "hospitalName", "Hospital Name") || "Unknown Hospital"
+      }))
+    } else {
+      enrichedRegularHospitals = await enrichHospitals(regularHospitals, filterIds)
+    }
   }
 
   // Combine all hospitals
@@ -1407,6 +1415,7 @@ export async function GET(req: Request) {
       specialistId: url.searchParams.get("specialistId"),
       departmentId: url.searchParams.get("departmentId"),
       includeStandalone: url.searchParams.get("includeStandalone") !== "false", // Default to true
+      minimal: url.searchParams.get("minimal") === "true", // New parameter for minimal data
     }
 
     // UPDATED: Use new searchBranches method with ShowHospital filter
@@ -1463,7 +1472,8 @@ export async function GET(req: Request) {
     const allHospitals = await getAllHospitals(
       filterIds,
       params.q || undefined,
-      params.includeStandalone
+      params.includeStandalone,
+      params.minimal
     )
 
     // Count regular hospitals
@@ -1486,6 +1496,10 @@ export async function GET(req: Request) {
       regularCount: regularHospitalCount,
       standaloneCount: standaloneBranchesCount,
       filteredCount: allHospitals.length,
+    }, {
+      headers: {
+        'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600',
+      },
     })
   } catch (error: any) {
     console.error("API Error:", error)

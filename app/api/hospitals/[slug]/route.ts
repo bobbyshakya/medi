@@ -613,108 +613,292 @@ async function enrichHospitals(
   });
 }
 
-// GET /api/hospitals
-export async function GET(req: Request) {
+// GET /api/hospitals/[slug]
+export async function GET(req: Request, { params }: { params: { slug: string } }) {
   try {
-    const url = new URL(req.url);
-    const params = {
-      q: url.searchParams.get("q")?.trim() || "",
-      page: Math.max(0, Number(url.searchParams.get("page") || 0)),
-      pageSize: Math.min(50, Number(url.searchParams.get("pageSize") || 20)),
-      hospitalId: url.searchParams.get("hospitalId")?.trim(),
-      hospitalText: url.searchParams.get("hospital")?.trim(),
-      branchText: url.searchParams.get("branch")?.trim(),
-      cityText: url.searchParams.get("city")?.trim(),
-      doctorText: url.searchParams.get("doctor")?.trim(),
-      specialtyText: url.searchParams.get("specialty")?.trim(),
-      accreditationText: url.searchParams.get("accreditation")?.trim(),
-      treatmentText: url.searchParams.get("treatment")?.trim(),
-      departmentText: url.searchParams.get("department")?.trim(),
-      branchId: url.searchParams.get("branchId"),
-      cityId: url.searchParams.get("cityId"),
-      doctorId: url.searchParams.get("doctorId"),
-      specialtyId: url.searchParams.get("specialtyId"),
-      accreditationId: url.searchParams.get("accreditationId"),
-      treatmentId: url.searchParams.get("treatmentId"),
-      departmentId: url.searchParams.get("departmentId"),
+    const slug = params.slug;
+    if (!slug) {
+      return NextResponse.json({ error: "Slug is required" }, { status: 400 });
+    }
+
+    // Generate slug for comparison
+    const generateSlug = (name: string): string => {
+      return name
+        .toLowerCase()
+        .trim()
+        .replace(/[^\w\s-]/g, "")
+        .replace(/\s+/g, "-")
+        .replace(/-+/g, "-");
     };
 
-    const [
-      hospitalIdsFromText,
-      branchIdsFromText,
-      cityIdsFromText,
-      doctorIdsFromText,
-      specialtyIdsFromText,
-      accreditationIdsFromText,
-      treatmentIdsFromText,
-      departmentIdsFromText,
-    ] = await Promise.all([
-      params.hospitalText ? DataFetcher.searchIds(COLLECTIONS.HOSPITALS, ["hospitalName"], params.hospitalText) : Promise.resolve([]),
-      params.branchText ? DataFetcher.searchIds(COLLECTIONS.BRANCHES, ["branchName"], params.branchText) : Promise.resolve([]),
-      params.cityText ? DataFetcher.searchIds(COLLECTIONS.CITIES, ["cityName"], params.cityText) : Promise.resolve([]),
-      params.doctorText ? DataFetcher.searchIds(COLLECTIONS.DOCTORS, ["doctorName"], params.doctorText) : Promise.resolve([]),
-      params.specialtyText ? DataFetcher.searchIds(COLLECTIONS.SPECIALTIES, ["Specialty", "specialty"], params.specialtyText) : Promise.resolve([]),
-      params.accreditationText ? DataFetcher.searchIds(COLLECTIONS.ACCREDITATIONS, ["title"], params.accreditationText) : Promise.resolve([]),
-      params.treatmentText ? DataFetcher.searchIds(COLLECTIONS.TREATMENTS, ["treatmentName"], params.treatmentText) : Promise.resolve([]),
-      params.departmentText ? DataFetcher.searchIds(COLLECTIONS.DEPARTMENTS, ["Name", "departmentName"], params.departmentText) : Promise.resolve([]),
-    ]);
+    // First, try to find the branch directly by slug
+    let branchQuery = wixClient.items
+      .query(COLLECTIONS.BRANCHES)
+      .eq("showHospital", true)  // Only show hospitals
+      .include(
+        "hospital",
+        "HospitalMaster_branches",
+        "city",
+        "doctor",
+        "specialty",
+        "accreditation",
+        "treatment",
+        "department"
+      )
+      .limit(1000);
 
-    const filterIds = {
-      branchIds: [...branchIdsFromText, ...(params.branchId ? [params.branchId] : [])],
-      cityIds: [...cityIdsFromText, ...(params.cityId ? [params.cityId] : [])],
-      doctorIds: [...doctorIdsFromText, ...(params.doctorId ? [params.doctorId] : [])],
-      specialtyIds: [...specialtyIdsFromText, ...(params.specialtyId ? [params.specialtyId] : [])],
-      accreditationIds: [...accreditationIdsFromText, ...(params.accreditationId ? [params.accreditationId] : [])],
-      treatmentIds: [...treatmentIdsFromText, ...(params.treatmentId ? [params.treatmentId] : [])],
-      departmentIds: [...departmentIdsFromText, ...(params.departmentId ? [params.departmentId] : [])],
-    };
+    const branchResult = await branchQuery.find();
+    let foundBranch = null;
+    let foundHospital = null;
 
-    let finalHospitalIds: string[] = [];
-
-    if (Object.values(filterIds).some((arr) => arr.length > 0)) {
-      finalHospitalIds = await QueryBuilder.getHospitalIds(filterIds);
-      if (finalHospitalIds.length === 0) {
-        return NextResponse.json({ items: [], total: 0 });
+    // Search for matching branch
+    for (const branch of branchResult.items) {
+      const branchName = branch.branchName || branch["Branch Name"] || "";
+      const expectedSlug = generateSlug(branchName);
+      if (expectedSlug === slug || branchName.toLowerCase().includes(slug.replace(/-/g, ' '))) {
+        foundBranch = branch;
+        break;
       }
     }
 
-    let query = wixClient.items
+    if (!foundBranch) {
+      // If not found as branch, check if it's a standalone hospital
+      const hospitalQuery = wixClient.items
+        .query(COLLECTIONS.HOSPITALS)
+        .include("specialty")
+        .limit(1000);
+
+      const hospitalResult = await hospitalQuery.find();
+      for (const hospital of hospitalResult.items) {
+        const hospitalName = hospital.hospitalName || hospital["Hospital Name"] || "";
+        const expectedSlug = generateSlug(hospitalName);
+        if (expectedSlug === slug || hospitalName.toLowerCase().includes(slug.replace(/-/g, ' '))) {
+          foundHospital = hospital;
+          break;
+        }
+      }
+
+      if (!foundHospital) {
+        return NextResponse.json({ error: "Hospital not found" }, { status: 404 });
+      }
+
+      // For hospital slug, find its branches
+      const branchesForHospital = branchResult.items.filter(b =>
+        ReferenceMapper.extractHospitalIds(b).includes(foundHospital._id)
+      );
+
+      if (branchesForHospital.length === 0) {
+        return NextResponse.json({ error: "No branches found for this hospital" }, { status: 404 });
+      }
+
+      // Return hospital with all its branches
+      const enrichedHospital = await enrichSingleHospital(foundHospital, branchesForHospital);
+      return NextResponse.json(enrichedHospital, {
+        headers: {
+          'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=7200', // 1 hour cache
+        },
+      });
+    }
+
+    // For branch slug, find the hospital it belongs to
+    const hospitalIds = ReferenceMapper.extractHospitalIds(foundBranch);
+    if (hospitalIds.length === 0) {
+      // Standalone branch - treat as hospital
+      const enrichedStandalone = await enrichStandaloneBranch(foundBranch);
+      return NextResponse.json(enrichedStandalone, {
+        headers: {
+          'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=7200',
+        },
+      });
+    }
+
+    // Find the hospital
+    const hospitalResult = await wixClient.items
       .query(COLLECTIONS.HOSPITALS)
+      .hasSome("_id", hospitalIds)
       .include("specialty")
-      .descending("_createdDate")
-      .limit(params.pageSize)
-      .skip(params.page * params.pageSize);
+      .find();
 
-    if (params.hospitalId) {
-      query = query.eq("_id", params.hospitalId);
-    } else if (finalHospitalIds.length > 0) {
-      query = query.hasSome("_id", finalHospitalIds);
+    if (hospitalResult.items.length === 0) {
+      return NextResponse.json({ error: "Hospital not found" }, { status: 404 });
     }
 
-    if (params.q || hospitalIdsFromText.length > 0) {
-      const qIds = params.q
-        ? await DataFetcher.searchIds(COLLECTIONS.HOSPITALS, ["hospitalName"], params.q)
-        : hospitalIdsFromText;
-      if (qIds.length === 0) return NextResponse.json({ items: [], total: 0 });
-      const intersection = finalHospitalIds.length > 0 ? finalHospitalIds.filter((id) => qIds.includes(id)) : qIds;
-      if (intersection.length === 0) return NextResponse.json({ items: [], total: 0 });
-      query = query.hasSome("_id", intersection);
-    }
+    foundHospital = hospitalResult.items[0];
 
-    const result = await query.find();
-    const enriched = await enrichHospitals(result.items, filterIds);
+    // Get all branches for this hospital
+    const allBranchesForHospital = branchResult.items.filter(b =>
+      ReferenceMapper.extractHospitalIds(b).includes(foundHospital._id)
+    );
 
-    return NextResponse.json({
-      items: enriched,
-      total: result.totalCount || enriched.length,
-      page: params.page,
-      pageSize: params.pageSize,
+    // Enrich the hospital with branches
+    const enrichedHospital = await enrichSingleHospital(foundHospital, allBranchesForHospital);
+
+    return NextResponse.json(enrichedHospital, {
+      headers: {
+        'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=7200',
+      },
     });
+
   } catch (error: any) {
     console.error("API Error:", error);
     return NextResponse.json(
-      { error: "Failed to fetch hospitals", details: error.message },
+      { error: "Failed to fetch hospital", details: error.message },
       { status: 500 }
     );
   }
+}
+
+// Helper function to enrich a single hospital with its branches
+async function enrichSingleHospital(hospital: any, branches: any[]) {
+  const doctorIds = new Set<string>();
+  const cityIds = new Set<string>();
+  const specialtyIds = new Set<string>();
+  const accreditationIds = new Set<string>();
+  const treatmentIds = new Set<string>();
+  const departmentIds = new Set<string>();
+
+  // Collect all IDs from branches
+  branches.forEach(b => {
+    const mapped = DataMappers.branch(b);
+    ReferenceMapper.extractIds(mapped.doctors).forEach(id => doctorIds.add(id));
+    ReferenceMapper.extractIds(mapped.city).forEach(id => cityIds.add(id));
+    ReferenceMapper.extractIds(mapped.accreditation).forEach(id => accreditationIds.add(id));
+    ReferenceMapper.extractIds(mapped.treatments).forEach(id => treatmentIds.add(id));
+
+    mapped.specialization.forEach((s: any) => {
+      if (s.isDepartment) {
+        departmentIds.add(s._id);
+      } else if (!s.isTreatment) {
+        specialtyIds.add(s._id);
+      }
+    });
+  });
+
+  // Fetch all related data in parallel
+  const [doctors, cities, specialties, accreditations, treatments, specialists, departments] = await Promise.all([
+    DataFetcher.fetchDoctors(Array.from(doctorIds)),
+    DataFetcher.fetchByIds(COLLECTIONS.CITIES, Array.from(cityIds), DataMappers.city),
+    DataFetcher.fetchByIds(COLLECTIONS.SPECIALTIES, Array.from(specialtyIds), DataMappers.specialty),
+    DataFetcher.fetchByIds(COLLECTIONS.ACCREDITATIONS, Array.from(accreditationIds), DataMappers.accreditation),
+    DataFetcher.fetchTreatments(Array.from(treatmentIds)),
+    DataFetcher.fetchSpecialistsWithRelationships(Array.from(specialtyIds)),
+    DataFetcher.fetchDepartmentsWithSpecialists(Array.from(departmentIds)),
+  ]);
+
+  const allSpecializations = { ...specialties, ...treatments, ...specialists, ...departments };
+
+  // Enrich branches
+  const enrichedBranches = branches.map(b => {
+    const mapped = DataMappers.branch(b);
+    return {
+      ...mapped,
+      doctors: mapped.doctors.map((d: any) => doctors[d._id] || d),
+      city: mapped.city.map((c: any) => cities[c._id] || c),
+      treatments: mapped.treatments.map((t: any) => treatments[t._id] || t),
+      specialization: mapped.specialization.map((s: any) => allSpecializations[s._id] || s),
+      accreditation: mapped.accreditation.map((a: any) => accreditations[a._id] || a),
+    };
+  });
+
+  // Collect unique items
+  const uniqueDoctors = new Map();
+  const uniqueSpecialists = new Map();
+  const uniqueTreatments = new Map();
+  const uniqueDepartments = new Map();
+
+  enrichedBranches.forEach(b => {
+    b.doctors.forEach((d: any) => d._id && uniqueDoctors.set(d._id, d));
+    b.treatments.forEach((t: any) => t._id && uniqueTreatments.set(t._id, t));
+    b.specialization.forEach((s: any) => {
+      if (s.isDepartment) {
+        uniqueDepartments.set(s._id, departments[s._id] || s);
+      } else if (!s.isTreatment) {
+        uniqueSpecialists.set(s._id, specialists[s._id] || s);
+      }
+    });
+  });
+
+  const mappedHospital = DataMappers.hospital(hospital);
+
+  return {
+    ...mappedHospital,
+    branches: enrichedBranches,
+    doctors: Array.from(uniqueDoctors.values()),
+    specialists: Array.from(uniqueSpecialists.values()),
+    treatments: Array.from(uniqueTreatments.values()),
+    departments: Array.from(uniqueDepartments.values()),
+    accreditations: enrichedBranches.flatMap(b => b.accreditation),
+  };
+}
+
+// Helper function to enrich a standalone branch as a hospital
+async function enrichStandaloneBranch(branch: any) {
+  const mappedBranch = DataMappers.branch(branch);
+  const doctorIds = new Set<string>();
+  const cityIds = new Set<string>();
+  const accreditationIds = new Set<string>();
+  const treatmentIds = new Set<string>();
+  const specialtyIds = new Set<string>();
+  const departmentIds = new Set<string>();
+
+  // Collect IDs
+  ReferenceMapper.extractIds(mappedBranch.doctors).forEach(id => doctorIds.add(id));
+  ReferenceMapper.extractIds(mappedBranch.city).forEach(id => cityIds.add(id));
+  ReferenceMapper.extractIds(mappedBranch.accreditation).forEach(id => accreditationIds.add(id));
+  ReferenceMapper.extractIds(mappedBranch.treatments).forEach(id => treatmentIds.add(id));
+
+  mappedBranch.specialization.forEach((s: any) => {
+    if (s.isDepartment) {
+      departmentIds.add(s._id);
+    } else if (!s.isTreatment) {
+      specialtyIds.add(s._id);
+    }
+  });
+
+  // Fetch data
+  const [doctors, cities, accreditations, treatments, enrichedSpecialists] = await Promise.all([
+    DataFetcher.fetchDoctors(Array.from(doctorIds)),
+    DataFetcher.fetchByIds(COLLECTIONS.CITIES, Array.from(cityIds), DataMappers.city),
+    DataFetcher.fetchByIds(COLLECTIONS.ACCREDITATIONS, Array.from(accreditationIds), DataMappers.accreditation),
+    DataFetcher.fetchTreatments(Array.from(treatmentIds)),
+    DataFetcher.fetchSpecialistsWithRelationships(Array.from(new Set([...specialtyIds, ...Array.from(departmentIds)]))),
+  ]);
+
+  // Enrich branch
+  const enrichedBranch = {
+    ...mappedBranch,
+    doctors: mappedBranch.doctors.map((d: any) => doctors[d._id] || d),
+    city: mappedBranch.city.map((c: any) => cities[c._id] || c),
+    accreditation: mappedBranch.accreditation.map((a: any) => accreditations[a._id] || a),
+    specialists: mappedBranch.specialists.map((s: any) => enrichedSpecialists[s._id] || s),
+    treatments: mappedBranch.treatments.map((t: any) => treatments[t._id] || t),
+    specialization: mappedBranch.specialization.map((s: any) => {
+      if (s.isTreatment) {
+        return treatments[s._id] || s;
+      } else {
+        return enrichedSpecialists[s._id] || s;
+      }
+    }),
+  };
+
+  // Create hospital from branch
+  const hospital = DataMappers.hospital(branch, true);
+
+  // Collect unique items
+  const uniqueDoctors = new Map();
+  const uniqueSpecialists = new Map();
+  const uniqueTreatments = new Map();
+
+  enrichedBranch.doctors.forEach((d: any) => d._id && uniqueDoctors.set(d._id, d));
+  enrichedBranch.specialists.forEach((s: any) => s._id && uniqueSpecialists.set(s._id, s));
+  enrichedBranch.treatments.forEach((t: any) => t._id && uniqueTreatments.set(t._id, t));
+
+  return {
+    ...hospital,
+    branches: [enrichedBranch],
+    doctors: Array.from(uniqueDoctors.values()),
+    specialists: Array.from(uniqueSpecialists.values()),
+    treatments: Array.from(uniqueTreatments.values()),
+    accreditations: enrichedBranch.accreditation,
+  };
 }

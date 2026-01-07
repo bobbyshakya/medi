@@ -1496,10 +1496,6 @@ export async function GET(req: Request) {
       regularCount: regularHospitalCount,
       standaloneCount: standaloneBranchesCount,
       filteredCount: allHospitals.length,
-    }, {
-      headers: {
-        'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600',
-      },
     })
   } catch (error: any) {
     console.error("API Error:", error)

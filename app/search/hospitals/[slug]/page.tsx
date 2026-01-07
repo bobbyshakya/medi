@@ -605,30 +605,14 @@ const extractUniqueTreatments = (branch: any): any[] => {
   return Object.values(uniqueTreatments)
 }
 
-// NEW: Function to fetch hospital data by slug with caching
+// NEW: Function to fetch hospital data by slug without caching
 const fetchHospitalBySlug = async (slug: string) => {
   console.time('fetchHospitalBySlug total')
-
-  // Check cache first
-  const cacheKey = `hospital_${slug}`
-  const cached = localStorage.getItem(cacheKey)
-  if (cached) {
-    try {
-      const { data, timestamp } = JSON.parse(cached)
-      if (Date.now() - timestamp < 5 * 60 * 1000) { // 5 minutes TTL
-        console.log('Returning cached hospital data')
-        console.timeEnd('fetchHospitalBySlug total')
-        return data
-      }
-    } catch (e) {
-      console.warn('Cache parse error:', e)
-    }
-  }
 
   try {
     console.time('First API call')
     // First, try the branch API endpoint
-    const res = await fetch(`/api/hospitals?q=${encodeURIComponent(slug)}&includeStandalone=true&pageSize=1`)
+    const res = await fetch(`/api/hospitals?q=${encodeURIComponent(slug)}&includeStandalone=true&pageSize=1`, { cache: 'no-store' })
 
     if (!res.ok) {
       throw new Error(`API responded with ${res.status}`)
@@ -638,16 +622,15 @@ const fetchHospitalBySlug = async (slug: string) => {
     console.timeEnd('First API call')
     console.log('First API data size:', JSON.stringify(data).length)
 
-    // If we found hospitals, cache and return the first one
+    // If we found hospitals, return the first one
     if (data.items && data.items.length > 0) {
-      localStorage.setItem(cacheKey, JSON.stringify({ data: data.items[0], timestamp: Date.now() }))
       console.timeEnd('fetchHospitalBySlug total')
       return data.items[0]
     }
 
     console.time('Broad API call')
     // If no hospitals found, try a broader search
-    const broadRes = await fetch(`/api/hospitals?includeStandalone=true&pageSize=50`)
+    const broadRes = await fetch(`/api/hospitals?includeStandalone=true&pageSize=50`, { cache: 'no-store' })
     if (broadRes.ok) {
       const broadData = await broadRes.json()
       console.timeEnd('Broad API call')
@@ -661,7 +644,6 @@ const fetchHospitalBySlug = async (slug: string) => {
         })
 
         if (matchingHospital) {
-          localStorage.setItem(cacheKey, JSON.stringify({ data: matchingHospital, timestamp: Date.now() }))
           console.timeEnd('fetchHospitalBySlug total')
           return matchingHospital
         }
@@ -680,7 +662,6 @@ const fetchHospitalBySlug = async (slug: string) => {
                 ...hospital,
                 branches: [matchingBranch] // Return only the matching branch
               }
-              localStorage.setItem(cacheKey, JSON.stringify({ data: result, timestamp: Date.now() }))
               console.timeEnd('fetchHospitalBySlug total')
               return result
             }
@@ -786,6 +767,10 @@ export default function BranchDetail({ params }: { params: Promise<{ slug: strin
     return [...branch.facilities].sort((a, b) => (a.name || '').localeCompare(b.name || ''))
   }, [branch?.facilities])
   const currentCity = branch?.city?.[0]?.cityName || null
+  const isDelhiNCR = currentCity && ['delhi', 'gurugram', 'gurgaon', 'noida', 'faridabad', 'ghaziabad'].some(city =>
+    currentCity.toLowerCase().includes(city.toLowerCase())
+  )
+  const displayCityName = isDelhiNCR ? 'Delhi NCR' : (currentCity || 'Nearby Locations')
 
   // For similar branches, since we only have one hospital now, we'll fetch additional data
   const [similarBranches, setSimilarBranches] = useState<any[]>([])
@@ -794,7 +779,7 @@ export default function BranchDetail({ params }: { params: Promise<{ slug: strin
   useEffect(() => {
     if (currentCity && branch) {
       // Fetch similar branches from the same city
-      fetch(`/api/hospitals?city=${encodeURIComponent(currentCity)}&minimal=true&pageSize=50`)
+      fetch(`/api/hospitals?city=${encodeURIComponent(currentCity)}&minimal=true&pageSize=50`, { cache: 'no-store' })
         .then(res => res.json())
         .then(data => {
           if (data.items) {
@@ -813,7 +798,7 @@ export default function BranchDetail({ params }: { params: Promise<{ slug: strin
   useEffect(() => {
     if (currentCity) {
       // Fetch all branches for search dropdown
-      fetch(`/api/hospitals?city=${encodeURIComponent(currentCity)}&minimal=true&pageSize=100`)
+      fetch(`/api/hospitals?city=${encodeURIComponent(currentCity)}&minimal=true&pageSize=100`, { cache: 'no-store' })
         .then(res => res.json())
         .then(data => {
           if (data.items) {
@@ -893,7 +878,7 @@ export default function BranchDetail({ params }: { params: Promise<{ slug: strin
               {sortedFacilities.length > 0 && <FacilitiesSection facilities={sortedFacilities} />}
               {allTreatments.length > 0 && <CarouselSection title="Available Treatments" items={allTreatments} type="treatment" searchPlaceholder="Search treatments by name or specialist..." onSearchSelect={handleTreatmentSelect} renderItem={(item) => <TreatmentCard item={item} />} />}
               {branch.doctors?.length > 0 && <CarouselSection title="Our Specialist Doctors" items={branch.doctors} type="doctor" searchPlaceholder="Search doctors by name or Speciality..." onSearchSelect={handleDoctorSelect} renderItem={(doctor) => <DoctorCard doctor={doctor} />} />}
-              <SimilarHospitalsSection branches={similarBranches} allBranches={allHospitalBranches} cityName={currentCity || 'Nearby Locations'} />
+              <SimilarHospitalsSection branches={similarBranches} allBranches={allHospitalBranches} cityName={displayCityName} />
             </div>
             <aside className="lg:col-span-3 space-y-8"><ContactForm /></aside>
           </div>

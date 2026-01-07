@@ -1387,7 +1387,7 @@ export async function GET(req: Request) {
     const params = {
       q: url.searchParams.get("q")?.trim() || "",
       page: Math.max(0, Number(url.searchParams.get("page") || 0)),
-      pageSize: Math.min(100, Number(url.searchParams.get("pageSize") || 30)),
+      pageSize: Math.min(1000, Number(url.searchParams.get("pageSize") || 100)),
       hospitalId: url.searchParams.get("hospitalId")?.trim(),
       hospitalText: url.searchParams.get("hospital")?.trim(),
       branchText: url.searchParams.get("branch")?.trim(),

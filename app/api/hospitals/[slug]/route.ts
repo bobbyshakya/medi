@@ -31,7 +31,7 @@ function extractRichText(richContent: any): string {
               .map((child: any) => child.textData?.text || child.text || "")
               .join("");
           }
-          return node.textData?.text || node.text || "";Q
+          return node.textData?.text || node.text || "";
         })
         .filter(Boolean)
         .join("\n")
@@ -634,7 +634,6 @@ export async function GET(req: Request, { params }: { params: { slug: string } }
     // First, try to find the branch directly by slug
     let branchQuery = wixClient.items
       .query(COLLECTIONS.BRANCHES)
-      .eq("showHospital", true)  // Only show hospitals
       .include(
         "hospital",
         "HospitalMaster_branches",
@@ -683,30 +682,12 @@ export async function GET(req: Request, { params }: { params: { slug: string } }
       }
 
       // For hospital slug, find its branches
-      let branchesForHospital = branchResult.items.filter(b =>
+      const branchesForHospital = branchResult.items.filter(b =>
         ReferenceMapper.extractHospitalIds(b).includes(foundHospital._id)
       );
 
       if (branchesForHospital.length === 0) {
-        // Create virtual branch for standalone hospitals (non-group)
-        const virtualBranch = {
-          _id: foundHospital._id + '_virtual',
-          branchName: foundHospital.hospitalName,
-          address: '',
-          city: [],
-          specialty: foundHospital.specialty || [],
-          accreditation: [],
-          description: foundHospital.description,
-          totalBeds: '',
-          noOfDoctors: '',
-          yearEstablished: foundHospital.yearEstablished,
-          branchImage: foundHospital.hospitalImage,
-          doctors: [],
-          treatments: [],
-          specialization: foundHospital.specialty || [],
-          popular: false,
-        };
-        branchesForHospital = [virtualBranch];
+        return NextResponse.json({ error: "No branches found for this hospital" }, { status: 404 });
       }
 
       // Return hospital with all its branches
@@ -900,7 +881,7 @@ async function enrichStandaloneBranch(branch: any) {
   };
 
   // Create hospital from branch
-  const hospital = DataMappers.hospital(branch);
+  const hospital = DataMappers.hospital(branch, true);
 
   // Collect unique items
   const uniqueDoctors = new Map();

@@ -845,13 +845,12 @@ const DataFetcher = {
     )
   },
 
-  // UPDATED: Fetch all branches with ShowHospital filter and include logo field
+  // UPDATED: Fetch all branches and include logo field
   async fetchAllBranches() {
     try {
-      // Fetch all branches where ShowHospital === true and include logo field
+      // Fetch all branches and include logo field
       const res = await wixClient.items
         .query(COLLECTIONS.BRANCHES)
-        .eq("showHospital", true)  // Filter by ShowHospital field
         .include(
           "hospital",
           "HospitalMaster_branches",
@@ -865,7 +864,7 @@ const DataFetcher = {
         .limit(1000)
         .find()
 
-      console.log(`Fetched ${res.items.length} branches where ShowHospital === true`)
+      console.log(`Fetched ${res.items.length} branches`)
       return res.items
     } catch (error) {
       console.error("Error fetching branches:", error)
@@ -873,16 +872,15 @@ const DataFetcher = {
     }
   },
 
-  // UPDATED: Fetch branches by IDs with ShowHospital filter
+  // UPDATED: Fetch branches by IDs
   async fetchBranchesByIds(ids: string[]) {
     if (!ids.length) return []
-    
+
     try {
-      // Fetch branches by IDs where ShowHospital === true
+      // Fetch branches by IDs
       const res = await wixClient.items
         .query(COLLECTIONS.BRANCHES)
         .hasSome("_id", ids)
-        .eq("showHospital", true)  // Filter by ShowHospital field
         .include(
           "hospital",
           "HospitalMaster_branches",
@@ -896,7 +894,7 @@ const DataFetcher = {
         .limit(1000)
         .find()
 
-      console.log(`Fetched ${res.items.length} branches by IDs where ShowHospital === true`)
+      console.log(`Fetched ${res.items.length} branches by IDs`)
       return res.items
     } catch (error) {
       console.error("Error fetching branches by IDs:", error)
@@ -904,16 +902,15 @@ const DataFetcher = {
     }
   },
 
-  // UPDATED: Search branches with ShowHospital filter
+  // UPDATED: Search branches
   async searchBranches(field: string, query: string) {
     try {
       const res = await wixClient.items
         .query(COLLECTIONS.BRANCHES)
         .contains(field as any, query)
-        .eq("showHospital", true)  // Filter by ShowHospital field
         .limit(500)
         .find()
-      
+
       return res.items.map((i: any) => i._id).filter(Boolean)
     } catch (e) {
       console.warn(`Search failed on ${COLLECTIONS.BRANCHES}.${field}:`, e)
@@ -958,10 +955,9 @@ const QueryBuilder = {
       specialistIds = [...(specialistIds || []), ...addIds]
     }
 
-    // UPDATED: Add ShowHospital filter
+    // UPDATED: Query branches
     const query = wixClient.items
       .query(COLLECTIONS.BRANCHES)
-      .eq("showHospital", true)  // Filter by ShowHospital field
       .include(
         "hospital",
         "HospitalMaster_branches",
@@ -1004,10 +1000,9 @@ async function enrichHospitals(
 ) {
   const hospitalIds = hospitals.map((h) => h._id!).filter(Boolean)
 
-  // STEP 1: Fetch branches for grouped hospitals with ShowHospital filter
+  // STEP 1: Fetch branches for grouped hospitals
   const groupedBranchesRes = await wixClient.items
     .query(COLLECTIONS.BRANCHES)
-    .eq("showHospital", true)  // Filter by ShowHospital field
     .include(
       "hospital",
       "HospitalMaster_branches",
@@ -1022,10 +1017,9 @@ async function enrichHospitals(
     .limit(1000)
     .find()
 
-  // STEP 2: Fetch branches for standalone hospitals with ShowHospital filter
+  // STEP 2: Fetch branches for standalone hospitals
   const standaloneBranchesRes = await wixClient.items
     .query(COLLECTIONS.BRANCHES)
-    .eq("showHospital", true)  // Filter by ShowHospital field
     .include(
       "hospital",
       "HospitalMaster_branches",
@@ -1210,7 +1204,8 @@ async function getAllHospitals(
   },
   searchQuery?: string,
   includeStandalone: boolean = true,
-  minimal: boolean = false
+  minimal: boolean = false,
+  slug?: string
 ) {
   // Fetch regular hospitals from HospitalMaster
   const regularHospitalsQuery = wixClient.items
@@ -1235,7 +1230,7 @@ async function getAllHospitals(
     }
   })
 
-  console.log(`Found ${standaloneBranches.length} standalone branches and ${groupedBranches.length} grouped branches (all with ShowHospital === true)`)
+  console.log(`Found ${standaloneBranches.length} standalone branches and ${groupedBranches.length} grouped branches`)
 
   // Process regular hospitals
   const regularHospitalsResult = await regularHospitalsQuery
@@ -1373,15 +1368,24 @@ async function getAllHospitals(
   }
 
   // Combine all hospitals
-  const allHospitals = [...enrichedRegularHospitals, ...standaloneHospitals]
+  let allHospitals = [...enrichedRegularHospitals, ...standaloneHospitals]
 
   // Apply search query if provided
   if (searchQuery) {
     const searchSlug = generateSlug(searchQuery)
-    return allHospitals.filter(hospital => {
+    allHospitals = allHospitals.filter(hospital => {
       const hospitalSlug = generateSlug(hospital.hospitalName || "")
-      return hospitalSlug.includes(searchSlug) || 
+      return hospitalSlug.includes(searchSlug) ||
              hospital.hospitalName.toLowerCase().includes(searchQuery.toLowerCase())
+    })
+  }
+
+  // Apply slug filter if provided
+  if (slug) {
+    const slugLower = generateSlug(slug)
+    allHospitals = allHospitals.filter(hospital => {
+      const hospitalSlug = generateSlug(hospital.hospitalName || "")
+      return hospitalSlug === slugLower
     })
   }
 
@@ -1394,6 +1398,7 @@ export async function GET(req: Request) {
     const url = new URL(req.url)
     const params = {
       q: url.searchParams.get("q")?.trim() || "",
+      slug: url.searchParams.get("slug")?.trim() || "",
       page: Math.max(0, Number(url.searchParams.get("page") || 0)),
       pageSize: Math.min(1000, Number(url.searchParams.get("pageSize") || 100)),
       hospitalId: url.searchParams.get("hospitalId")?.trim(),
@@ -1473,7 +1478,8 @@ export async function GET(req: Request) {
       filterIds,
       params.q || undefined,
       params.includeStandalone,
-      params.minimal
+      params.minimal,
+      params.slug || undefined
     )
 
     // Count regular hospitals
@@ -1496,6 +1502,10 @@ export async function GET(req: Request) {
       regularCount: regularHospitalCount,
       standaloneCount: standaloneBranchesCount,
       filteredCount: allHospitals.length,
+    }, {
+      headers: {
+        'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600',
+      },
     })
   } catch (error: any) {
     console.error("API Error:", error)

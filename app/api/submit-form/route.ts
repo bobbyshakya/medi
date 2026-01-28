@@ -4,7 +4,11 @@ import { wixClient } from "@/lib/wixClient"
 import { Resend } from 'resend'
 
 // Initialize Resend client
-const resend = new Resend('re_8YGxVSjE_Q7rKy9Jgk6FzwhHeEw5GJ2fW')
+const resendApiKey = process.env.RESEND_API_KEY
+if (!resendApiKey) {
+  throw new Error("RESEND_API_KEY environment variable is required")
+}
+const resend = new Resend(resendApiKey)
 
 // Simple runtime validation without external deps
 function validate(input: any):

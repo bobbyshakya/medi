@@ -431,7 +431,6 @@ export async function fetchBranchesByIds(ids: string[]) {
       .limit(1000)
       .find()
 
-    console.log(`Fetched ${res.items.length} branches by IDs`)
     return res.items.filter(item => shouldShowHospital(item))
   } catch (error) {
     console.error("Error fetching branches by IDs:", error)

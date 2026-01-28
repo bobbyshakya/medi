@@ -14,100 +14,8 @@ const COLLECTIONS = {
   TREATMENTS: "TreatmentMaster",
 };
 
-// RICH TEXT EXTRACTOR - BULLETPROOF
-function extractRichText(richContent: any): string {
-  if (!richContent) return "";
-  if (typeof richContent === "string") return richContent.trim();
+import { extractRichText, extractRichTextHTML, getValue, generateSlug } from '../shared-utils'
 
-  if (richContent.data && richContent.data.aboutDoctor !== undefined) {
-    richContent = richContent.data;
-  }
-
-  try {
-    if (richContent.nodes && Array.isArray(richContent.nodes)) {
-      return richContent.nodes
-        .map((node: any) => {
-          if (node.nodes && Array.isArray(node.nodes)) {
-            return node.nodes
-              .map((child: any) => child.textData?.text || child.text || "")
-              .join("");
-          }
-          return node.textData?.text || node.text || "";
-        })
-        .filter(Boolean)
-        .join("\n")
-        .trim();
-    }
-  } catch (e) {
-    console.warn("Rich text parse failed:", e);
-  }
-
-  return String(richContent).trim() || "";
-}
-
-function extractRichTextHTML(richContent: any): string {
-  if (!richContent) return "";
-  if (typeof richContent === "string") return richContent;
-
-  if (richContent.data) richContent = richContent.data;
-
-  let html = "";
-  try {
-    if (richContent.nodes && Array.isArray(richContent.nodes)) {
-      richContent.nodes.forEach((node: any) => {
-        const text = node.nodes?.map((n: any) => n.textData?.text || n.text || "").join("") || node.textData?.text || node.text || "";
-
-        switch (node.type) {
-          case "PARAGRAPH":
-            html += `<p>${text}</p>`;
-            break;
-          case "HEADING_ONE":
-            html += `<h1>${text}</h1>`;
-            break;
-          case "HEADING_TWO":
-            html += `<h2>${text}</h2>`;
-            break;
-          case "HEADING_THREE":
-            html += `<h3>${text}</h3>`;
-            break;
-          case "BULLETED_LIST":
-            html += "<ul>";
-            node.nodes?.forEach((li: any) => {
-              const liText = li.nodes?.map((n: any) => n.textData?.text || n.text || "").join("") || "";
-              html += `<li>${liText}</li>`;
-            });
-            html += "</ul>";
-            break;
-          case "ORDERED_LIST":
-            html += "<ol>";
-            node.nodes?.forEach((li: any) => {
-              const liText = li.nodes?.map((n: any) => n.textData?.text || n.text || "").join("") || "";
-              html += `<li>${liText}</li>`;
-            });
-            html += "</ol>";
-            break;
-          default:
-            if (text) html += `<p>${text}</p>`;
-        }
-      });
-      return html || extractRichText(richContent);
-    }
-  } catch (e) {
-    console.warn("HTML parse failed:", e);
-  }
-
-  return extractRichText(richContent);
-}
-
-function getValue(item: any, ...keys: string[]): string | null {
-  for (const key of keys) {
-    const val = item?.[key] ?? item?.data?.[key];
-    if (val !== undefined && val !== null && val !== "") {
-      return String(val).trim();
-    }
-  }
-  return null;
-}
 
 // DATA MAPPERS - UPDATED: REMOVED OFFEREDBYSPECIALISTS FROM TREATMENT
 const DataMappers = {
@@ -654,15 +562,6 @@ export async function GET(req: Request, { params }: { params: { slug: string } }
       return NextResponse.json({ error: "Slug is required" }, { status: 400 });
     }
 
-    // Generate slug for comparison
-    const generateSlug = (name: string): string => {
-      return name
-        .toLowerCase()
-        .trim()
-        .replace(/[^\w\s-]/g, "")
-        .replace(/\s+/g, "-")
-        .replace(/-+/g, "-");
-    };
 
     // First, try to find the branch directly by slug
     let branchQuery = wixClient.items

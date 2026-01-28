@@ -1,7 +1,7 @@
 // app/api/hospitals/mappers.ts
 // Data mapping functions
 
-import { getValue, extractRichText, extractRichTextHTML } from './utils'
+import { getValue, extractRichText, extractRichTextHTML } from './shared-utils'
 import type { HospitalData, BranchData, DoctorData, CityData } from './types'
 
 /**

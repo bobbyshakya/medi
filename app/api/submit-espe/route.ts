@@ -6,7 +6,10 @@ import { Resend } from 'resend';
 import { redirect } from 'next/navigation';
 
 // Initialize Resend with API key
-const resendApiKey = process.env.RESEND_API_KEY || 're_8YGxVSjE_Q7rKy9Jgk6FzwhHeEw5GJ2fW';
+const resendApiKey = process.env.RESEND_API_KEY;
+if (!resendApiKey) {
+  throw new Error("RESEND_API_KEY environment variable is required");
+}
 const resend = new Resend(resendApiKey);
 
 interface FormData {
@@ -117,7 +120,7 @@ export async function submitMedivisorForm(formData: FormData, attachments: Attac
       const emailResponse = await resend.emails.send({
         from: 'Medivisor <onboarding@resend.dev>',
         to: ['info@medivisorhealth.com'],
-        reply_to: formData.email,
+        replyTo: formData.email,
         subject: `New Medivisor EPSP Application from ${formData.fullName}`,
         html: `
           <!DOCTYPE html>

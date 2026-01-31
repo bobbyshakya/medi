@@ -3,13 +3,6 @@
 import { wixClient } from "@/lib/wixClient"
 import { Resend } from 'resend'
 
-// Initialize Resend client
-const resendApiKey = process.env.RESEND_API_KEY
-if (!resendApiKey) {
-  throw new Error("RESEND_API_KEY environment variable is required")
-}
-const resend = new Resend(resendApiKey)
-
 // Simple runtime validation without external deps
 function validate(input: any):
   | {
@@ -47,6 +40,13 @@ function toE164(countryCode: string, whatsapp: string) {
 }
 
 export async function submitContact(input: unknown): Promise<{ ok: boolean; error?: string }> {
+  // Initialize Resend client
+  const resendApiKey = process.env.RESEND_API_KEY
+  if (!resendApiKey) {
+    return { ok: false, error: "RESEND_API_KEY environment variable is required" }
+  }
+  const resend = new Resend(resendApiKey)
+  
   const parsed = validate(input)
   if (!parsed.ok) return { ok: false, error: parsed.error }
 

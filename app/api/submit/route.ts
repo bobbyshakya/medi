@@ -3,13 +3,6 @@
 import { wixClient } from "@/lib/wixClient"
 import { Resend } from 'resend'
 
-// Initialize Resend client
-const resendApiKey = process.env.RESEND_API_KEY
-if (!resendApiKey) {
-  throw new Error("RESEND_API_KEY environment variable is required")
-}
-const resend = new Resend(resendApiKey)
-
 // Updated validation to include new fields
 function validate(input: any):
   | {
@@ -67,6 +60,16 @@ function toE164(whatsapp: string) {
 
 export async function POST(request: Request) {
   try {
+    // Initialize Resend client
+    const resendApiKey = process.env.RESEND_API_KEY
+    if (!resendApiKey) {
+      return new Response(JSON.stringify({ ok: false, error: "RESEND_API_KEY environment variable is required" }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' }
+      })
+    }
+    const resend = new Resend(resendApiKey)
+    
     const body = await request.json()
     
     const parsed = validate(body)
@@ -207,6 +210,13 @@ export async function POST(request: Request) {
 
 // Keep the original function for backward compatibility
 export async function submitContact(input: unknown): Promise<{ ok: boolean; error?: string }> {
+  // Initialize Resend client
+  const resendApiKey = process.env.RESEND_API_KEY
+  if (!resendApiKey) {
+    return { ok: false, error: "RESEND_API_KEY environment variable is required" }
+  }
+  const resend = new Resend(resendApiKey)
+  
   const parsed = validate(input)
   if (!parsed.ok) return { ok: false, error: parsed.error }
 

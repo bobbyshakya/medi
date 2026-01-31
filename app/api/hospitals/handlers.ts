@@ -5,7 +5,8 @@ import { wixClient } from "@/lib/wixClient"
 import { COLLECTIONS } from './collections'
 import { DataMappers, ReferenceMapper } from './mappers'
 import { fetchAllBranches, fetchDoctors, fetchCitiesWithStateAndCountry, fetchByIds, cachedFetchByIds, fetchTreatmentsWithFullData, fetchSpecialistsWithDeptAndTreatments } from './fetchers'
-import { generateSlug, shouldShowHospital, shouldShowHospitalForHospital, isStandaloneBranch, accreditationsCache } from './utils'
+import { shouldShowHospital, shouldShowHospitalForHospital, isStandaloneBranch, accreditationsCache } from './utils'
+import { generateSlug } from './shared-utils'
 import type { FilterIds, HospitalData } from './types'
 
 /**
@@ -53,8 +54,9 @@ export async function enrichHospitals(
       .find()
   ])
 
-  // Combine both branch results
-  const allBranches = [...groupedBranchesRes.items, ...standaloneBranchesRes.items]
+  // Combine both branch results and filter to only include ShowHospital=true branches
+  let allBranches = [...groupedBranchesRes.items, ...standaloneBranchesRes.items]
+  allBranches = allBranches.filter((b: any) => shouldShowHospital(b))
 
   // Create a map to deduplicate branches by ID
   const uniqueBranchesMap = new Map<string, any>()

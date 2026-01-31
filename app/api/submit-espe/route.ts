@@ -5,13 +5,6 @@ import { wixClient } from "@/lib/wixClient";
 import { Resend } from 'resend';
 import { redirect } from 'next/navigation';
 
-// Initialize Resend with API key
-const resendApiKey = process.env.RESEND_API_KEY;
-if (!resendApiKey) {
-  throw new Error("RESEND_API_KEY environment variable is required");
-}
-const resend = new Resend(resendApiKey);
-
 interface FormData {
   fullName: string;
   applicantType: string;
@@ -49,6 +42,13 @@ export async function submitMedivisorForm(formData: FormData, attachments: Attac
   try {
     console.log("[v0] Starting form submission for:", formData.fullName);
     console.log("[v0] Resend API Key configured:", !!process.env.RESEND_API_KEY);
+
+    // Initialize Resend client
+    const resendApiKey = process.env.RESEND_API_KEY;
+    if (!resendApiKey) {
+      return { ok: false, error: "RESEND_API_KEY environment variable is required" };
+    }
+    const resend = new Resend(resendApiKey);
 
     // Validation
     if (!formData.fullName?.trim()) {

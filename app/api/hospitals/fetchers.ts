@@ -379,10 +379,13 @@ export async function fetchTreatmentsWithFullData(treatmentIds: string[]) {
 }
 
 /**
- * Fetches all branches
+ * Fetches all branches with proper limit for large datasets
+ * Only returns branches where ShowHospital=true
  */
 export async function fetchAllBranches() {
   try {
+    // Use a high limit to fetch all branches (Wix typically returns up to 1000 items per query)
+    // For datasets larger than 1000, consider implementing cursor-based pagination
     const res = await wixClient.items
       .query(COLLECTIONS.BRANCHES)
       .include(
@@ -396,10 +399,10 @@ export async function fetchAllBranches() {
         "specialist",
         "ShowHospital", // Include the boolean field for visibility control
       )
-      .limit(1000)
+      .limit(1000) // Wix API maximum limit
       .find()
 
-    // Removed console log for production performance
+    // Filter to only include ShowHospital=true branches
     return res.items.filter(item => shouldShowHospital(item))
   } catch (error) {
     console.error("Error fetching branches:", error)

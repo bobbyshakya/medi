@@ -49,20 +49,45 @@ export const getMatchingBranches = (hospitals: HospitalType[], filters: FilterSt
   const lowerTreatment = treatment.query.toLowerCase()
   const lowerLocation = location.query.toLowerCase()
 
-  const matchingTreatmentIds = new Set<string>()
+  // Build a Set of valid branch IDs from treatment branchesAvailableAt
+  const treatmentBranchIds = new Set<string>()
+  const treatmentLocationMap = new Map<string, { hospitalId: string; branchName: string; cities: any[] }>()
+  
   if (treatment.id || lowerTreatment) {
     allExtendedTreatments.forEach(t => {
       const nameMatch = lowerTreatment && (t.name ?? '').toLowerCase().includes(lowerTreatment)
       if ((treatment.id && t._id === treatment.id) || nameMatch) {
-        matchingTreatmentIds.add(t._id)
+        // Add all branches available at this treatment
+        t.branchesAvailableAt?.forEach(loc => {
+          if (loc.branchId) {
+            treatmentBranchIds.add(loc.branchId)
+            treatmentLocationMap.set(loc.branchId, {
+              hospitalId: loc.hospitalId,
+              branchName: loc.branchName || "",
+              cities: loc.cities || [],
+            })
+          }
+        })
       }
     })
-    if ((treatment.id || lowerTreatment) && matchingTreatmentIds.size === 0) return []
+    
+    // If we have treatment filter but no matching branches found, return empty
+    if ((treatment.id || lowerTreatment) && treatmentBranchIds.size === 0) {
+      return []
+    }
   }
 
   return hospitals
     .flatMap((h) => h.branches?.map((b) => ({ ...b, hospitalName: h.hospitalName, hospitalLogo: h.logo, hospitalId: h._id })) || [])
     .filter((b) => {
+      // If treatment filter is active, only include branches that offer that treatment
+      if (treatment.id || lowerTreatment) {
+        // Check if this branch is in the treatment's branchesAvailableAt
+        if (!treatmentBranchIds.has(b._id)) {
+          return false
+        }
+      }
+
       if ((city.id || lowerCity) && !b.city.some((c) => (city.id && c._id === city.id) || (lowerCity && (c.cityName ?? '').toLowerCase().includes(lowerCity)))) return false
       if ((state.id || lowerState) && !b.city.some((c) => (state.id && c.state === state.id) || (lowerState && (c.state ?? '').toLowerCase().includes(lowerState)))) return false
       if ((location.id || lowerLocation) && !b.city.some((c) =>
@@ -72,23 +97,6 @@ export const getMatchingBranches = (hospitals: HospitalType[], filters: FilterSt
         (lowerLocation && (c.state ?? '').toLowerCase().includes(lowerLocation))
       )) return false
       if ((branch.id || lowerBranch) && !(branch.id === b._id) && !(lowerBranch && (b.branchName ?? '').toLowerCase().includes(lowerBranch))) return false
-
-      if (treatment.id || lowerTreatment) {
-        const allBranchTreatmentIds = new Set<string>()
-        b.treatments?.forEach(t => allBranchTreatmentIds.add(t._id))
-        b.specialists?.forEach(spec => spec.treatments?.forEach(t => allBranchTreatmentIds.add(t._id)))
-
-        let hasMatchingTreatment = false
-        if (matchingTreatmentIds.size > 0) {
-          for (const treatmentId of matchingTreatmentIds) {
-            if (allBranchTreatmentIds.has(treatmentId)) {
-              hasMatchingTreatment = true
-              break
-            }
-          }
-        }
-        if (!hasMatchingTreatment) return false
-      }
 
       const allDepartments = (b.specialists || []).flatMap(spec => spec.department || [])
       if ((department.id || lowerDept) && !allDepartments.some((d) => (department.id && d._id === department.id) || (lowerDept && (d.name ?? '').toLowerCase().includes(lowerDept)))) return false

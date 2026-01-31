@@ -100,15 +100,17 @@ export const useHospitalsData = () => {
 
 
   const allExtendedDoctors = useMemo(() => getAllExtendedDoctors(allHospitals), [allHospitals])
-  const allExtendedTreatments = useMemo(() => getAllExtendedTreatments(allHospitals), [allHospitals])
-
-  // When in treatments view, use all treatments from API, otherwise use hospital-derived treatments
+  
+  // Use treatments from API (which now includes branchesAvailableAt mapping)
+  // Fall back to hospital-derived treatments if API data is not available
   const treatmentsForView = useMemo(() => {
-    if (filters.view === 'treatments') {
+    if (filters.view === 'treatments' && allTreatmentsFromApi.length > 0) {
+      // Use API treatments with branchesAvailableAt mapping
       return allTreatmentsFromApi
     }
-    return allExtendedTreatments
-  }, [filters.view, allTreatmentsFromApi, allExtendedTreatments])
+    // Fallback to hospital-derived treatments
+    return getAllExtendedTreatments(allHospitals)
+  }, [filters.view, allTreatmentsFromApi, allHospitals])
 
   const visibleHospitals = useMemo(() => allHospitals.filter(h => h.showHospital !== false), [allHospitals])
 

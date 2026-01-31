@@ -178,9 +178,9 @@ export const RenderContent = ({
 
   return (
     <>
-      <div className="mb-4 text-sm text-gray-600">
+      {/* <div className="mb-4 text-sm text-gray-600">
         Showing {visibleItems.length} of {items.length} {view === 'hospitals' ? 'branches' : view}
-      </div>
+      </div> */}
       <div className="grid grid-cols-1 my-4 mb-10 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {visibleItems.map((item) => (
           <div key={item.baseId || item._id} className="h-full">

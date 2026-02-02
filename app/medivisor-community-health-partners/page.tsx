@@ -81,9 +81,9 @@ export default function Home() {
                                     While digital platforms have helped us reach many families, we also recognize a difficult reality: many of our countrymen are not online or are not comfortable using technology. As a result, they continue to struggle in silence — not because help does not exist, but because they cannot reach it.
                                 </p>
                                 <p>
-                                    To address this gap, Medivisor has launched the Expanded Patient Support Programme (EPSP). This programme is designed to reach villages, churches, and local communities and ensure that no one is left behind simply because they cannot connect digitally.
+                                    To address this gap, we have launched the Medivisor Expanded Patient Support Network (PNG). This network is designed to reach villages, churches, and local communities and ensure that no one is left behind simply because they cannot connect digitally.
                                 </p>
-                                <p className="pt-6">
+                                <p >
                                     Since Medivisor alone cannot go deep and wide, we now invite compassionate, service-minded individuals and organizations across Papua New Guinea to join hands with us as:
                                 </p>
                                 <div className="mt-4 p-4 bg-[#E22026]/10 rounded-lg ">
@@ -143,12 +143,12 @@ export default function Home() {
                             <div className="flex items-center mb-6">
                                 <div className="h-10 w-1 bg-[#E22026] rounded-full mr-4"></div>
                                 <h2 className="text-2xl font-bold text-gray-900">
-                                    What Is This Programme About?
+                                    What Is This Network About?
                                 </h2>
                             </div>
                             <div className="space-y-4 text-gray-700 leading-relaxed">
                                 <p className="font-semibold text-gray-900">
-                                    The Medivisor Expanded Patient Support Programme (EPSP) is a community-based initiative created to:
+                                    The Medivisor Expanded Patient Support Network (PNG) is a community-based initiative created to:
                                 </p>
                                 <ul className="space-y-3">
                                     {[
@@ -411,7 +411,7 @@ export default function Home() {
                             </div>
                             <div className="space-y-4 text-gray-700 leading-relaxed">
                                 <p>
-                                    By joining this programme, you become part of a compassionate mission to reduce suffering and restore hope.
+                                    By joining this network, you become part of a compassionate mission to reduce suffering and restore hope.
                                 </p>
                                 <div className="mt-6 p-6 bg-red-50 rounded-xl border border-blue-100">
                                     <p className="font-semibold text-gray-900 text-lg">

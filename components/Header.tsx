@@ -252,7 +252,7 @@ export default function Header() {
                 </button>
               </div>
 
-              <BranchFilter allHospitals={allHospitals} />
+              {/* <BranchFilter allHospitals={allHospitals} /> */}
 
               {/* Navigation Items */}
               <ul className="flex w-full flex-col md:flex-row gap-2 md:gap-8 px-6 md:px-0 pt-6 md:pt-0">

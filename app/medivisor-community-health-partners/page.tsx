@@ -30,12 +30,14 @@ export default function Home() {
                         </h1>
 
                         <div className="flex justify-start mt-4">
-                            <button className="hover:bg-[#E22026] cursor-pointer md:block hidden bg-[#74BF44] text-white font-medium px-5 py-2 rounded-md shadow-md transition-all">
+                           <a href="/epsp-form">
+                            <button className="hover:bg-[#E22026] text-lg cursor-pointer md:block hidden bg-[#74BF44] text-white font-medium px-12 py-2 rounded-md shadow-md transition-all">
 
                                 {/* Helping Patients. Guiding Families. Saving Lives. */}
                                 Join Us
 
                             </button>
+                            </a>
                         </div>
 
                     </div>

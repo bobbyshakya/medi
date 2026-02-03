@@ -129,8 +129,59 @@ export default async function BranchDetail({ params }: { params: Promise<{ slug:
 
   const hospital = hospitalData;
   const branch = foundBranch;
+  
   // Calculate derived data with validation
-  const allTreatments = branch ? extractUniqueTreatments(branch) : [];
+  // For group hospitals (multiple branches), collect treatments from ALL branches
+  const isGroupHospital = Array.isArray(hospitalData.branches) && hospitalData.branches.length > 1
+  
+  // Use enriched treatments from hospital level (already mapped with all fields)
+  // Fall back to extracting from branches if hospital.treatments is empty
+  const hospitalTreatments = hospitalData?.treatments || []
+  
+  // For group hospitals, use enriched treatments from hospital level
+  // For single branch, extract from branch + specialists
+  const allTreatments = isGroupHospital
+    ? hospitalTreatments  // Use pre-enriched treatments from hospital
+    : (branch ? extractUniqueTreatments(branch) : [])
+  
+  // Debug: log treatment counts
+  console.log('Treatment debug:', {
+    isGroupHospital,
+    hospitalTreatmentsCount: hospitalTreatments.length,
+    allTreatmentsCount: allTreatments.length
+  })
+  
+  // Build unified specialists list from all branches for group hospitals
+  const allSpecialists = (() => {
+    if (isGroupHospital) {
+      const specialistsMap = new Map()
+      hospitalData.branches?.forEach((b: any) => {
+        b.specialists?.forEach((s: any) => {
+          if (s._id && !specialistsMap.has(s._id)) {
+            specialistsMap.set(s._id, { ...s, branchName: b.branchName })
+          }
+        })
+      })
+      return Array.from(specialistsMap.values())
+    }
+    return branch?.specialists || []
+  })()
+  
+  // Build unified doctors list from all branches for group hospitals
+  const allDoctors = (() => {
+    if (isGroupHospital) {
+      const doctorsMap = new Map()
+      hospitalData.branches?.forEach((b: any) => {
+        b.doctors?.forEach((d: any) => {
+          if ((d._id || d.doctorName) && !doctorsMap.has(d._id || d.doctorName)) {
+            doctorsMap.set(d._id || d.doctorName, { ...d, branchName: b.branchName })
+          }
+        })
+      })
+      return Array.from(doctorsMap.values())
+    }
+    return branch?.doctors || []
+  })()
   const sortedFacilities = (() => {
     if (!branch?.facilities || !Array.isArray(branch.facilities)) return [];
     return [...branch.facilities]
@@ -195,8 +246,21 @@ export default async function BranchDetail({ params }: { params: Promise<{ slug:
               {branch.description && <AboutSection description={branch.description} hospitalName={hospital.hospitalName} hospitalSlug={hospitalSlug} />}
               {sortedFacilities.length > 0 && <FacilitiesSection facilities={sortedFacilities} />}
               {allTreatments.length > 0 && <InteractiveCarouselSection title="Available Treatments" items={allTreatments} type="treatment" searchPlaceholder="Search treatments by name or specialist..." />}
-              {branch.doctors?.length > 0 && <InteractiveCarouselSection title="Our Specialist Doctors" items={branch.doctors} type="doctor" searchPlaceholder="Search doctors by name or Speciality..." />}
-              <SimilarHospitalsSection currentHospitalId={hospital._id} currentBranchId={branch._id} currentCity={currentCity} displayCityName={displayCityName} />
+              {(isGroupHospital ? allDoctors.length > 0 : branch.doctors?.length > 0) && (
+                <InteractiveCarouselSection 
+                  title="Our Specialist Doctors" 
+                  items={isGroupHospital ? allDoctors : branch.doctors} 
+                  type="doctor" 
+                  searchPlaceholder="Search doctors by name or Speciality..." 
+                />
+              )}
+              <SimilarHospitalsSection 
+                currentHospitalId={hospital._id} 
+                currentBranchId={branch._id} 
+                currentCity={currentCity} 
+                displayCityName={displayCityName}
+                allHospitals={hospitalData.allHospitals}
+              />
             </div>
             <aside className="lg:col-span-3 space-y-8"><ContactForm /></aside>
           </div>

@@ -1,5 +1,5 @@
 // app/api/hospitals/types.ts
-// Type definitions for hospitals API
+// Optimized type definitions for hospitals API
 
 export interface HospitalFilters {
   branchIds?: string[]
@@ -17,6 +17,7 @@ export interface ApiParams {
   slug?: string
   page: number
   pageSize: number
+  cursor?: string
   hospitalId?: string
   hospitalText?: string
   branchText?: string
@@ -59,6 +60,12 @@ export interface ApiResponse {
   regularCount: number
   standaloneCount: number
   filteredCount: number
+  hasMore: boolean
+  nextCursor?: string
+}
+
+export interface PaginatedApiResponse<T> extends ApiResponse {
+  items: T[]
 }
 
 export interface HospitalData {
@@ -121,4 +128,25 @@ export interface CityData {
   state: string
   countryId?: string
   country: string
+}
+
+// =============================================================================
+// PERFORMANCE OPTIMIZATION TYPES
+// =============================================================================
+
+export interface LazyLoadConfig {
+  loadBranches: boolean
+  loadDoctors: boolean
+  loadCities: boolean
+  loadAccreditations: boolean
+  loadTreatments: boolean
+  loadSpecialists: boolean
+  limitBranches?: number
+}
+
+export interface QueryOptimizationConfig {
+  useCursorPagination: boolean
+  parallelFetch: boolean
+  cacheResults: boolean
+  lazyLoadRelated: boolean
 }

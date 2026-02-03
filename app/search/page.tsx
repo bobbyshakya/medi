@@ -15,7 +15,7 @@ import FilterDropdown from "@/components/search/FilterDropdown"
 import FilterSidebar from "@/components/search/FilterSidebar"
 import ViewToggle from "@/components/search/ViewToggle"
 import { ResultsHeader, MobileFilterButton, BreadcrumbNav, RenderContent } from "@/components/search/LayoutComponents"
-import { useHospitalsData } from "@/hooks/useHospitalsData"
+import { useCMSData } from "@/hooks/useCMSData"
 import type { FilterState } from '@/types/search'
 
 /**
@@ -26,6 +26,9 @@ function HospitalsPageContent() {
   // Destructure all necessary data and functions from the custom hook
   const {
     loading,
+    isLoadingMore,
+    isFullDataLoaded,
+    totalCount,
     filters,
     updateFilter,
     updateSubFilter,
@@ -36,7 +39,7 @@ function HospitalsPageContent() {
     filteredTreatments,
     currentCount,
     getFilterValueDisplay,
-  } = useHospitalsData()
+  } = useCMSData()
 
   // State for controlling mobile filter sidebar visibility
   const [showFilters, setShowFilters] = React.useState(false)
@@ -121,6 +124,7 @@ function HospitalsPageContent() {
             <RenderContent
               view={filters.view}
               loading={loading}
+              isLoadingMore={isLoadingMore}
               currentCount={currentCount}
               filteredBranches={filteredBranches}
               filteredDoctors={filteredDoctors}

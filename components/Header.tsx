@@ -63,10 +63,9 @@ interface HospitalAPIResponse {
 }
 
 async function fetchMasterHospitalData(): Promise<Hospital[]> {
-  // Use a `try...catch` block to handle errors more cleanly, 
-  // though the existing `if (!response.ok)` handles server errors well.
+  // Use the new unified CMS API
   
-  const response = await fetch('/api/hospitals?pageSize=50', { 
+  const response = await fetch('/api/cms?action=all&pageSize=50', { 
     cache: 'no-store'
   });
 
@@ -79,15 +78,16 @@ async function fetchMasterHospitalData(): Promise<Hospital[]> {
   }
 
   // 2. Add type assertion for the JSON response for better type safety
-  const data: HospitalAPIResponse = await response.json();
+  const data = await response.json();
+  const items = data.hospitals || data.items || [];
   
-  // 3. Ensure `data` is an object and has an `items` property before returning
-  if (!data || !Array.isArray(data.items)) {
+  // 3. Ensure we have valid data
+  if (!Array.isArray(items)) {
       console.error("API response structure is invalid:", data);
-      throw new Error("Invalid data structure received from hospital API.");
+      throw new Error("Invalid data structure received from CMS API.");
   }
   
-  return data.items;
+  return items;
 }
 
 // =================================================================
@@ -252,7 +252,7 @@ export default function Header() {
                 </button>
               </div>
 
-              {/* <BranchFilter allHospitals={allHospitals} /> */}
+              <BranchFilter allHospitals={allHospitals} />
 
               {/* Navigation Items */}
               <ul className="flex w-full flex-col md:flex-row gap-2 md:gap-8 px-6 md:px-0 pt-6 md:pt-0">

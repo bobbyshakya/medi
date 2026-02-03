@@ -29,7 +29,19 @@ const EMBLA_SLIDE_SIZES = {
   lg: "lg:w-1/3",
 }
 
-const SimilarHospitalsSection = ({ currentHospitalId, currentBranchId, currentCity, displayCityName }: { currentHospitalId: string; currentBranchId: string; currentCity: string; displayCityName: string }) => {
+const SimilarHospitalsSection = ({ 
+  currentHospitalId, 
+  currentBranchId, 
+  currentCity, 
+  displayCityName,
+  allHospitals // NEW: Pre-fetched hospitals data from server
+}: { 
+  currentHospitalId: string; 
+  currentBranchId: string; 
+  currentCity: string; 
+  displayCityName: string;
+  allHospitals?: any[]
+}) => {
   const router = useRouter()
   const [branches, setBranches] = useState<any[]>([])
   const [allBranches, setAllBranches] = useState<any[]>([])
@@ -48,33 +60,11 @@ const SimilarHospitalsSection = ({ currentHospitalId, currentBranchId, currentCi
     setNextBtnDisabled(!emblaApi.canScrollNext())
   }, [])
 
-  const fetchData = useCallback(async (retryCount = 0) => {
-    try {
-      setLoading(true)
-      setError(false)
-
-      // Fetch similar branches
-      const similarRes = await fetch(`/api/hospitals?pageSize=100`)
-      if (!similarRes.ok) throw new Error('Failed to fetch similar branches')
-      const similarData = await similarRes.json()
-      const similarBranches = similarData.items
-        .filter((h: any) => h._id !== currentHospitalId)
-        .flatMap((h: any) => (h.branches || []).map((b: any) => ({
-          ...b,
-          hospitalName: h.hospitalName,
-          yearEstablished: b.yearEstablished || h.yearEstablished,
-          logo: b.logo || h.logo,
-          accreditation: b.accreditation || h.accreditation
-        })))
-        .filter((b: any) => b.city?.some((c: any) => c?.cityName?.toLowerCase().includes(currentCity.toLowerCase()) || currentCity.toLowerCase().includes(c?.cityName?.toLowerCase())) && b._id !== currentBranchId)
-        .sort((a: any, b: any) => (a.branchName || '').localeCompare(b.branchName || ''))
-        .slice(0, 10)
-
-      // Fetch all branches for search
-      const allRes = await fetch(`/api/hospitals?pageSize=500`)
-      if (!allRes.ok) throw new Error('Failed to fetch all branches')
-      const allData = await allRes.json()
-      const allHospitalBranches = allData.items
+  // Process pre-fetched data on mount
+  useEffect(() => {
+    if (allHospitals && allHospitals.length > 0) {
+      // Extract all branches with hospital info from pre-fetched data
+      const allHospitalBranches = allHospitals
         .flatMap((h: any) => (h.branches || []).map((b: any) => ({
           ...b,
           hospitalName: h.hospitalName,
@@ -84,6 +74,65 @@ const SimilarHospitalsSection = ({ currentHospitalId, currentBranchId, currentCi
         })))
         .filter((b: any) => b?.branchName)
         .sort((a: any, b: any) => (a.branchName || '').localeCompare(b.branchName || ''))
+
+      // Filter similar branches (same city, different hospital)
+      const similarBranches = allHospitalBranches
+        .filter((b: any) => {
+          const isInSameCity = b.city?.some((c: any) => 
+            c?.cityName?.toLowerCase().includes(currentCity.toLowerCase()) || 
+            currentCity.toLowerCase().includes(c?.cityName?.toLowerCase())
+          )
+          const isDifferentBranch = b._id !== currentBranchId
+          return isInSameCity && isDifferentBranch
+        })
+        .slice(0, 10)
+
+      setBranches(similarBranches)
+      setAllBranches(allHospitalBranches)
+      setLoading(false)
+    }
+  }, [allHospitals, currentHospitalId, currentBranchId, currentCity])
+
+  const fetchData = useCallback(async (retryCount = 0) => {
+    // Skip if we already have data from pre-fetch
+    if (allHospitals && allHospitals.length > 0) {
+      setLoading(false)
+      return
+    }
+    
+    try {
+      setLoading(true)
+      setError(false)
+
+      // Use the new unified CMS API for faster data fetching
+      const res = await fetch(`/api/cms?action=all&pageSize=500`)
+      if (!res.ok) throw new Error('Failed to fetch hospitals')
+      const data = await res.json()
+      const hospitals = data.hospitals || []
+
+      // Extract all branches with hospital info
+      const allHospitalBranches = hospitals
+        .flatMap((h: any) => (h.branches || []).map((b: any) => ({
+          ...b,
+          hospitalName: h.hospitalName,
+          yearEstablished: b.yearEstablished || h.yearEstablished,
+          logo: b.logo || h.logo,
+          accreditation: b.accreditation || h.accreditation
+        })))
+        .filter((b: any) => b?.branchName)
+        .sort((a: any, b: any) => (a.branchName || '').localeCompare(b.branchName || ''))
+
+      // Filter similar branches (same city, different hospital)
+      const similarBranches = allHospitalBranches
+        .filter((b: any) => {
+          const isInSameCity = b.city?.some((c: any) => 
+            c?.cityName?.toLowerCase().includes(currentCity.toLowerCase()) || 
+            currentCity.toLowerCase().includes(c?.cityName?.toLowerCase())
+          )
+          const isDifferentBranch = b._id !== currentBranchId
+          return isInSameCity && isDifferentBranch
+        })
+        .slice(0, 10)
 
       setBranches(similarBranches)
       setAllBranches(allHospitalBranches)

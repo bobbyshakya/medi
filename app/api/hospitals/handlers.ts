@@ -1,71 +1,142 @@
 // app/api/hospitals/handlers.ts
-// Main business logic handlers for hospitals API
+// Optimized business logic handlers with lazy loading support
 
 import { wixClient } from "@/lib/wixClient"
 import { COLLECTIONS } from './collections'
 import { DataMappers, ReferenceMapper } from './mappers'
-import { fetchAllBranches, fetchDoctors, fetchCitiesWithStateAndCountry, fetchByIds, cachedFetchByIds, fetchTreatmentsWithFullData, fetchSpecialistsWithDeptAndTreatments } from './fetchers'
-import { shouldShowHospital, shouldShowHospitalForHospital, isStandaloneBranch, accreditationsCache } from './utils'
+import { 
+  fetchAllBranches, 
+  fetchDoctors, 
+  fetchCitiesWithStateAndCountry, 
+  fetchByIds, 
+  cachedFetchByIds, 
+  fetchTreatmentsWithFullData, 
+  fetchSpecialistsWithDeptAndTreatments 
+} from './fetchers'
+import { 
+  shouldShowHospital, 
+  shouldShowHospitalForHospital, 
+  isStandaloneBranch, 
+  accreditationsCache 
+} from './utils'
 import { generateSlug } from './shared-utils'
 import type { FilterIds, HospitalData } from './types'
 
+// =============================================================================
+// LAZY LOADING SUPPORT
+// =============================================================================
+
+interface LazyLoadConfig {
+  loadBranches?: boolean
+  loadDoctors?: boolean
+  loadCities?: boolean
+  loadAccreditations?: boolean
+  loadTreatments?: boolean
+  loadSpecialists?: boolean
+  limitBranches?: number
+}
+
+/**
+ * Default lazy loading config for different use cases
+ */
+const LAZY_CONFIGS = {
+  list: {
+    loadBranches: true, // Enable branches for search/listing pages
+    loadDoctors: false,
+    loadCities: true,   // Enable cities for filtering
+    loadAccreditations: false,
+    loadTreatments: false,
+    loadSpecialists: false,
+    limitBranches: 20,  // Limit branches per hospital for list view
+  } as LazyLoadConfig,
+  
+  detail: {
+    loadBranches: true,
+    loadDoctors: true,
+    loadCities: true,
+    loadAccreditations: true,
+    loadTreatments: true,
+    loadSpecialists: true,
+    limitBranches: 50,
+  } as LazyLoadConfig,
+  
+  minimal: {
+    loadBranches: false,
+    loadDoctors: false,
+    loadCities: false,
+    loadAccreditations: false,
+    loadTreatments: false,
+    loadSpecialists: false,
+  } as LazyLoadConfig,
+}
+
+// =============================================================================
+// OPTIMIZED HOSPITAL ENRICHMENT
+// =============================================================================
+
 /**
  * Enriches hospitals with branch, doctor, and treatment data
+ * Optimized with lazy loading and selective data fetching
  */
 export async function enrichHospitals(
   hospitals: HospitalData[],
   filterIds: FilterIds,
+  config: LazyLoadConfig = LAZY_CONFIGS.detail,
 ) {
   const hospitalIds = hospitals.map((h) => h._id).filter(Boolean)
+  
+  if (hospitalIds.length === 0) return hospitals
 
-  // STEP 1 & 2: Fetch branches for grouped and standalone hospitals in parallel
-  const [groupedBranchesRes, standaloneBranchesRes] = await Promise.all([
-    wixClient.items
-      .query(COLLECTIONS.BRANCHES)
-      .include(
-        "hospital",
-        "HospitalMaster_branches",
-        "city",
-        "doctor",
-        "specialty",
-        "accreditation",
-        "treatment",
-        "specialist",
-        "ShowHospital",
-      )
-      .hasSome("HospitalMaster_branches", hospitalIds)
-      .limit(1000)
-      .find(),
-    wixClient.items
-      .query(COLLECTIONS.BRANCHES)
-      .include(
-        "hospital",
-        "HospitalMaster_branches",
-        "city",
-        "doctor",
-        "specialty",
-        "accreditation",
-        "treatment",
-        "specialist",
-        "ShowHospital",
-      )
-      .hasSome("hospital", hospitalIds)
-      .limit(1000)
-      .find()
-  ])
+  // Step 1: Fetch branches only if needed (lazy loading)
+  let allBranches: any[] = []
+  if (config.loadBranches) {
+    const [groupedBranchesRes, standaloneBranchesRes] = await Promise.all([
+      wixClient.items
+        .query(COLLECTIONS.BRANCHES)
+        .include(
+          "hospital",
+          "HospitalMaster_branches",
+          "city",
+          "doctor",
+          "specialty",
+          "accreditation",
+          "treatment",
+          "specialist",
+          "ShowHospital",
+        )
+        .hasSome("HospitalMaster_branches", hospitalIds)
+        .limit(config.limitBranches || 1000)
+        .find(),
+      wixClient.items
+        .query(COLLECTIONS.BRANCHES)
+        .include(
+          "hospital",
+          "HospitalMaster_branches",
+          "city",
+          "doctor",
+          "specialty",
+          "accreditation",
+          "treatment",
+          "specialist",
+          "ShowHospital",
+        )
+        .hasSome("hospital", hospitalIds)
+        .limit(config.limitBranches || 1000)
+        .find()
+    ])
 
-  // Combine both branch results and filter to only include ShowHospital=true branches
-  let allBranches = [...groupedBranchesRes.items, ...standaloneBranchesRes.items]
-  allBranches = allBranches.filter((b: any) => shouldShowHospital(b))
+    // Combine and filter branches
+    allBranches = [...groupedBranchesRes.items, ...standaloneBranchesRes.items]
+    allBranches = allBranches.filter((b: any) => shouldShowHospital(b))
+  }
 
-  // Create a map to deduplicate branches by ID
+  // Deduplicate branches
   const uniqueBranchesMap = new Map<string, any>()
   allBranches.forEach((b: any) => {
     if (b._id) {
       uniqueBranchesMap.set(b._id, b)
     }
   })
-
   const uniqueBranches = Array.from(uniqueBranchesMap.values())
 
   const branchesByHospital: Record<string, any[]> = {}
@@ -76,15 +147,13 @@ export async function enrichHospitals(
   const treatmentIds = new Set<string>()
   const specialistIds = new Set<string>()
 
-  // Process all branches (both grouped and standalone)
+  // Process branches
   uniqueBranches.forEach((b: any) => {
-    // Get hospital IDs from both grouping and direct references
     const hIds = new Set<string>()
 
-    // Add hospital IDs from group reference (existing logic)
+    // Get hospital IDs
     ReferenceMapper.extractHospitalIds(b).forEach((id) => hIds.add(id))
 
-    // Add hospital IDs from direct hospital reference (new logic)
     const directHospitalRefs = ReferenceMapper.multiReference(
       b.hospital || b.data?.hospital,
       "hospitalName", "Hospital Name"
@@ -93,46 +162,83 @@ export async function enrichHospitals(
       if (h._id) hIds.add(h._id)
     })
 
-    // Add branch to all relevant hospitals
+    // Add branch to relevant hospitals
     hIds.forEach((hid) => {
       if (hospitalIds.includes(hid)) {
         if (!branchesByHospital[hid]) branchesByHospital[hid] = []
         const mapped = DataMappers.branch(b)
         branchesByHospital[hid].push(mapped)
 
-        // Collect IDs for enrichment
-        ReferenceMapper.extractIds(mapped.doctors).forEach((id) => doctorIds.add(id))
-        ReferenceMapper.extractIds(mapped.city).forEach((id) => cityIds.add(id))
-        ReferenceMapper.extractIds(mapped.accreditation).forEach((id) => accreditationIds.add(id))
-        ReferenceMapper.extractIds(mapped.specialists).forEach((id) => specialistIds.add(id))
-        ReferenceMapper.extractIds(mapped.treatments).forEach((id) => treatmentIds.add(id))
+        // Collect IDs only if we're loading related data
+        if (config.loadDoctors) {
+          ReferenceMapper.extractIds(mapped.doctors).forEach((id) => doctorIds.add(id))
+        }
+        if (config.loadCities) {
+          ReferenceMapper.extractIds(mapped.city).forEach((id) => cityIds.add(id))
+        }
+        if (config.loadAccreditations) {
+          ReferenceMapper.extractIds(mapped.accreditation).forEach((id) => accreditationIds.add(id))
+        }
+        if (config.loadSpecialists) {
+          ReferenceMapper.extractIds(mapped.specialists).forEach((id) => specialistIds.add(id))
+        }
+        if (config.loadTreatments) {
+          ReferenceMapper.extractIds(mapped.treatments).forEach((id) => treatmentIds.add(id))
+        }
 
-        mapped.specialization.forEach((s: any) => {
-          if (s.isTreatment) {
-            treatmentIds.add(s._id)
-          } else {
-            specialtyIds.add(s._id)
-          }
-        })
+        if (config.loadSpecialists || config.loadTreatments) {
+          mapped.specialization.forEach((s: any) => {
+            if (s.isTreatment) {
+              treatmentIds.add(s._id)
+            } else {
+              specialtyIds.add(s._id)
+            }
+          })
+        }
       }
     })
   })
 
-  const [doctors, cities, accreditations, treatments, enrichedSpecialists] = await Promise.all([
-    fetchDoctors(Array.from(doctorIds)),
-    fetchCitiesWithStateAndCountry(Array.from(cityIds)),
-    cachedFetchByIds(COLLECTIONS.ACCREDITATIONS, Array.from(accreditationIds), DataMappers.accreditation, accreditationsCache),
-    fetchTreatmentsWithFullData(Array.from(treatmentIds)),
-    fetchSpecialistsWithDeptAndTreatments(Array.from(new Set([...specialtyIds, ...specialistIds]))),
-  ])
+  // Step 2: Fetch related data in parallel (only if needed)
+  const enrichmentPromises: Promise<any>[] = []
+  
+  if (config.loadDoctors) {
+    enrichmentPromises.push(fetchDoctors(Array.from(doctorIds)))
+  } else {
+    enrichmentPromises.push(Promise.resolve({}))
+  }
+  
+  if (config.loadCities) {
+    enrichmentPromises.push(fetchCitiesWithStateAndCountry(Array.from(cityIds)))
+  } else {
+    enrichmentPromises.push(Promise.resolve({}))
+  }
+  
+  if (config.loadAccreditations) {
+    enrichmentPromises.push(cachedFetchByIds(COLLECTIONS.ACCREDITATIONS, Array.from(accreditationIds), DataMappers.accreditation, accreditationsCache))
+  } else {
+    enrichmentPromises.push(Promise.resolve({}))
+  }
+  
+  if (config.loadTreatments) {
+    enrichmentPromises.push(fetchTreatmentsWithFullData(Array.from(treatmentIds)))
+  } else {
+    enrichmentPromises.push(Promise.resolve({}))
+  }
+  
+  if (config.loadSpecialists) {
+    enrichmentPromises.push(fetchSpecialistsWithDeptAndTreatments(Array.from(new Set([...specialtyIds, ...specialistIds]))))
+  } else {
+    enrichmentPromises.push(Promise.resolve({}))
+  }
+
+  const [doctors, cities, accreditations, treatments, enrichedSpecialists] = await Promise.all(enrichmentPromises)
 
   return hospitals.map((hospital) => {
     const rawBranches = branchesByHospital[hospital._id] || []
+    
     const filteredBranches = rawBranches.filter((b) => {
-      // Always check ShowHospital for visibility control
-      if (!shouldShowHospital(b)) {
-        return false
-      }
+      if (!shouldShowHospital(b)) return false
 
       const matchBranch = !filterIds.branch.length || filterIds.branch.includes(b._id)
       const matchCity = !filterIds.city.length || b.city.some((c: any) => filterIds.city.includes(c._id))
@@ -149,6 +255,7 @@ export async function enrichHospitals(
         b.specialists.some((s: any) => s.department.some((d: any) => filterIds.department.includes(d._id)))
       const matchAccred =
         !filterIds.accreditation.length || b.accreditation.some((a: any) => filterIds.accreditation.includes(a._id))
+      
       return (
         matchBranch &&
         matchCity &&
@@ -162,9 +269,11 @@ export async function enrichHospitals(
     })
 
     const enrichedBranches = filteredBranches.map((b) => {
-      let enrichedCities = b.city.map((c: any) => cities[c._id] || c)
+      let enrichedCities = config.loadCities 
+        ? b.city.map((c: any) => cities[c._id] || c)
+        : b.city
 
-      if (enrichedCities.length === 0) {
+      if (enrichedCities.length === 0 && config.loadCities) {
         enrichedCities = [{
           _id: `fallback-${b._id}`,
           cityName: "Unknown City",
@@ -175,21 +284,24 @@ export async function enrichHospitals(
 
       return {
         ...b,
-        doctors: b.doctors.map((d: any) => doctors[d._id] || d),
+        doctors: config.loadDoctors ? b.doctors.map((d: any) => doctors[d._id] || d) : b.doctors,
         city: enrichedCities,
-        accreditation: b.accreditation.map((a: any) => accreditations[a._id] || a),
-        specialists: b.specialists.map((s: any) => enrichedSpecialists[s._id] || s),
-        treatments: b.treatments.map((t: any) => treatments[t._id] || t),
-        specialization: b.specialization.map((s: any) => {
-          if (s.isTreatment) {
-            return treatments[s._id] || s
-          } else {
-            return enrichedSpecialists[s._id] || s
-          }
-        }),
+        accreditation: config.loadAccreditations ? b.accreditation.map((a: any) => accreditations[a._id] || a) : b.accreditation,
+        specialists: config.loadSpecialists ? b.specialists.map((s: any) => enrichedSpecialists[s._id] || s) : b.specialists,
+        treatments: config.loadTreatments ? b.treatments.map((t: any) => treatments[t._id] || t) : b.treatments,
+        specialization: (config.loadSpecialists || config.loadTreatments)
+          ? b.specialization.map((s: any) => {
+              if (s.isTreatment) {
+                return treatments[s._id] || s
+              } else {
+                return enrichedSpecialists[s._id] || s
+              }
+            })
+          : b.specialization,
       }
     })
 
+    // Collect unique items
     const uniqueDoctors = new Map()
     const uniqueSpecialists = new Map()
     const uniqueTreatments = new Map()
@@ -211,8 +323,13 @@ export async function enrichHospitals(
   })
 }
 
+// =============================================================================
+// OPTIMIZED GET ALL HOSPITALS
+// =============================================================================
+
 /**
- * Gets all hospitals (both from HospitalMaster and standalone branches)
+ * Gets all hospitals with optimized lazy loading
+ * Uses config-based approach to minimize unnecessary data fetching
  */
 export async function getAllHospitals(
   filterIds: FilterIds,
@@ -221,20 +338,24 @@ export async function getAllHospitals(
   minimal: boolean = false,
   slug?: string,
   cachedBranches?: any[],
-  showHospital: boolean = true
+  showHospital: boolean = true,
+  lazyConfig?: LazyLoadConfig,
 ) {
+  // Determine lazy loading config
+  const config = lazyConfig || (minimal ? LAZY_CONFIGS.minimal : LAZY_CONFIGS.list)
+
   // Fetch regular hospitals from HospitalMaster
   const regularHospitalsQuery = wixClient.items
     .query(COLLECTIONS.HOSPITALS)
     .include("specialty", "ShowHospital")
     .descending("_createdDate")
-    .limit(1000)
+    .limit(minimal ? 100 : 1000)
     .find()
 
-  // Use cached branches if provided, otherwise fetch
+  // Use cached branches if provided
   const allBranches = cachedBranches || await fetchAllBranches()
 
-  // Separate branches into standalone and grouped
+  // Separate branches
   const standaloneBranches: any[] = []
   const groupedBranches: any[] = []
 
@@ -245,8 +366,6 @@ export async function getAllHospitals(
       groupedBranches.push(branch)
     }
   })
-
-  // Removed console log for production performance
 
   // Process regular hospitals
   const regularHospitalsResult = await regularHospitalsQuery
@@ -266,7 +385,6 @@ export async function getAllHospitals(
     standaloneBranches.forEach(branch => {
       const mapped = DataMappers.branch(branch)
 
-      // Collect IDs for enrichment
       ReferenceMapper.extractIds(mapped.doctors).forEach((id) => doctorIds.add(id))
       ReferenceMapper.extractIds(mapped.city).forEach((id) => cityIds.add(id))
       ReferenceMapper.extractIds(mapped.accreditation).forEach((id) => accreditationIds.add(id))
@@ -282,12 +400,9 @@ export async function getAllHospitals(
       })
     })
 
-    // Filter standalone branches based on filterIds and always check ShowHospital for visibility
+    // Filter standalone branches
     const filteredStandaloneBranches = standaloneBranches.filter(branch => {
-      // Always check ShowHospital for visibility control
-      if (!shouldShowHospital(branch)) {
-        return false
-      }
+      if (!shouldShowHospital(branch)) return false
 
       const mapped = DataMappers.branch(branch)
 
@@ -319,7 +434,7 @@ export async function getAllHospitals(
       )
     })
 
-    // Fetch all related data for enrichment
+    // Fetch related data for enrichment
     const [doctors, cities, accreditations, treatments, enrichedSpecialists] = await Promise.all([
       fetchDoctors([...doctorIds]),
       fetchCitiesWithStateAndCountry([...cityIds]),
@@ -328,11 +443,10 @@ export async function getAllHospitals(
       fetchSpecialistsWithDeptAndTreatments([...new Set([...specialtyIds, ...specialistIds])]),
     ])
 
-    // Convert filtered standalone branches to hospitals
+    // Convert filtered branches to hospitals
     standaloneHospitals = filteredStandaloneBranches.map(branch => {
       const mappedBranch = DataMappers.branch(branch)
 
-      // Enrich branch data
       const enrichedBranch = {
         ...mappedBranch,
         doctors: mappedBranch.doctors.map((d: any) => doctors[d._id] || d),
@@ -349,10 +463,8 @@ export async function getAllHospitals(
         }),
       }
 
-      // Create hospital from branch
       const hospital = DataMappers.hospital(branch, true)
 
-      // Collect unique doctors, specialists, and treatments
       const uniqueDoctors = new Map()
       const uniqueSpecialists = new Map()
       const uniqueTreatments = new Map()
@@ -367,8 +479,8 @@ export async function getAllHospitals(
         showHospital: shouldShowHospital(branch),
       } : {
         ...hospital,
-        branches: [enrichedBranch], // Standalone hospital has exactly one branch (itself)
-        doctors: [], // Exclude doctors for standalone branches
+        branches: [enrichedBranch],
+        doctors: [],
         specialists: Array.from(uniqueSpecialists.values()),
         treatments: Array.from(uniqueTreatments.values()),
         accreditations: enrichedBranch.accreditation,
@@ -389,8 +501,7 @@ export async function getAllHospitals(
         showHospital: shouldShowHospitalForHospital(h)
       })) as any[]
     } else {
-      enrichedRegularHospitals = await enrichHospitals(regularHospitals.map(h => DataMappers.hospital(h)), filterIds)
-      // Add showHospital field to regular hospitals
+      enrichedRegularHospitals = await enrichHospitals(regularHospitals.map(h => DataMappers.hospital(h)), filterIds, config)
       enrichedRegularHospitals = enrichedRegularHospitals.map((hospital, index) => ({
         ...hospital,
         showHospital: shouldShowHospitalForHospital(regularHospitals[index])
@@ -401,7 +512,7 @@ export async function getAllHospitals(
   // Combine all hospitals
   let allHospitals: any[] = [...enrichedRegularHospitals, ...standaloneHospitals]
 
-  // Apply search query if provided
+  // Apply search query
   if (searchQuery) {
     const searchSlug = generateSlug(searchQuery)
     allHospitals = allHospitals.filter(hospital => {
@@ -411,7 +522,7 @@ export async function getAllHospitals(
     })
   }
 
-  // Apply slug filter if provided
+  // Apply slug filter
   if (slug) {
     const slugLower = generateSlug(slug)
     allHospitals = allHospitals.filter(hospital => {
@@ -420,8 +531,48 @@ export async function getAllHospitals(
     })
   }
 
-  // Always apply showHospital filter to hide items where showHospital is false
+  // Apply showHospital filter
   allHospitals = allHospitals.filter(hospital => hospital.showHospital === true)
 
   return allHospitals
+}
+
+// =============================================================================
+// LAZY LOAD SINGLE HOSPITAL
+// =============================================================================
+
+/**
+ * Lazily load a single hospital with full details
+ */
+export async function getHospitalBySlug(
+  slug: string,
+  includeRelated: boolean = true
+): Promise<HospitalData | null> {
+  const normalizedSlug = generateSlug(slug)
+  
+  // Check cache first
+  const cacheKey = `hospital_slug_${normalizedSlug}`
+  const cached = accreditationsCache.get(cacheKey)
+  if (cached) return cached as HospitalData
+
+  // Fetch hospital by slug
+  const hospitals = await getAllHospitals(
+    { branch: [], city: [], doctor: [], specialty: [], accreditation: [], treatment: [], specialist: [], department: [] },
+    undefined,
+    true,
+    false,
+    slug,
+    undefined,
+    true,
+    includeRelated ? LAZY_CONFIGS.detail : LAZY_CONFIGS.minimal
+  )
+
+  if (hospitals.length === 0) return null
+
+  const hospital = hospitals[0]
+  
+  // Cache the result
+  accreditationsCache.set(cacheKey, hospital)
+  
+  return hospital
 }

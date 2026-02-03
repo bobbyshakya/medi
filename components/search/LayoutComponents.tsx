@@ -101,6 +101,7 @@ export const BreadcrumbNav = () => (
 type RenderContentProps = {
   view: string
   loading: boolean
+  isLoadingMore?: boolean
   currentCount: number
   filteredBranches: any[]
   filteredDoctors: any[]
@@ -111,6 +112,7 @@ type RenderContentProps = {
 export const RenderContent = ({
   view,
   loading,
+  isLoadingMore = false,
   currentCount,
   filteredBranches,
   filteredDoctors,
@@ -208,8 +210,14 @@ export const RenderContent = ({
 
   return (
     <>
-      <div className="mb-4 text-sm text-gray-600">
+      <div className="mb-4 text-sm text-gray-600 flex items-center gap-2">
         Showing {visibleItems.length} of {items.length} {view === 'hospitals' ? 'branches' : view}
+        {isLoadingMore && (
+          <span className="inline-flex items-center gap-1 text-gray-500">
+            <Loader2 className="w-4 h-4 animate-spin" />
+            Loading more...
+          </span>
+        )}
       </div>
       <div className="grid grid-cols-1 my-4 mb-10 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {visibleItems.map((item) => (

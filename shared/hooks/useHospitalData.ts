@@ -1,7 +1,9 @@
 "use client"
 
+// shared/hooks/useHospitalData.ts
+// Refactored to use the new unified CMS API
+
 import { useState, useEffect } from "react"
-import { getAllExtendedTreatments, getAllExtendedDoctors } from "../utils"
 
 interface Hospital {
   _id: string
@@ -50,7 +52,7 @@ interface UseHospitalDataResult {
   error: string | null
 }
 
-export const useHospitalData = (pageSize: number = 1000): UseHospitalDataResult => {
+export const useHospitalData = (pageSize: number = 500): UseHospitalDataResult => {
   const [hospitals, setHospitals] = useState<Hospital[]>([])
   const [treatments, setTreatments] = useState<Treatment[]>([])
   const [doctors, setDoctors] = useState<Doctor[]>([])
@@ -63,18 +65,59 @@ export const useHospitalData = (pageSize: number = 1000): UseHospitalDataResult 
       setError(null)
 
       try {
-        const res = await fetch(`/api/hospitals?pageSize=${pageSize}`)
-        if (!res.ok) throw new Error("Failed to fetch hospitals")
+        // Use the new unified CMS API
+        const res = await fetch(`/api/cms?action=all&pageSize=${pageSize}`)
+        if (!res.ok) throw new Error("Failed to fetch CMS data")
 
         const data = await res.json()
-        const hospitalsData: Hospital[] = data.items
+        const hospitalsData: Hospital[] = data.hospitals || []
+        const treatmentsData: Treatment[] = data.treatments || []
 
-        const extendedTreatments = getAllExtendedTreatments(hospitalsData)
-        const extendedDoctors = getAllExtendedDoctors(hospitalsData)
+        // Extract doctors from hospitals
+        const doctorsMap = new Map<string, Doctor>()
+        hospitalsData.forEach((h) => {
+          h.doctors?.forEach((d: any) => {
+            if (d._id && !doctorsMap.has(d._id)) {
+              doctorsMap.set(d._id, {
+                ...d,
+                locations: [{ hospitalName: h.hospitalName, hospitalId: h._id }],
+                departments: [],
+              })
+            }
+          })
+          h.branches?.forEach((b: any) => {
+            b.doctors?.forEach((d: any) => {
+              if (d._id) {
+                if (doctorsMap.has(d._id)) {
+                  const existing = doctorsMap.get(d._id)!
+                  existing.locations.push({
+                    hospitalName: h.hospitalName,
+                    hospitalId: h._id,
+                    branchName: b.branchName,
+                    branchId: b._id,
+                  })
+                } else {
+                  doctorsMap.set(d._id, {
+                    ...d,
+                    locations: [
+                      {
+                        hospitalName: h.hospitalName,
+                        hospitalId: h._id,
+                        branchName: b.branchName,
+                        branchId: b._id,
+                      },
+                    ],
+                    departments: [],
+                  })
+                }
+              }
+            })
+          })
+        })
 
         setHospitals(hospitalsData)
-        setTreatments(extendedTreatments)
-        setDoctors(extendedDoctors)
+        setTreatments(treatmentsData)
+        setDoctors(Array.from(doctorsMap.values()))
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to load data")
       } finally {

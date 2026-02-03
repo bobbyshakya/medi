@@ -101,11 +101,11 @@ const HospitalCard = ({ branch }: HospitalCardProps) => {
   const primaryCity = branch.city?.[0] || null
   const locationDisplay = formatLocation(primaryCity) // Format: "City, State, Country"
   const hospitalLogoUrl = getWixImageUrl(branch.hospitalLogo)
-  const primarySpecialty = branch.specialization?.[0]?.name || branch.specialization?.[0]?.title || "General Care"
+  const primarySpecialty = branch.specialization?.[0]?.name || "General Care"
   const accreditationLogoUrl = getWixImageUrl(branch.accreditation?.[0]?.image)
 
   return (
-    <Link href={`/search/hospitals/${slug}`} className="block">
+    <Link href={`/search/hospitals/${slug}`} prefetch className="block">
       <article
         className="group bg-white rounded-xs shadow-sm md:mb-0 mb-5 md:shadow-xs transition-all duration-300 overflow-hidden cursor-pointer h-full flex flex-col hover:shadow-sm border border-gray-300 md:border-gray-100"
         onMouseEnter={() => setIsHovered(true)} // ADDED handler

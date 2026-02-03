@@ -150,22 +150,134 @@ export const extractUniqueTreatments = (branch: any): any[] => {
   return Object.values(uniqueTreatments)
 }
 
-// NEW: Function to fetch hospital data by slug without caching
+/**
+ * Extract treatments from ALL branches of a group hospital.
+ * This ensures that when viewing a group hospital, treatments from all
+ * branches are collected and displayed together.
+ */
+export const extractTreatmentsFromAllBranches = (hospitalData: any): any[] => {
+  const uniqueTreatments = {} as { [key: string]: any }
+
+  // Helper to add a treatment to the unique collection
+  const addTreatment = (treatment: any, sourceName: string) => {
+    if (!treatment || !(treatment._id || treatment.name)) return
+    const key = treatment._id || treatment.name
+    if (!uniqueTreatments[key]) {
+      uniqueTreatments[key] = {
+        ...treatment,
+        specialistName: sourceName,
+        _id: treatment._id || key,
+        name: treatment.name || treatment.treatmentName,
+        description: treatment.description || '',
+        startingCost: treatment.startingCost || treatment.averageCost,
+        treatmentImage: treatment.treatmentImage || treatment.image
+      }
+    }
+  }
+
+  // 1. Include treatments directly associated with the hospital (main treatments)
+  if (hospitalData?.treatments && Array.isArray(hospitalData.treatments)) {
+    hospitalData.treatments.forEach((treatment: any) => {
+      addTreatment(treatment, 'Hospital Treatment')
+    })
+  }
+
+  // 2. Include treatments from ALL branches
+  if (hospitalData?.branches && Array.isArray(hospitalData.branches)) {
+    hospitalData.branches.forEach((branch: any) => {
+      const branchName = branch.branchName || 'Unknown Branch'
+
+      // Treatments directly on branch
+      if (branch.treatments && Array.isArray(branch.treatments)) {
+        branch.treatments.forEach((treatment: any) => {
+          addTreatment(treatment, `${branchName} - Direct`)
+        })
+      }
+
+      // Treatments from specialists in this branch
+      if (branch.specialists && Array.isArray(branch.specialists)) {
+        branch.specialists.forEach((specialist: any) => {
+          const specialistName = specialist.name || specialist.specialty || 'Unknown Specialist'
+          if (specialist.treatments && Array.isArray(specialist.treatments)) {
+            specialist.treatments.forEach((treatment: any) => {
+              addTreatment(treatment, `${branchName} - ${specialistName}`)
+            })
+          }
+        })
+      }
+
+      // Treatments from specialization
+      if (branch.specialization && Array.isArray(branch.specialization)) {
+        branch.specialization.forEach((spec: any) => {
+          if (spec && spec.isTreatment) {
+            addTreatment(spec, `${branchName} - Specialized`)
+          }
+        })
+      }
+
+      // Treatments from doctors' specializations
+      if (branch.doctors && Array.isArray(branch.doctors)) {
+        branch.doctors.forEach((doctor: any) => {
+          const doctorName = doctor.doctorName || doctor.name || 'Unknown Doctor'
+          if (doctor.specialization && Array.isArray(doctor.specialization)) {
+            doctor.specialization.forEach((spec: any) => {
+              if (spec && spec.treatments && Array.isArray(spec.treatments)) {
+                spec.treatments.forEach((treatment: any) => {
+                  addTreatment(treatment, `${branchName} - ${doctorName}`)
+                })
+              }
+            })
+          }
+        })
+      }
+    })
+  }
+
+  return Object.values(uniqueTreatments)
+}
+
+// NEW: Function to fetch hospital data by slug using unified CMS API
 export const fetchHospitalBySlug = async (slug: string) => {
   console.time('fetchHospitalBySlug total')
 
   try {
-    console.time('Broad API call')
-    // Fetch all hospitals to find the matching one
+    console.time('CMS API call')
+    // Use the new unified CMS API for faster data fetching
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
-    const broadRes = await fetch(`${baseUrl}/api/hospitals?includeStandalone=true&pageSize=500`, { cache: 'no-store' })
+    const res = await fetch(`${baseUrl}/api/cms?action=hospital&slug=${encodeURIComponent(slug)}`, { 
+      cache: 'force-cache',
+      next: { revalidate: 3600 } // Cache for 1 hour
+    })
+    
+    if (res.ok) {
+      const data = await res.json()
+      console.timeEnd('CMS API call')
+      
+      if (data.hospital) {
+        console.timeEnd('fetchHospitalBySlug total')
+        // Return hospital with allHospitals for SimilarHospitalsSection
+        return { 
+          ...data.hospital, 
+          allHospitals: data.hospitals || [] 
+        }
+      }
+    }
+
+    // Fallback: Fetch all hospitals and find matching one
+    console.time('Fallback API call')
+    const broadRes = await fetch(`${baseUrl}/api/cms?action=all&pageSize=500`, { 
+      cache: 'force-cache',
+      next: { revalidate: 3600 }
+    })
+    
     if (broadRes.ok) {
       const broadData = await broadRes.json()
-      console.timeEnd('Broad API call')
-      console.log('Broad API data size:', broadData.items?.length || 0, 'items')
-      if (broadData.items && broadData.items.length > 0) {
+      console.timeEnd('Fallback API call')
+      console.log('Fallback API data size:', broadData.hospitals?.length || 0, 'items')
+      
+      if (broadData.hospitals && broadData.hospitals.length > 0) {
         // Find hospital by matching slug
-        const matchingHospital = broadData.items.find((hospital: any) => {
+        const matchingHospital = broadData.hospitals.find((hospital: any) => {
           if (!hospital?.hospitalName) return false
           const hospitalSlug = generateSlug(hospital.hospitalName)
           return hospitalSlug === slug || slug.startsWith(hospitalSlug + '-')
@@ -173,11 +285,15 @@ export const fetchHospitalBySlug = async (slug: string) => {
 
         if (matchingHospital) {
           console.timeEnd('fetchHospitalBySlug total')
-          return matchingHospital
+          // Return with allHospitals for SimilarHospitalsSection
+          return { 
+            ...matchingHospital, 
+            allHospitals: broadData.hospitals 
+          }
         }
 
         // If still not found, look for branches with matching names
-        for (const hospital of broadData.items) {
+        for (const hospital of broadData.hospitals) {
           if (hospital.branches && Array.isArray(hospital.branches)) {
             const matchingBranch = hospital.branches.find((branch: any) => {
               if (!branch?.branchName) return false
@@ -188,7 +304,8 @@ export const fetchHospitalBySlug = async (slug: string) => {
             if (matchingBranch) {
               const result = {
                 ...hospital,
-                branches: [matchingBranch] // Return only the matching branch
+                branches: [matchingBranch], // Return only the matching branch
+                allHospitals: broadData.hospitals // Include all hospitals for SimilarHospitalsSection
               }
               console.timeEnd('fetchHospitalBySlug total')
               return result

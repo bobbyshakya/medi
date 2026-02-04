@@ -1155,6 +1155,98 @@ export async function getHospitalBySlug(slug: string): Promise<HospitalDetailRes
 }
 
 /**
+ * Get treatment by slug with branch availability
+ * Supports matching by treatment name slug
+ */
+export async function getTreatmentBySlug(slug: string): Promise<ExtendedTreatmentData | null> {
+  const { treatments, hospitals } = await getAllCMSData()
+
+  // Normalize slug: lowercase, trim, remove trailing dashes, normalize multiple dashes
+  const normalizedSlug = slug.toLowerCase().trim().replace(/[-_]+/g, '-')
+
+  // Find treatment by slug
+  let treatment = treatments.find((t) => {
+    const treatmentSlug = generateSlug(t.name)
+    return treatmentSlug === normalizedSlug ||
+           treatmentSlug === slug || // Also try original case
+           t._id === slug ||
+           t._id === normalizedSlug
+  })
+
+  // If not found by direct match, try fuzzy matching
+  if (!treatment) {
+    // Try partial match (for slugs like "treatment-name-delhi")
+    treatment = treatments.find((t) => {
+      const treatmentSlug = generateSlug(t.name)
+      return normalizedSlug.includes(treatmentSlug) ||
+             slug.includes(treatmentSlug)
+    })
+  }
+
+  if (!treatment) {
+    return null
+  }
+
+  // Find all branches offering this treatment
+  const branchesOfferingTreatment: Map<string, any> = new Map()
+
+  hospitals.forEach((hospital) => {
+    hospital.branches.forEach((branch) => {
+      // Check treatments directly on branch
+      const branchTreatments = [...(branch.treatments || [])]
+      
+      // Check treatments from specialists
+      branch.specialists?.forEach((specialist) => {
+        specialist.treatments?.forEach((specTreatment) => {
+          if (specTreatment._id === treatment?._id) {
+            const branchKey = `${hospital._id}-${branch._id}`
+            if (!branchesOfferingTreatment.has(branchKey)) {
+              branchesOfferingTreatment.set(branchKey, {
+                ...branch,
+                hospitalName: hospital.hospitalName,
+                hospitalId: hospital._id,
+                hospitalLogo: hospital.logo,
+              })
+            }
+          }
+        })
+      })
+
+      // Check treatments directly on branch
+      branchTreatments.forEach((branchTreatment) => {
+        if (branchTreatment._id === treatment?._id) {
+          const branchKey = `${hospital._id}-${branch._id}`
+          if (!branchesOfferingTreatment.has(branchKey)) {
+            branchesOfferingTreatment.set(branchKey, {
+              ...branch,
+              hospitalName: hospital.hospitalName,
+              hospitalId: hospital._id,
+              hospitalLogo: hospital.logo,
+            })
+          }
+        }
+      })
+    })
+  })
+
+  // Build treatment location data
+  const branchesAvailableAt = Array.from(branchesOfferingTreatment.values()).map((branch) => ({
+    branchId: branch._id,
+    branchName: branch.branchName,
+    hospitalName: branch.hospitalName,
+    hospitalId: branch.hospitalId,
+    cities: branch.city || [],
+    departments: [],
+    cost: treatment.cost || null,
+  }))
+
+  return {
+    ...treatment,
+    branchesAvailableAt,
+  }
+}
+
+/**
  * Search hospitals by query
  */
 export async function searchHospitals(query: string): Promise<HospitalData[]> {

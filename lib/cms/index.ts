@@ -7,6 +7,7 @@ export {
   getAllCMSData,
   getCachedCMSData,
   getHospitalBySlug,
+  getTreatmentBySlug,
   searchHospitals,
   generateSlug,
 } from './data-service'

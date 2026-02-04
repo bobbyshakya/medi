@@ -61,6 +61,7 @@ import useEmblaCarousel from "embla-carousel-react"
 import classNames from "classnames"
 import { Inter } from "next/font/google"
 import ContactForm from "@/components/ContactForm"
+import { findTreatmentWithDoctors } from "./utils"
 
 // Lightweight Inter font configuration
 const inter = Inter({
@@ -277,115 +278,6 @@ const RichTextDisplay = ({ htmlContent, className = "" }: { htmlContent: string;
     />
   );
 };
-
-// Data Aggregation Functions (Pure)
-const getAllExtendedTreatments = (hospitals: Hospital[]): Treatment[] => {
-  const extended = new Map<string, Treatment>()
-  hospitals.forEach((h) => {
-    const processTreatment = (item: any, branch?: Branch, departments: Department[] = []) => {
-      const baseId = item._id
-      if (!extended.has(baseId)) {
-        extended.set(baseId, {
-          ...item,
-          cost: item.cost ?? 'Price Varies',
-          branchesAvailableAt: [],
-          departments: [],
-        } as Treatment)
-      }
-      const existingTreatment = extended.get(baseId)!
-      const location: TreatmentLocation = {
-        branchId: branch?._id,
-        branchName: branch?.branchName,
-        hospitalName: h.hospitalName,
-        hospitalId: h._id,
-        cities: branch?.city || [],
-        departments: Array.from(new Map(departments.map(dept => [dept._id, dept])).values()),
-        cost: item.cost,
-      }
-
-      const isLocationDuplicate = existingTreatment.branchesAvailableAt.some(
-        loc => loc.hospitalId === h._id && (loc.branchId === branch?._id || (!loc.branchId && !branch?._id))
-      )
-
-      if (!isLocationDuplicate) {
-        existingTreatment.branchesAvailableAt.push(location)
-        const allDepts = [...existingTreatment.departments, ...departments]
-        existingTreatment.departments = Array.from(new Map(allDepts.map(dept => [dept._id, dept])).values())
-      }
-    }
-    // Hospital level treatments
-    h.treatments?.forEach((item) => processTreatment(item))
-    // Branch level treatments
-    h.branches.forEach((b) => {
-      const branchTreatments = [...(b.treatments || []), ...(b.specialists || []).flatMap(s => s.treatments || [])]
-      branchTreatments.forEach((item) => {
-        const treatmentDepartments: Department[] = []
-        b.specialists?.forEach(spec => {
-          const hasThisTreatment = spec.treatments?.some((t: any) => t._id === item._id)
-          if (hasThisTreatment && spec.department) treatmentDepartments.push(...spec.department)
-        })
-        processTreatment(item, b, treatmentDepartments)
-      })
-    })
-  })
-  return Array.from(extended.values())
-}
-
-const getAllExtendedDoctors = (hospitals: Hospital[]): Doctor[] => {
-  const extendedMap = new Map<string, Doctor>()
-
-  hospitals.forEach((h) => {
-    const processDoctor = (item: any, branch?: Branch) => {
-      const baseId = item._id
-
-      const doctorDepartments: Department[] = []
-      item.specialization?.forEach((spec: any) => {
-        spec.department?.forEach((dept: Department) => {
-          doctorDepartments.push(dept)
-        })
-      })
-      const uniqueDepartments = Array.from(new Map(doctorDepartments.map(dept => [dept._id, dept])).values())
-
-      const location = {
-        hospitalName: h.hospitalName,
-        hospitalId: h._id,
-        branchName: branch?.branchName,
-        branchId: branch?._id,
-        cities: branch?.city || [],
-      }
-
-      if (extendedMap.has(baseId)) {
-        const existingDoctor = extendedMap.get(baseId)!
-
-        const isLocationDuplicate = existingDoctor.locations.some(
-          loc => loc.hospitalId === h._id && (loc.branchId === branch?._id || (!loc.branchId && !branch?._id))
-        )
-
-        if (!isLocationDuplicate) {
-          existingDoctor.locations.push(location)
-        }
-
-        const allDepts = [...existingDoctor.departments, ...uniqueDepartments]
-        existingDoctor.departments = Array.from(new Map(allDepts.map(dept => [dept._id, dept])).values())
-
-      } else {
-        extendedMap.set(baseId, {
-          ...item,
-          locations: [location],
-          departments: uniqueDepartments,
-        } as Doctor)
-      }
-    }
-
-    h.doctors.forEach((d) => processDoctor(d))
-
-    h.branches.forEach((b) => {
-      b.doctors.forEach((d) => processDoctor(d, b))
-    })
-  })
-
-  return Array.from(extendedMap.values())
-}
 
 // --- Components ---
 // DoctorCard Component
@@ -1000,7 +892,7 @@ export default function TreatmentPage({ params }: TreatmentPageProps) {
   }, [allMatchingDoctors, selectedCityId, citySearchValue])
 
 
-  // Fetch data (omitted for brevity)
+  // Fetch data using direct CMS library calls
   useEffect(() => {
     let isMounted = true
     const fetchTreatmentData = async () => {
@@ -1011,71 +903,19 @@ export default function TreatmentPage({ params }: TreatmentPageProps) {
         const resolvedParams = await params
         const treatmentSlug = resolvedParams.slug
 
-        const res = await fetch('/api/hospitals?pageSize=1000')
-        if (!res.ok) throw new Error("Failed to fetch hospitals")
-
-        const data = await res.json() as ApiResponse
-
-        const allExtendedTreatments = getAllExtendedTreatments(data.items)
-        const allExtendedDoctors = getAllExtendedDoctors(data.items)
-
-        const foundTreatment = allExtendedTreatments.find(t => generateSlug(t.name) === treatmentSlug)
-
-        if (!foundTreatment) {
+        // Use direct CMS library call instead of API route
+        const result = await findTreatmentWithDoctors(treatmentSlug)
+        
+        if (!result) {
           throw new Error("Treatment not found")
         }
 
-        const lowerTreatmentDepts = foundTreatment.departments.map(d => d.name.toLowerCase())
-
-        // Collect all branches offering this treatment with matching doctors
-        const branchesOfferingTreatment: ExtendedBranch[] = []
-        data.items.forEach((hospital) => {
-          hospital.branches.forEach((branch) => {
-            const branchTreatments = [...(branch.treatments || []), ...(branch.specialists || []).flatMap((s: any) => s.treatments || [])]
-            if (branchTreatments.some((t: any) => generateSlug(t.name) === treatmentSlug)) {
-              // Find matching doctors for this branch
-              const matchingDoctorsForBranch: Doctor[] = allExtendedDoctors.filter(doctor => {
-                const hasLocationInThisBranch = doctor.locations.some(loc =>
-                  loc.hospitalId === hospital._id &&
-                  (loc.branchId === branch._id || !loc.branchId)
-                )
-                const deptMatch = doctor.departments.some((dept: Department) =>
-                  lowerTreatmentDepts.includes(dept.name.toLowerCase())
-                )
-                return hasLocationInThisBranch && deptMatch
-              })
-
-              branchesOfferingTreatment.push({
-                ...branch,
-                hospitalName: hospital.hospitalName,
-                hospitalId: hospital._id,
-                hospitalLogo: hospital.logo,
-                matchingDoctors: matchingDoctorsForBranch
-              })
-            }
-          })
-        })
-
-        // Collect unique matching doctors across ALL branches (not limited)
-        const uniqueDoctorsIds = new Set<string>()
-        branchesOfferingTreatment.forEach(branch => {
-          branch.matchingDoctors.forEach(doc => uniqueDoctorsIds.add(doc._id))
-        })
-        const allMatchingDoctors = Array.from(uniqueDoctorsIds)
-          .map(id => allExtendedDoctors.find(d => d._id === id))
-          .filter(Boolean)
-          .sort((a, b) => {
-            const expA = parseInt(a!.experienceYears || '0', 10)
-            const expB = parseInt(b!.experienceYears || '0', 10)
-            return expB - expA
-          })
-
         if (isMounted) {
-          setTreatment(foundTreatment)
-          setAllBranches(branchesOfferingTreatment) // Use full list for filtering
-          setAllMatchingDoctors(allMatchingDoctors as Doctor[])
-          setAllHospitals(data.items)
-          setTreatmentCategory(foundTreatment.category || '')
+          setTreatment(result.treatment)
+          setAllBranches(result.branchesOfferingTreatment)
+          setAllMatchingDoctors(result.allMatchingDoctors)
+          setAllHospitals([]) // Not needed for display
+          setTreatmentCategory(result.treatment.category || '')
         }
       } catch (err) {
         if (isMounted) {

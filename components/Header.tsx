@@ -229,9 +229,9 @@ export default function Header() {
               priority // Add this line
             />
           </Link>
-        <div className='w-[50%]'>
+        {/* <div className='w-[50%]'>
             <BranchFilter allHospitals={allHospitals} />
-        </div>
+        </div> */}
           {/* Navigation */}
           <div className="flex w-full md:ml-10 items-center justify-between gap-4">
             <div
@@ -338,7 +338,7 @@ export default function Header() {
 
           </div>
           {/* CTA & Mobile Menu Toggle */}
-          {/* <div className="flex w-full md:w-1/6 items-center justify-end gap-3">
+          <div className="flex w-full md:w-1/6 items-center justify-end gap-3">
               <button
                 className="bg-[#E22026] cursor-pointer md:block hidden hover:bg-[#74BF44] text-white font-medium px-5 py-2 rounded-md shadow-md transition-all"
                 onClick={openModal}
@@ -354,7 +354,7 @@ export default function Header() {
               >
                 {isMenuOpen ? <X size={28} /> : <Menu size={28} />}
               </button>
-            </div> */}
+            </div>
 
         </nav>
       </motion.header>

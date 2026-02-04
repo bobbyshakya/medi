@@ -2,192 +2,199 @@
 "use client"
 import { useState, useMemo, useCallback, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
-import { Building2, MapPin, Stethoscope, Users, X, Search, Award } from "lucide-react"
+import { Building2, MapPin, Stethoscope, Users, X, Search } from "lucide-react"
 
-// --- Type Definitions ---
+// --- Types ---
 interface UniversalOption {
-  id: string;
-  name: string;
-  type: "branch" | "city" | "treatment" | "doctor" | "specialty";
-  label: string;
-  hospitalName?: string;
-  city?: string;
+  id: string
+  name: string
+  type: "branch" | "city" | "treatment" | "doctor" | "specialty"
+  label: string
+  hospitalName?: string
+  city?: string
 }
 
-interface SpecialistData {
-  _id: string;
-  name: string;
-  treatments?: TreatmentData[];
+interface BranchData { _id?: string; branchName?: string; city?: any; treatments?: any[]; specialists?: any[] }
+interface DoctorData { _id?: string; doctorName?: string; specialization?: any }
+interface TreatmentData { _id?: string; id?: string; name?: string; treatmentName?: string }
+interface HospitalData { hospitalName?: string; branches?: BranchData[]; doctors?: DoctorData[]; treatments?: TreatmentData[]; specialists?: any[] }
+
+interface WixTreatment {
+  _id: string
+  name: string
+  branchesAvailableAt?: { hospitalName: string; cities?: { cityName?: string; name?: string }[] }[]
 }
 
-interface BranchData {
-  _id: string;
-  branchName?: string;
-  city?: any;
-  treatments?: any[];
-  specialists?: SpecialistData[]; // Added specialists to BranchData
+interface BranchFilterProps { allHospitals: HospitalData[]; initialSearch?: string }
+
+// --- Utilities ---
+const slug = (v: string) => v.toLowerCase().trim().replace(/[^\w\s-]/g, '').replace(/[\s_-]+/g, '-')
+
+const getCity = (data: any): string => {
+  if (!data) return ''
+  if (typeof data === 'string') return data.trim()
+  if (Array.isArray(data) && data[0]) {
+    const c = data[0]
+    return typeof c === 'string' ? c : c.cityName || c.name || ''
+  }
+  if (typeof data === 'object') return data.cityName || data.name || ''
+  return ''
 }
 
-interface DoctorData {
-  _id: string;
-  doctorName?: string;
-  specialization?: any;
-}
-
-interface TreatmentData {
-  _id?: string;
-  name?: string;
-}
-
-interface HospitalData {
-  hospitalName?: string;
-  branches?: BranchData[];
-  doctors?: DoctorData[];
-  treatments?: TreatmentData[]; // Treatments directly under hospital
-  specialists?: SpecialistData[]; // Specialists directly under hospital
-}
-
-interface BranchFilterProps {
-  allHospitals: HospitalData[];
-  initialSearch?: string;
-}
-
-// --- Utility Functions ---
-const generateSlug = (name: string | null | undefined): string => {
-  if (!name || typeof name !== 'string') return ''
-  return name
-    .toLowerCase()
-    .trim()
-    .replace(/[^\w\s-]/g, '')
-    .replace(/[\s_-]+/g, '-')
-}
-
-const extractProperName = (item: any): string => {
+const getName = (item: any): string => {
   if (!item) return 'Unknown'
-
-  if (typeof item === 'string') {
-    return item
-  }
-
-  // Adjusted logic to prioritize names based on potential structure
-  if (typeof item === 'object') {
-    // Check for nested name properties first, common in API objects
-    if (item.name) return item.name
-    if (item.cityName) return item.cityName
-    if (item.branchName) return item.branchName
-    if (item.doctorName) return item.doctorName
-    if (item.specializationName) return item.specializationName
-    if (item.treatmentName) return item.treatmentName // For cases like `item.treatmentName`
-  }
-
-  return 'Unknown'
+  if (typeof item === 'string') return item
+  return item.name || item.treatmentName || item.cityName || item.branchName || item.doctorName || 
+         item.specializationName || item.displayName || item.title || item.label || 'Unknown'
 }
 
-// --- SearchDropdown Component ---
+// --- Relevance Scoring ---
+const calculateRelevanceScore = (query: string, name: string, hospitalName?: string, city?: string): number => {
+  if (!query) return 0
+  const q = query.toLowerCase().trim()
+  const n = name.toLowerCase()
+  const h = (hospitalName || '').toLowerCase()
+  const c = (city || '').toLowerCase()
+  
+  // Split query into words for partial matching
+  const queryWords = q.split(/\s+/)
+  
+  // Check for exact match on full name
+  if (n === q) return 100
+  
+  // Check if name starts with query
+  if (n.startsWith(q)) return 90
+  
+  // Check for city exact match
+  if (c === q) return 85
+  
+  // Check for hospital name exact match
+  if (h === q) return 80
+  
+  // Calculate word-based matching score
+  let wordMatchScore = 0
+  let matchedWords = 0
+  
+  // Check each word in query against name
+  queryWords.forEach(word => {
+    if (word.length < 2) return // Skip very short words
+    
+    // Check if word appears in name (partial match)
+    if (n.includes(word)) {
+      matchedWords++
+      // Higher score if word starts a word in name
+      if (n.split(/\s+/).some(w => w.startsWith(word))) {
+        wordMatchScore += 15
+      } else {
+        wordMatchScore += 10
+      }
+    }
+    
+    // Check if word appears in hospital name
+    if (h.includes(word)) {
+      matchedWords++
+      if (h.split(/\s+/).some(w => w.startsWith(word))) {
+        wordMatchScore += 12
+      } else {
+        wordMatchScore += 8
+      }
+    }
+    
+    // Check if word appears in city
+    if (c.includes(word)) {
+      matchedWords++
+      wordMatchScore += 5
+    }
+  })
+  
+  // Bonus for matching multiple words
+  if (matchedWords >= queryWords.length && queryWords.length > 1) {
+    wordMatchScore += 20
+  }
+  
+  return Math.min(wordMatchScore, 100) // Cap at 100
+}
+
+// --- Search Component ---
 const SearchDropdown = ({
-  value,
-  onChange,
-  placeholder,
-  options,
-  onOptionSelect,
-  onClear
+  value, onChange, placeholder, options, onOptionSelect, onClear
 }: {
   value: string
-  onChange: (value: string) => void
+  onChange: (v: string) => void
   placeholder: string
   options: UniversalOption[]
   onOptionSelect: (id: string, type: UniversalOption['type']) => void
   onClear: () => void
 }) => {
   const [isOpen, setIsOpen] = useState(false)
-  const dropdownRef = useRef<HTMLDivElement>(null)
+  const ref = useRef<HTMLDivElement>(null)
 
-  const filteredOptions = useMemo(() => {
+  // Lightweight, real-time filtered results with relevance scoring
+  const filtered = useMemo(() => {
     if (!value) return options.slice(0, 6)
-
-    const lower = value.toLowerCase().trim()
-    if (!lower) return options.slice(0, 6) // Handle case where trimming makes it empty
-
-    // **NEW CHANGE: Update search logic to match the start of any word in the name**
+    const q = value.toLowerCase().trim()
+    
     return options
-      .filter(option => {
-        const optionNameLower = option.name.toLowerCase()
-        const words = optionNameLower.split(/\s+/) // Split by spaces
-
-        // Check if the query matches the start of any word in the name
-        const matchesWordStart = words.some(word => word.startsWith(lower))
-
-        // Also keep the simple check for label (e.g., 'Doctor')
-        return matchesWordStart || option.label.toLowerCase().startsWith(lower)
-      })
+      .map(opt => ({
+        opt,
+        score: calculateRelevanceScore(value, opt.name, opt.hospitalName, opt.city)
+      }))
+      .filter(({ score }) => score > 0)
+      .sort((a, b) => b.score - a.score || a.opt.name.localeCompare(b.opt.name))
+      .map(({ opt }) => opt)
       .slice(0, 8)
   }, [value, options])
 
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsOpen(false)
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
+    const handle = (e: MouseEvent) => { if (!ref.current?.contains(e.target as Node)) setIsOpen(false) }
+    document.addEventListener('mousedown', handle)
+    return () => document.removeEventListener('mousedown', handle)
   }, [])
 
-  const getIcon = (type: UniversalOption['type']) => {
-    const icons = {
-      branch: Building2,
-      city: MapPin,
-      treatment: Stethoscope,
-      doctor: Users,
-      specialty: Award,
-    }
-    const Icon = icons[type]
-    return <Icon className="w-4 h-4 text-gray-500 mr-3" />
+  const icon = (type: UniversalOption['type']) => {
+    const map = { branch: Building2, city: MapPin, treatment: Stethoscope, doctor: Users, specialty: Search }
+    const Icon = map[type]
+    return <Icon className="w-4 h-4 text-gray-500 mr-2 flex-shrink-0" />
+  }
+
+  const badge = (type: UniversalOption['type']) => {
+    const colors = { branch: 'bg-blue-100 text-blue-700', city: 'bg-green-100 text-green-700', 
+                     treatment: 'bg-purple-100 text-purple-700', doctor: 'bg-red-100 text-red-700', specialty: 'bg-orange-100 text-orange-700' }
+    return <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${colors[type]}`}>{type.charAt(0).toUpperCase() + type.slice(1)}</span>
   }
 
   return (
-    <div ref={dropdownRef} className="relative w-full max-w-md mx-auto">
+    <div ref={ref} className="relative w-full max-w-xl mx-auto">
       <div className="relative">
-        <Search className="w-4 h-4 text-gray-400 absolute left-2 top-1/2 -translate-y-1/2" />
+        <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
         <input
-          type="text"
-          value={value}
-          onChange={(e) => { onChange(e.target.value); setIsOpen(true); }}
+          type="text" value={value} autoComplete="off"
+          onChange={e => { onChange(e.target.value); setIsOpen(true); }}
           onFocus={() => setIsOpen(true)}
-          placeholder="Search by Hospital, Doctor, treatment"
-          className="w-full pl-7 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900 placeholder-gray-500 text-sm"
-          autoComplete="off"
+          placeholder={placeholder}
+          className="w-full pl-10 pr-10 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
         />
         {value && (
-          <button
-            type="button"
-            onClick={onClear}
-            className="absolute right-3 bg-white top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-          >
+          <button onClick={onClear} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
             <X className="w-4 h-4" />
           </button>
         )}
       </div>
-
-      {isOpen && filteredOptions.length > 0 && (
-        <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-          {filteredOptions.map((option) => (
+      {isOpen && filtered.length > 0 && (
+        <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-72 overflow-y-auto">
+          {filtered.map(opt => (
             <button
-              key={`${option.type}-${option.id}`}
-              type="button"
-              onClick={() => {
-                onOptionSelect(option.id, option.type)
-                setIsOpen(false)
-              }}
-              className="w-full text-left px-4 py-3 text-sm flex items-center hover:bg-gray-50 border-b border-gray-100 last:border-b-0"
+              key={`${opt.type}-${opt.id}`}
+              onClick={() => { onOptionSelect(opt.id, opt.type); setIsOpen(false); }}
+              className="w-full text-left px-4 py-3 flex items-start hover:bg-gray-50 border-b border-gray-100 last:border-b-0"
             >
-              {getIcon(option.type)}
-              <div className="flex-1">
-                <div className="font-medium text-gray-900">{option.name}</div>
-                <div className="text-xs text-gray-500 mt-1">
-                  {option.label}
-                  {option.hospitalName && ` • ${option.hospitalName}`}
-                  {option.city && ` • ${option.city}`}
+              {icon(opt.type)}
+              <div className="flex-1 min-w-0">
+                <div className="font-medium text-gray-900 truncate">{opt.name}</div>
+                <div className="flex items-center gap-2 mt-1 text-xs text-gray-500">
+                  {badge(opt.type)}
+                  {opt.hospitalName && <span className="truncate">{opt.hospitalName}</span>}
+                  {opt.city && <span className="flex items-center gap-1"><MapPin className="w-3 h-3" />{opt.city}</span>}
                 </div>
               </div>
             </button>
@@ -202,226 +209,108 @@ const SearchDropdown = ({
 const BranchFilter = ({ allHospitals, initialSearch = "" }: BranchFilterProps) => {
   const router = useRouter()
   const [query, setQuery] = useState(initialSearch)
+  const [wixTreatments, setWixTreatments] = useState<WixTreatment[]>([])
 
-  const availableOptions = useMemo(() => {
-    const options: UniversalOption[] = []
-    const addedIds = new Set<string>()
+  useEffect(() => {
+    fetch('/api/treatments').then(r => r.json()).then(d => setWixTreatments(d.items || [])).catch(console.error)
+  }, [])
 
-    try {
-      // Add doctors
-      allHospitals.forEach(hospital => {
-        hospital.doctors?.forEach((doctor: DoctorData) => {
-          if (doctor?._id && doctor.doctorName) {
-            const doctorName = extractProperName(doctor.doctorName)
-            if (doctorName !== 'Unknown' && !addedIds.has(`doctor-${doctor._id}`)) {
-              options.push({
-                id: doctor._id,
-                name: doctorName,
-                type: 'doctor',
-                label: 'Doctor'
-              })
-              addedIds.add(`doctor-${doctor._id}`)
-            }
-          }
+  const options = useMemo(() => {
+    const opts: UniversalOption[] = []
+    const seen = new Set<string>()
+
+    const add = (opt: UniversalOption) => { if (!seen.has(`${opt.type}-${opt.id}`)) { opts.push(opt); seen.add(`${opt.type}-${opt.id}`); } }
+
+    // Specialties
+    const specs = new Map<string, string>()
+    allHospitals.forEach(h => {
+      h.doctors?.forEach(d => {
+        (Array.isArray(d.specialization) ? d.specialization : [d.specialization]).forEach(s => {
+          if (s) { const id = s._id || slug(s.name || ''); if (id) specs.set(id, s.name || '') }
         })
       })
-
-      // Add specializations
-      const specs = new Map<string, string>()
-      allHospitals.forEach(hospital => {
-        // From hospital.doctors
-        hospital.doctors?.forEach((doctor: DoctorData) => {
-          if (doctor?.specialization) {
-            const specList = Array.isArray(doctor.specialization) ? doctor.specialization : [doctor.specialization]
-            specList.forEach((spec: any) => {
-              const id = spec?._id || generateSlug(typeof spec === 'string' ? spec : spec.name)
-              const name = extractProperName(spec)
-              if (id && name !== 'Unknown') specs.set(id, name)
-            })
-          }
-        })
-        // From hospital.branches.specialists (assuming specialists also have a specialization name)
-        hospital.branches?.forEach((branch: BranchData) => {
-          branch.specialists?.forEach((specialist: SpecialistData) => {
-            const id = specialist?._id || generateSlug(specialist.name)
-            const name = extractProperName(specialist)
-            if (id && name !== 'Unknown') specs.set(id, name)
-          })
-        })
+      h.branches?.forEach(b => {
+        b.specialists?.forEach(s => { const id = s._id || slug(s.name || ''); if (id && s.name) specs.set(id, s.name) })
       })
-      specs.forEach((name, id) => {
-        options.push({ id, name, type: 'specialty', label: 'Specialty' })
-      })
+    })
+    specs.forEach((name, id) => add({ id, name, type: 'specialty', label: 'Specialty' }))
 
-      // Add treatments
-      const treatments = new Map<string, { name: string; hospitalName: string; city: string; _id?: string }>()
-      allHospitals.forEach(hospital => {
-        const hospitalName = hospital.hospitalName || ''
-        
-        // Treatments directly under hospital
-        hospital.treatments?.forEach((treatment: any) => {
-          const name = extractProperName(treatment)
-          if (name && name !== 'Unknown') {
-            const id = treatment._id || generateSlug(name)
-            treatments.set(id, { name, hospitalName, city: '', _id: treatment._id })
-          }
-        })
-        
-        // Treatments under hospital.branches
-        hospital.branches?.forEach((branch: BranchData) => {
-          const branchCity = extractProperName(branch.city)
-          
-          branch.treatments?.forEach((treatment: any) => {
-            const name = extractProperName(treatment)
-            if (name && name !== 'Unknown') {
-              const id = treatment._id || generateSlug(name)
-              treatments.set(id, { name, hospitalName, city: branchCity, _id: treatment._id })
-            }
-          })
+    // Doctors
+    allHospitals.forEach(h => {
+      const hname = h.hospitalName || ''
+      h.doctors?.forEach(d => { if (d._id && d.doctorName) add({ id: d._id, name: getName(d.doctorName), type: 'doctor', label: 'Doctor', hospitalName: hname }) })
+    })
 
-          // Treatments nested under hospital.branches.specialists
-          branch.specialists?.forEach((specialist: SpecialistData) => {
-            specialist.treatments?.forEach((treatment: TreatmentData) => {
-              const name = extractProperName(treatment)
-              if (name && name !== 'Unknown') {
-                const id = treatment._id || generateSlug(name)
-                treatments.set(id, { name, hospitalName, city: branchCity, _id: treatment._id })
-              }
-            })
-          })
-        })
-      })
-      treatments.forEach(({ name, hospitalName, city, _id }, id) => {
-        options.push({ 
-          id: _id || id, 
-          name, 
-          type: 'treatment', 
-          label: 'Treatment',
-          hospitalName,
-          city
-        })
-      })
+    // Wix Treatments
+    wixTreatments.forEach(t => {
+      if (t._id && t.name) {
+        const loc = t.branchesAvailableAt?.[0]
+        add({ id: t._id, name: t.name, type: 'treatment', label: 'Treatment', hospitalName: loc?.hospitalName || '', city: loc?.cities?.[0]?.cityName || '' })
+      }
+    })
 
-      // **City search filter logic remains REMOVED**
-
-      // Add branches
-      allHospitals.forEach(hospital => {
-        const hospitalName = hospital.hospitalName || ''
-        hospital.branches?.forEach((branch: BranchData) => {
-          if (branch._id && branch.branchName) {
-            const name = extractProperName(branch.branchName)
-            const city = extractProperName(branch.city)
-            if (name !== 'Unknown' && !addedIds.has(`branch-${branch._id}`)) {
-              options.push({
-                id: branch._id,
-                name: name,
-                type: 'branch',
-                label: 'Branch',
-                hospitalName,
-                city
-              })
-              addedIds.add(`branch-${branch._id}`)
-            }
-          }
-        })
-      })
-
-    } catch (error) {
-      console.error('Error processing data:', error)
-    }
-
-    return options.sort((a, b) => a.name.localeCompare(b.name))
-  }, [allHospitals])
-
-  const handleOptionSelect = useCallback((id: string, type: UniversalOption['type']) => {
-    const option = availableOptions.find(o => o.id === id && o.type === type)
-    if (!option) return
-
-    // Keep query temporarily for URL generation, but clear it after navigation
-    const slug = generateSlug(option.name)
-    let url: string = ''
-
-    switch (type) {
-      case 'doctor':
-        url = `/doctors/${slug}`
-        break
-      case 'specialty':
-        url = `/search/?view=doctors&specialization=${encodeURIComponent(slug)}`
-        break
-      case 'treatment':
-        // Use the option's actual ID if it's a UUID, otherwise use slug as query
-        const isUUID = (str: string): boolean => /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(str)
-        const treatmentParam = isUUID(option.id) ? option.id : slug
-        url = `/search/?view=treatments&treatment=${encodeURIComponent(treatmentParam)}`
-        break
-      case 'city':
-        // This case will not be hit if city options are removed, but kept for type completeness.
-        url = `/search/?city=${encodeURIComponent(option.name)}`
-        break
-      case 'branch':
-        // Find the branch and hospital names from allHospitals data
-        let branchName = option.name
-        let hospitalName = ''
-        for (const hospital of allHospitals) {
-          const foundBranch = hospital.branches?.find(b => b._id === id)
-          if (foundBranch) {
-            branchName = foundBranch.branchName || option.name
-            hospitalName = hospital.hospitalName || ''
-            break
-          }
+    // Hospital Treatments
+    const treatments = new Map<string, UniversalOption>()
+    allHospitals.forEach(h => {
+      const hname = h.hospitalName || ''
+      h.treatments?.forEach(t => {
+        const name = getName(t)
+        if (name && name !== 'Unknown') {
+          const id = t._id || t.id || slug(name)
+          if (!seen.has(`treatment-${id}`)) treatments.set(id, { id, name, type: 'treatment', label: 'Treatment', hospitalName: hname, city: '' })
         }
-        url = `/search/hospitals/${generateSlug(branchName)}`
-        break
-    }
+      })
+      h.branches?.forEach(b => {
+        const city = getCity(b.city)
+        b.treatments?.forEach((t: any) => {
+          const name = getName(t)
+          if (name && name !== 'Unknown') {
+            const id = t._id || t.id || slug(name)
+            if (!seen.has(`treatment-${id}`)) treatments.set(id, { id, name, type: 'treatment', label: 'Treatment', hospitalName: hname, city })
+          }
+        })
+        b.specialists?.forEach((s: any) => {
+          s.treatments?.forEach((t: any) => {
+            const name = getName(t)
+            if (name && name !== 'Unknown') {
+              const id = t._id || t.id || slug(name)
+              if (!seen.has(`treatment-${id}`)) treatments.set(id, { id, name, type: 'treatment', label: 'Treatment', hospitalName: hname, city })
+            }
+          })
+        })
+      })
+    })
+    treatments.forEach(o => add(o))
 
-    // 1. Navigate to the new URL
+    // Branches
+    allHospitals.forEach(h => {
+      const hname = h.hospitalName || ''
+      h.branches?.forEach(b => {
+        if (b._id && b.branchName) add({ id: b._id, name: getName(b.branchName), type: 'branch', label: 'Branch', hospitalName: hname, city: getCity(b.city) })
+      })
+    })
+
+    return opts.sort((a, b) => a.name.localeCompare(b.name))
+  }, [allHospitals, wixTreatments])
+
+  const handleSelect = useCallback((id: string, type: UniversalOption['type']) => {
+    const opt = options.find(o => o.id === id && o.type === type)
+    if (!opt) return
+    const s = slug(opt.name)
+    let url = ''
+    const isUUID = (str: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str)
+    switch (type) {
+      case 'doctor': url = `/doctors/${s}`; break
+      case 'specialty': url = `/search/?view=doctors&specialization=${s}`; break
+      case 'treatment': url = `/search/?view=treatments&treatment=${isUUID(opt.id) ? opt.id : s}`; break
+      case 'city': url = `/search/?view=hospitals&city=${s}`; break  // City now shows only hospitals
+      case 'branch': url = `/search/hospitals/${s}`; break
+    }
     router.push(url)
+    setQuery('')
+  }, [options, router])
 
-    // 2. Clear the input field for a fresh search when user returns/stays
-    setQuery("")
-
-  }, [availableOptions, router, allHospitals])
-
-  const clearSearch = () => {
-    setQuery("")
-  }
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    const trimmedQuery = query.trim()
-
-    if (!trimmedQuery) return
-
-    // Enhanced logic: Find a match using slugs for better tolerance to casing and spacing
-    const querySlug = generateSlug(trimmedQuery)
-    const matchingOption = availableOptions.find(option =>
-      generateSlug(option.name) === querySlug
-    )
-
-    if (matchingOption) {
-      handleOptionSelect(matchingOption.id, matchingOption.type)
-      return
-    }
-
-    // Fallback search
-    router.push(`/search?q=${encodeURIComponent(trimmedQuery)}`)
-    setQuery("") // Clear query after general fallback search
-  }
-
-  return (
-    <div className="w-1/2">
-      <form onSubmit={handleSubmit} className="flex justify-center">
-        <SearchDropdown
-          value={query}
-          onChange={setQuery}
-          placeholder="Search by Hospital, Doctor, treatment"
-          options={availableOptions}
-          onOptionSelect={handleOptionSelect}
-          onClear={clearSearch}
-        />
-      </form>
-    </div>
-  )
+  return <SearchDropdown value={query} onChange={setQuery} placeholder="Search hospitals, treatments, doctors..." options={options} onOptionSelect={handleSelect} onClear={() => setQuery('')} />
 }
 
 export default BranchFilter

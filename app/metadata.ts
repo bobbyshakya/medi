@@ -145,7 +145,52 @@ export const aboutMetadata: Metadata = {
   },
 };
 
-
+export const pngExpendedMetadata: Metadata = {
+  title: 'Medivisor Community Health Partners PNG | Join Our Healthcare Network',
+  description: 'Join the Medivisor Expanded Patient Support Network (PNG) as a Community Health Partner. Help bridge healthcare gaps between Papua New Guinea and India. Earn respect, purpose, skills, and sustainable livelihood while saving lives.',
+  keywords: [
+    'Medivisor Community Health Partners',
+    'PNG Health Ambassador',
+    'Medical Support Network PNG',
+    'Healthcare Partners Papua New Guinea',
+    'Medical Tourism India',
+    'Community Health Guide',
+    'Patient Support Network',
+    'Health Ambassador Program',
+    'Medical Support PNG',
+    'Healthcare Bridge PNG India'
+  ],
+  robots: 'index, follow',
+  alternates: {
+    canonical: 'https://medivisorindiatreatment.com/medivisor-expanded-patient-support-network-png',
+  },
+  openGraph: {
+    title: 'Medivisor Community Health Partners PNG | Join Our Healthcare Network',
+    description: 'Join the Medivisor Expanded Patient Support Network (PNG) as a Community Health Partner. Help bridge healthcare gaps between Papua New Guinea and India.',
+    url: 'https://medivisorindiatreatment.com/medivisor-expanded-patient-support-network-png',
+    siteName: 'Medivisor India Treatment',
+    images: [
+      {
+        url: 'https://medivisorindiatreatment.com/png-banner.jpg',
+        width: 1200,
+        height: 630,
+        alt: 'Medivisor Community Health Partners PNG',
+      },
+    ],
+    locale: 'en_US',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Medivisor Community Health Partners PNG | Join Our Healthcare Network',
+    description: 'Join the Medivisor Expanded Patient Support Network (PNG) as a Community Health Partner.',
+    site: '@MedivisorIndiatreatment',
+    images: ['https://medivisorindiatreatment.com/png-banner.jpg'],
+  },
+  facebook: {
+    appId: '1234567890',
+  },
+};
 
 // Example 4: Blog Page (New addition)
 export const blogMetadata: Metadata = {
@@ -536,4 +581,48 @@ export const contactMetadata: Metadata = {
   robots: "index, follow",
   authors: [{ name: "Medivisor India" }],
   metadataBase: new URL("https://medivisorindiatreatment.com"),
+};
+
+export const pngNetworkMetadata: Metadata = {
+  title: 'Medivisor Community Health Partners PNG | Join Our Healthcare Network',
+  description: 'Join the Medivisor Expanded Patient Support Network (PNG) as a Community Health Partner. Help bridge healthcare gaps between Papua New Guinea and India. Earn respect, purpose, skills, and sustainable livelihood while saving lives.',
+  keywords: [
+    'Medivisor Community Health Partners',
+    'PNG Health Ambassador',
+    'Medical Support Network PNG',
+    'Healthcare Partners Papua New Guinea',
+    'Medical Tourism India',
+    'Community Health Guide',
+    'Patient Support Network',
+    'Health Ambassador Program',
+    'Medical Support PNG',
+    'Healthcare Bridge PNG India'
+  ],
+  robots: 'index, follow',
+  alternates: {
+    canonical: 'https://medivisorindiatreatment.com/medivisor-expanded-patient-support-network-png',
+  },
+  openGraph: {
+    title: 'Medivisor Community Health Partners PNG | Join Our Healthcare Network',
+    description: 'Join the Medivisor Expanded Patient Support Network (PNG) as a Community Health Partner. Help bridge healthcare gaps between Papua New Guinea and India.',
+    url: 'https://medivisorindiatreatment.com/medivisor-expanded-patient-support-network-png',
+    siteName: 'Medivisor India Treatment',
+    images: [
+      {
+        url: 'https://medivisorindiatreatment.com/png-banner.jpg',
+        width: 1200,
+        height: 630,
+        alt: 'Medivisor Community Health Partners PNG',
+      },
+    ],
+    locale: 'en_US',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Medivisor Community Health Partners PNG | Join Our Healthcare Network',
+    description: 'Join the Medivisor Expanded Patient Support Network (PNG) as a Community Health Partner.',
+    site: '@MedivisorIndia',
+    images: ['https://medivisorindiatreatment.com/png-banner.jpg'],
+  },
 };

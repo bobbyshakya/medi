@@ -64,8 +64,8 @@ interface HospitalAPIResponse {
 
 async function fetchMasterHospitalData(): Promise<Hospital[]> {
   // Use the new unified CMS API
-  
-  const response = await fetch('/api/cms?action=all&pageSize=50', { 
+
+  const response = await fetch('/api/cms?action=all&pageSize=50', {
     cache: 'no-store'
   });
 
@@ -80,13 +80,13 @@ async function fetchMasterHospitalData(): Promise<Hospital[]> {
   // 2. Add type assertion for the JSON response for better type safety
   const data = await response.json();
   const items = data.hospitals || data.items || [];
-  
+
   // 3. Ensure we have valid data
   if (!Array.isArray(items)) {
-      console.error("API response structure is invalid:", data);
-      throw new Error("Invalid data structure received from CMS API.");
+    console.error("API response structure is invalid:", data);
+    throw new Error("Invalid data structure received from CMS API.");
   }
-  
+
   return items;
 }
 
@@ -214,22 +214,24 @@ export default function Header() {
         className={`fixed top-0 left-0 w-full z-50 bg-white transition-all duration-300 ease-in-out ${isScrolled ? 'py-2 shadow-xs' : 'py-1.5 shadow-xs'
           }`}
 
-          
+
       >
         <nav className="flex justify-between container mx-auto items-center px-4 lg:px-0">
           {/* Logo */}
-          <Link href="/" className="flex-shrink-0 w-[260px] ">
+          <Link href="/" className="flex-shrink-0 w-[260px] mr-10 ">
             <Image
               src="/logo-10.png"
               alt="Medivisor India Treatment Logo"
               width={260}
               height={85}
-              className={`w-full object-contain transition-all duration-300 ${isScrolled ? 'h-16' : 'h-16'
+              className={`w-full  object-contain transition-all duration-300 ${isScrolled ? 'h-16' : 'h-16'
                 }`}
               priority // Add this line
             />
           </Link>
-
+        <div className='w-[50%]'>
+            <BranchFilter allHospitals={allHospitals} />
+        </div>
           {/* Navigation */}
           <div className="flex w-full md:ml-10 items-center justify-between gap-4">
             <div
@@ -253,8 +255,8 @@ export default function Header() {
                   <X size={28} />
                 </button>
               </div>
-{/* 
-              <BranchFilter allHospitals={allHospitals} /> */}
+
+
 
               {/* Navigation Items */}
               <ul className="flex w-full flex-col md:flex-row gap-2 md:gap-8 px-6 md:px-0 pt-6 md:pt-0">
@@ -333,8 +335,10 @@ export default function Header() {
               </div>
             </div>
 
-            {/* CTA & Mobile Menu Toggle */}
-            <div className="flex w-full md:w-1/6 items-center justify-end gap-3">
+
+          </div>
+          {/* CTA & Mobile Menu Toggle */}
+          {/* <div className="flex w-full md:w-1/6 items-center justify-end gap-3">
               <button
                 className="bg-[#E22026] cursor-pointer md:block hidden hover:bg-[#74BF44] text-white font-medium px-5 py-2 rounded-md shadow-md transition-all"
                 onClick={openModal}
@@ -350,8 +354,8 @@ export default function Header() {
               >
                 {isMenuOpen ? <X size={28} /> : <Menu size={28} />}
               </button>
-            </div>
-          </div>
+            </div> */}
+
         </nav>
       </motion.header>
 

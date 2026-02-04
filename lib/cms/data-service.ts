@@ -1070,15 +1070,20 @@ export async function getAllCMSData(): Promise<CMSDataResponse> {
 export async function getHospitalBySlug(slug: string): Promise<HospitalDetailResponse> {
   const { hospitals } = await getAllCMSData()
 
-  const normalizedSlug = slug.toLowerCase().trim()
+  // Normalize slug: lowercase, trim, remove trailing dashes, normalize multiple dashes
+  const normalizedSlug = slug.toLowerCase().trim().replace(/[-_]+/g, '-')
   
   // First try to find by hospital slug
   let hospital = hospitals.find((h) => {
     const hospitalSlug = generateSlug(h.hospitalName)
     return hospitalSlug === normalizedSlug || 
-           h._id === slug || 
+           hospitalSlug === slug || // Also try original case
+           h._id === slug ||
+           h._id === normalizedSlug ||
            hospitalSlug + '-' === normalizedSlug || // Handle trailing dash
-           normalizedSlug.startsWith(hospitalSlug + '-') // Handle hospital-city slug
+           normalizedSlug.startsWith(hospitalSlug + '-') || // Handle hospital-city slug
+           hospitalSlug + '-' === slug ||
+           slug.startsWith(hospitalSlug + '-') // Handle hospital-city slug with original case
   })
 
   // If not found, try to find by branch slug
@@ -1087,9 +1092,12 @@ export async function getHospitalBySlug(slug: string): Promise<HospitalDetailRes
       const matchingBranch = h.branches.find((b) => {
         const branchSlug = generateSlug(b.branchName)
         return branchSlug === normalizedSlug ||
+               branchSlug === slug || // Also try original case
                branchSlug + '-' === normalizedSlug ||
-               normalizedSlug.startsWith(branchSlug + '-') ||
-               (h.hospitalName && (generateSlug(h.hospitalName) + '-' + branchSlug === normalizedSlug))
+               slug.startsWith(branchSlug + '-') ||
+               slug.startsWith(branchSlug + '-') ||
+               (h.hospitalName && (generateSlug(h.hospitalName) + '-' + branchSlug === normalizedSlug)) ||
+               (h.hospitalName && (generateSlug(h.hospitalName) + '-' + branchSlug === slug))
       })
       
       if (matchingBranch) {

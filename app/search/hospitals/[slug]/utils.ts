@@ -237,85 +237,37 @@ export const extractTreatmentsFromAllBranches = (hospitalData: any): any[] => {
 }
 
 // NEW: Function to fetch hospital data by slug using unified CMS API
+// IMPORTANT: Uses direct CMS library call instead of API route to avoid production issues
+// with self-referential API calls and environment variable configuration
+import { getHospitalBySlug as getHospitalFromCMS } from '@/lib/cms'
+
 export const fetchHospitalBySlug = async (slug: string) => {
   console.time('fetchHospitalBySlug total')
 
   try {
-    console.time('CMS API call')
-    // Use the new unified CMS API for faster data fetching
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
-    const res = await fetch(`${baseUrl}/api/cms?action=hospital&slug=${encodeURIComponent(slug)}`, { 
-      cache: 'force-cache',
-      next: { revalidate: 3600 } // Cache for 1 hour
-    })
+    console.time('CMS direct call')
+    // Direct call to CMS library - avoids API route issues in production
+    const result = await getHospitalFromCMS(slug)
+    console.timeEnd('CMS direct call')
     
-    if (res.ok) {
-      const data = await res.json()
-      console.timeEnd('CMS API call')
+    if (result.hospital) {
+      console.timeEnd('fetchHospitalBySlug total')
+      return result.hospital
+    }
+    
+    // Try fallback with normalized slug
+    const normalizedSlug = slug.toLowerCase().trim().replace(/[-_]+/g, '-')
+    if (normalizedSlug !== slug) {
+      console.time('CMS fallback call')
+      const fallbackResult = await getHospitalFromCMS(normalizedSlug)
+      console.timeEnd('CMS fallback call')
       
-      if (data.hospital) {
+      if (fallbackResult.hospital) {
         console.timeEnd('fetchHospitalBySlug total')
-        return data.hospital
+        return fallbackResult.hospital
       }
     }
-
-    // Fallback: Fetch all hospitals and find matching one
-    console.time('Fallback API call')
-    const broadRes = await fetch(`${baseUrl}/api/cms?action=all&pageSize=500`, { 
-      cache: 'force-cache',
-      next: { revalidate: 3600 }
-    })
     
-    if (broadRes.ok) {
-      const broadData = await broadRes.json()
-      console.timeEnd('Fallback API call')
-      console.log('Fallback API data size:', broadData.hospitals?.length || 0, 'items')
-      
-      if (broadData.hospitals && broadData.hospitals.length > 0) {
-        const normalizedSlug = slug.toLowerCase().trim()
-        
-        // Find hospital by matching slug (case-insensitive)
-        const matchingHospital = broadData.hospitals.find((hospital: any) => {
-          if (!hospital?.hospitalName) return false
-          const hospitalSlug = generateSlug(hospital.hospitalName)
-          return hospitalSlug === normalizedSlug || 
-                 slug.toLowerCase() === hospitalSlug ||
-                 normalizedSlug.startsWith(hospitalSlug + '-') ||
-                 slug.toLowerCase().startsWith(hospitalSlug + '-')
-        })
-
-        if (matchingHospital) {
-          console.timeEnd('fetchHospitalBySlug total')
-          return matchingHospital
-        }
-
-        // If still not found, look for branches with matching names
-        for (const hospital of broadData.hospitals) {
-          if (hospital.branches && Array.isArray(hospital.branches)) {
-            const matchingBranch = hospital.branches.find((branch: any) => {
-              if (!branch?.branchName) return false
-              const branchSlug = generateSlug(branch.branchName)
-              return branchSlug === normalizedSlug ||
-                     slug.toLowerCase() === branchSlug ||
-                     normalizedSlug.startsWith(branchSlug + '-') ||
-                     slug.toLowerCase().startsWith(branchSlug + '-') ||
-                     (hospital.hospitalName && (generateSlug(hospital.hospitalName) + '-' + branchSlug === normalizedSlug)) ||
-                     (hospital.hospitalName && (generateSlug(hospital.hospitalName) + '-' + branchSlug === slug.toLowerCase()))
-            })
-
-            if (matchingBranch) {
-              const result = {
-                ...hospital,
-                branches: [matchingBranch] // Return only the matching branch
-              }
-              console.timeEnd('fetchHospitalBySlug total')
-              return result
-            }
-          }
-        }
-      }
-    }
-
     console.timeEnd('fetchHospitalBySlug total')
     return null
   } catch (error) {

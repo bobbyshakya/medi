@@ -160,36 +160,36 @@ export const RenderContent = ({
     )
   }
 
-  if (currentCount === 0) {
-    // Coming Soon state for doctors view
-    if (view === "doctors") {
-      return (
-        <div className="flex flex-col items-center justify-center py-24 bg-gradient-to-b from-gray-50 to-white rounded-xl shadow-sm border border-gray-100 mx-4">
-          <div className="relative mb-8">
-            <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center">
-              <Calendar className="w-12 h-12 text-gray-400" />
-            </div>
-            <div className="absolute -bottom-1 -right-1 w-8 h-8 bg-gray-50 rounded-full flex items-center justify-center border border-gray-100">
-              <Clock className="w-4 h-4 text-gray-400" />
-            </div>
+  // Always show Coming Soon for doctors view (temporary)
+  if (view === "doctors") {
+    return (
+      <div className="flex flex-col items-center justify-center py-24 bg-gradient-to-b from-gray-50 to-white rounded-xl shadow-sm border border-gray-100 mx-4">
+        <div className="relative mb-8">
+          <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center">
+            <Calendar className="w-12 h-12 text-gray-400" />
           </div>
-          <h3 className="text-3xl font-bold text-gray-900 mb-3">Coming Soon</h3>
-          <p className="text-gray-500 mb-2 text-lg text-center max-w-md">
-            Doctor profiles will be available here very soon.
-          </p>
-          <p className="text-gray-400 text-sm mb-8 text-center">
-            Stay tuned for updates
-          </p>
-          <Link 
-            href="/"
-            className="px-8 py-3 bg-gray-900 text-white text-base font-medium rounded-lg hover:bg-gray-800 transition-all duration-300 shadow-lg hover:shadow-xl"
-          >
-            Back to Home
-          </Link>
+          <div className="absolute -bottom-1 -right-1 w-8 h-8 bg-gray-50 rounded-full flex items-center justify-center border border-gray-100">
+            <Clock className="w-4 h-4 text-gray-400" />
+          </div>
         </div>
-      )
-    }
+        <h3 className="text-3xl font-bold text-gray-900 mb-3">Coming Soon</h3>
+        <p className="text-gray-500 mb-2 text-lg text-center max-w-md">
+          Doctor profiles will be available here very soon.
+        </p>
+        <p className="text-gray-400 text-sm mb-8 text-center">
+          Stay tuned for updates
+        </p>
+        <Link 
+          href="/"
+          className="px-8 py-3 bg-gray-900 text-white text-base font-medium rounded-lg hover:bg-gray-800 transition-all duration-300 shadow-lg hover:shadow-xl"
+        >
+          Back to Home
+        </Link>
+      </div>
+    )
+  }
 
+  if (currentCount === 0) {
     // Default empty state for other views
     return (
       <div className="flex flex-col items-center justify-center py-20 bg-white rounded-xs shadow-md border border-gray-100">

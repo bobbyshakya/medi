@@ -265,7 +265,7 @@ export async function GET(req: Request) {
     const category = url.searchParams.get("category")?.trim() || ""
     const popular = url.searchParams.get("popular") === "true"
     const page = Math.max(0, Number(url.searchParams.get("page") || 0))
-    const pageSize = Math.min(100, Number(url.searchParams.get("pageSize") || 20)) // Reduced default page size
+    const pageSize = Number(url.searchParams.get("pageSize") || 1000) // Allow fetching all treatments
 
     const now = Date.now()
 

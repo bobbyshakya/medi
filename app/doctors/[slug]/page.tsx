@@ -76,88 +76,275 @@ const getTreatmentImage = (imageData: any): string | null => getWixImageUrl(imag
 const getHospitalImage = (imageData: any): string | null => getWixImageUrl(imageData)
 const getBranchImage = (imageData: any): string | null => getWixImageUrl(imageData)
 
-const getShortDescription = (richContent: any, maxLength: number = 100): string => {
+const getShortDescription = (richContent: any, maxLength: number = 200): string => {
+  if (!richContent) return ''
+  
   if (typeof richContent === 'string') {
     const text = richContent.replace(/<[^>]*>/g, '').trim()
     return text.length > maxLength ? text.substring(0, maxLength) + '...' : text
   }
+  
   if (!richContent?.nodes) return ''
-  let text = ''
-  for (const node of richContent.nodes) {
-    if (node.type === 'PARAGRAPH' && text.length < maxLength) {
-      const paraText = node.nodes?.map((n: any) => n.text || '').join(' ').trim()
-      text += (text ? ' ' : '') + paraText
+  
+  // Extract text from rich content nodes including lists
+  let extractedText: string[] = []
+  
+  const extractTextFromNode = (node: any): string => {
+    if (!node) return ''
+    
+    if (node.type === 'TEXT' || node.type === undefined) {
+      return node.text || ''
     }
-    if (text.length >= maxLength) break
+    
+    if (node.nodes && Array.isArray(node.nodes)) {
+      return node.nodes.map(extractTextFromNode).join(' ')
+    }
+    
+    // For list items, add bullet point
+    if (node.type === 'LIST_ITEM' || node.type === 'LI' || node.type === 'list-item') {
+      const itemText = node.nodes?.map(extractTextFromNode).join(' ').trim()
+      return itemText ? '• ' + itemText : ''
+    }
+    
+    return node.nodes ? node.nodes.map(extractTextFromNode).join(' ') : ''
   }
-  return text.trim().length > maxLength ? text.trim().substring(0, maxLength) + '...' : text.trim()
+  
+  richContent.nodes.forEach((node: any) => {
+    const text = extractTextFromNode(node)
+    if (text) extractedText.push(text)
+  })
+  
+  const text = extractedText.join(' ').replace(/\s+/g, ' ').trim()
+  return text.length > maxLength ? text.substring(0, maxLength) + '...' : text
 }
 
 const renderRichText = (richContent: any): JSX.Element | null => {
+  // Handle null/undefined
+  if (!richContent) return null
+  
+  // Handle plain HTML string from Wix CMS
   if (typeof richContent === 'string') {
-    return <div className={`text-base text-gray-700 leading-relaxed space-y-3 prose prose-sm max-w-none font-light ${inter.variable}`} dangerouslySetInnerHTML={{ __html: richContent }} />
+    return (
+      <div 
+        className={`text-base text-gray-700 leading-relaxed space-y-3 prose prose-sm max-w-none font-light wix-rich-text ${inter.variable}`}
+        dangerouslySetInnerHTML={{ __html: richContent }} 
+      />
+    )
   }
-  if (!richContent?.nodes) return null
+  
+  // Handle Wix rich content object with nodes
+  if (richContent.nodes && Array.isArray(richContent.nodes)) {
+    return (
+      <div className={`space-y-3 ${inter.variable} font-light rich-text-content wix-rich-nodes`}>
+        {richContent.nodes.map((node: any, idx: number) => renderNode(node, idx))}
+      </div>
+    )
+  }
+  
+  // Handle other object formats (e.g., HTML in 'html' property)
+  if (richContent.html && typeof richContent.html === 'string') {
+    return (
+      <div 
+        className={`text-base text-gray-700 leading-relaxed space-y-3 prose prose-sm max-w-none font-light wix-rich-text ${inter.variable}`}
+        dangerouslySetInnerHTML={{ __html: richContent.html }} 
+      />
+    )
+  }
+  
+  return null
+}
 
-  const renderNode = (node: any): JSX.Element | null => {
-    switch (node.type) {
-      case 'PARAGRAPH':
+const renderNode = (node: any, index: number): JSX.Element | null => {
+  if (!node) return null
+  
+  // Handle text node directly
+  if (node.type === 'TEXT' || !node.type) {
+    return renderTextNode(node, index)
+  }
+  
+  const key = node._id || `node-${index}`
+  
+  switch (node.type.toUpperCase()) {
+    case 'PARAGRAPH':
+    case 'PARAGRAPHS':
+      return (
+        <p key={key} className={`text-base text-gray-700 leading-relaxed mb-3 font-light ${inter.variable}`}>
+          {node.nodes?.map((child: any, idx: number) => renderTextNode(child, idx)) || node.text}
+        </p>
+      )
+      
+    case 'HEADING1':
+    case 'H1':
+      return (
+        <h1 key={key} className={`text-2xl md:text-3xl font-semibold text-gray-900 mb-4 mt-6 leading-tight ${inter.variable}`}>
+          {node.nodes?.map((child: any, idx: number) => renderTextNode(child, idx)) || node.text}
+        </h1>
+      )
+      
+    case 'HEADING2':
+    case 'H2':
+      return (
+        <h2 key={key} className={`text-xl md:text-2xl font-semibold text-gray-900 mb-3 mt-5 leading-tight ${inter.variable}`}>
+          {node.nodes?.map((child: any, idx: number) => renderTextNode(child, idx)) || node.text}
+        </h2>
+      )
+      
+    case 'HEADING3':
+    case 'H3':
+      return (
+        <h3 key={key} className={`text-lg md:text-xl font-semibold text-gray-900 mb-2 mt-4 leading-tight ${inter.variable}`}>
+          {node.nodes?.map((child: any, idx: number) => renderTextNode(child, idx)) || node.text}
+        </h3>
+      )
+      
+    case 'HEADING4':
+    case 'H4':
+      return (
+        <h4 key={key} className={`text-base md:text-lg font-semibold text-gray-900 mb-2 mt-3 leading-tight ${inter.variable}`}>
+          {node.nodes?.map((child: any, idx: number) => renderTextNode(child, idx)) || node.text}
+        </h4>
+      )
+      
+    case 'ORDERED_LIST':
+    case 'OL':
+    case 'UL':
+    case 'UNORDERED_LIST':
+      const ListTag = (node.type.toUpperCase() === 'OL' || node.type.toUpperCase() === 'ORDERED_LIST') ? 'ol' : 'ul'
+      return (
+        <ListTag key={key} className={`list-${ListTag === 'ol' ? 'decimal' : 'disc'} list-inside space-y-2 ml-4 my-4`}>
+          {node.nodes?.map((item: any, idx: number) => renderListItemNode(item, idx))}
+        </ListTag>
+      )
+      
+    case 'LIST_ITEM':
+    case 'LI':
+    case 'LISTITEM':
+      return (
+        <li key={key} className="text-base text-gray-700 leading-relaxed font-light">
+          {node.nodes?.map((child: any, idx: number) => renderTextNode(child, idx)) || node.text}
+        </li>
+      )
+      
+    case 'IMAGE':
+    case 'IMG':
+      const imgSrc = getWixImageUrl(node.imageData?.image?.src || node.src || node.url)
+      if (imgSrc) {
         return (
-          <p key={Math.random()} className={`text-base text-gray-700 leading-relaxed mb-2 font-light ${inter.variable}`}>
-            {node.nodes?.map((child: any, idx: number) => renderTextNode(child, idx))}
+          <div key={key} className="my-4">
+            <img
+              src={imgSrc}
+              alt={node.alt || 'Embedded image'}
+              className="w-full h-auto rounded-lg max-w-full shadow-sm"
+              onError={(e) => { e.currentTarget.style.display = "none" }}
+            />
+          </div>
+        )
+      }
+      return null
+      
+    case 'LINK':
+    case 'A':
+      return (
+        <a key={key} href={node.href || node.url || '#'} className="text-blue-600 hover:text-blue-800 underline">
+          {node.nodes?.map((child: any, idx: number) => renderTextNode(child, idx)) || node.text}
+        </a>
+      )
+      
+    case 'BLOCKQUOTE':
+      return (
+        <blockquote key={key} className="border-l-4 border-gray-300 pl-4 my-4 italic text-gray-600">
+          {node.nodes?.map((child: any, idx: number) => renderTextNode(child, idx)) || node.text}
+        </blockquote>
+      )
+      
+    case 'HR':
+    case 'HORIZONTAL_RULE':
+      return <hr key={key} className="my-6 border-gray-200" />
+      
+    case 'BREAK':
+    case 'BR':
+      return <br key={key} />
+      
+    default:
+      // Fallback: try to render as paragraph with text content
+      const textContent = node.text || node.content || ''
+      if (textContent) {
+        return (
+          <p key={key} className={`text-base text-gray-700 leading-relaxed mb-3 font-light ${inter.variable}`}>
+            {textContent}
           </p>
         )
-      case 'HEADING1':
+      }
+      // Try to render children
+      if (node.nodes && Array.isArray(node.nodes)) {
         return (
-          <h3 key={Math.random()} className={`text-xl md:text-2xl font-medium text-gray-900 mb-2 leading-tight ${inter.variable}`}>
-            {node.nodes?.map((child: any, idx: number) => renderTextNode(child, idx))}
-          </h3>
+          <div key={key} className="space-y-2">
+            {node.nodes.map((child: any, idx: number) => renderNode(child, idx))}
+          </div>
         )
-      case 'HEADING2':
-        return (
-          <h4 key={Math.random()} className={`text-xl md:text-xl font-medium text-gray-900 mb-2 leading-tight ${inter.variable}`}>
-            {node.nodes?.map((child: any, idx: number) => renderTextNode(child, idx))}
-          </h4>
-        )
-      case 'IMAGE':
-        const imgSrc = getWixImageUrl(node.imageData?.image?.src)
-        if (imgSrc) {
-          return (
-            <div key={Math.random()} className="my-4">
-              <img
-                src={imgSrc}
-                alt="Embedded image"
-                className="w-full h-auto rounded-xs max-w-full"
-                onError={(e) => { e.currentTarget.style.display = "none" }}
-              />
-            </div>
-          )
-        }
-        return null
-      default:
-        return null
+      }
+      return null
+  }
+}
+
+const renderListItemNode = (node: any, index: number): JSX.Element | null => {
+  if (!node) return null
+  
+  // If it's already a list item
+  if (node.type === 'LIST_ITEM' || node.type === 'LI' || node.type === 'LISTITEM') {
+    return (
+      <li key={node._id || `li-${index}`} className="text-base text-gray-700 leading-relaxed font-light">
+        {node.nodes?.map((child: any, idx: number) => renderTextNode(child, idx)) || node.text}
+      </li>
+    )
+  }
+  
+  // If list contains paragraphs directly
+  if (node.type === 'PARAGRAPH' || node.nodes) {
+    return (
+      <li key={`li-${index}`} className="text-base text-gray-700 leading-relaxed font-light">
+        {node.nodes?.map((child: any, idx: number) => renderTextNode(child, idx)) || node.text}
+      </li>
+    )
+  }
+  
+  return null
+}
+
+const renderTextNode = (textNode: any, idx: number): React.ReactNode => {
+  // Handle null/undefined
+  if (!textNode) return null
+  
+  // Handle non-TEXT nodes by rendering their text content
+  if (textNode.type !== 'TEXT' && textNode.type !== undefined) {
+    if (textNode.text) return <span key={idx}>{textNode.text}</span>
+    if (textNode.nodes && Array.isArray(textNode.nodes)) {
+      return textNode.nodes.map((child: any, cIdx: number) => renderTextNode(child, cIdx))
     }
+    return null
   }
-
-  const renderTextNode = (textNode: any, idx: number): JSX.Element | null => {
-    if (textNode.type !== 'TEXT') return null
-    const text = textNode.text || ''
-    const isBold = textNode.textStyle?.bold || false
-    const isItalic = textNode.textStyle?.italic || false
-    const isUnderline = textNode.textStyle?.underline || false
-    let content = text
-    if (isBold) content = <strong key={idx} className="font-medium">{text}</strong>
-    else if (isItalic) content = <em key={idx}>{text}</em>
-    else if (isUnderline) content = <u key={idx}>{text}</u>
-    else content = <span key={idx} className={`font-light ${inter.variable}`}>{text}</span>
-    return content
+  
+  const text = textNode.text || ''
+  if (!text) return null
+  
+  const textStyle = textNode.textStyle || {}
+  const isBold = textStyle.bold || false
+  const isItalic = textStyle.italic || false
+  const isUnderline = textStyle.underline || false
+  const isStrikethrough = textStyle.strikethrough || false
+  const isCode = textStyle.code || false
+  
+  let content: React.ReactNode = <span key={idx} className={`font-light ${inter.variable}`}>{text}</span>
+  
+  if (isCode) {
+    content = <code key={idx} className="bg-gray-100 px-1 py-0.5 rounded text-sm font-mono">{content}</code>
   }
-
-  return (
-    <div className={`space-y-4 ${inter.variable} font-light`}>
-      {richContent.nodes.map((node: any, idx: number) => renderNode(node))}
-    </div>
-  )
+  if (isStrikethrough) content = <s key={`${idx}-s`}>{content}</s>
+  if (isUnderline) content = <u key={`${idx}-u`}>{content}</u>
+  if (isItalic) content = <em key={`${idx}-em`}>{content}</em>
+  if (isBold) content = <strong key={`${idx}-b`} className="font-semibold">{content}</strong>
+  
+  return content
 }
 
 const mergeTreatments = (existing: TreatmentType[] | undefined, current: TreatmentType[] | undefined): TreatmentType[] => {

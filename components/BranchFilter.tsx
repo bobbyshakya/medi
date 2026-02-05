@@ -182,7 +182,7 @@ const SearchDropdown = ({
           onChange={e => { onChange(e.target.value); setIsOpen(true); }}
           onFocus={() => setIsOpen(true)}
           placeholder={placeholder}
-          className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+          className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 md:text-base text-sm bg-white"
         />
         {value && (
           <button onClick={onClear} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
@@ -235,8 +235,8 @@ const BranchFilter = ({ allHospitals, initialSearch = "" }: BranchFilterProps) =
   // Fetch treatments from multiple sources
   const fetchAllTreatments = useCallback(async () => {
     try {
-      // 1. Fetch from Wix API (main TreatmentMaster collection)
-      const wixRes = await fetch('/api/treatments')
+      // 1. Fetch from Wix API (main TreatmentMaster collection) - fetch ALL treatments without pagination
+      const wixRes = await fetch('/api/treatments?pageSize=1000')
       const wixData = await wixRes.json()
       const wixTreatmentsData = (wixData.items || []) as WixTreatment[]
 
@@ -357,11 +357,11 @@ const BranchFilter = ({ allHospitals, initialSearch = "" }: BranchFilterProps) =
     })
     specs.forEach((name, id) => add({ id, name, type: 'specialty', label: 'Specialty' }))
 
-    // Doctors
-    allHospitals.forEach(h => {
-      const hname = h.hospitalName || ''
-      h.doctors?.forEach((d: DoctorData) => { if (d._id && d.doctorName) add({ id: d._id, name: getName(d.doctorName), type: 'doctor', label: 'Doctor', hospitalName: hname }) })
-    })
+    // Doctors - HIDDEN from dropdown (only accessible via specialties)
+    // allHospitals.forEach(h => {
+    //   const hname = h.hospitalName || ''
+    //   h.doctors?.forEach((d: DoctorData) => { if (d._id && d.doctorName) add({ id: d._id, name: getName(d.doctorName), type: 'doctor', label: 'Doctor', hospitalName: hname }) })
+    // })
 
     // Treatments from all sources (Wix API + hospitals + branches + specialists)
     allTreatments.forEach((t) => {
@@ -436,7 +436,7 @@ const BranchFilter = ({ allHospitals, initialSearch = "" }: BranchFilterProps) =
     setQuery('')
   }, [options, router])
 
-  return <SearchDropdown value={query} onChange={setQuery} placeholder="Search hospitals, treatments, doctors..." options={options} onOptionSelect={handleSelect} onClear={() => setQuery('')} />
+  return <SearchDropdown value={query} onChange={setQuery} placeholder="Search hospitals, treatments..." options={options} onOptionSelect={handleSelect} onClear={() => setQuery('')} />
 }
 
 export default BranchFilter

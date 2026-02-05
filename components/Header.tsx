@@ -55,13 +55,6 @@ interface Hospital {
 // Data Fetching
 // =================================================================
 
-// 1. Define the expected shape of the API response (assuming the API returns an object 
-//    containing an 'items' array).
-interface HospitalAPIResponse {
-  items: Hospital[];
-  totalCount?: number; // Optional: include other properties if they exist
-}
-
 async function fetchMasterHospitalData(): Promise<Hospital[]> {
   // Use the new unified CMS API
 
@@ -193,7 +186,6 @@ export default function Header() {
       });
   }, []);
 
-  const openModal = () => setIsModalOpen(true);
   const closeModal = () => setIsModalOpen(false);
 
   const handleSubmenuToggle = (label: string) => {
@@ -224,14 +216,14 @@ export default function Header() {
               alt="Medivisor India Treatment Logo"
               width={260}
               height={85}
-              className={`w-full  object-contain transition-all duration-300 ${isScrolled ? 'md:h-16 h-10' : 'm:h-16 h-10'
+              className={`w-full  object-contain transition-all duration-300 ${isScrolled ? 'md:h-16 h-10' : 'md:h-16 h-10'
                 }`}
               priority // Add this line
             />
           </Link>
         
           {/* Navigation */}
-          <div className="flex w-full md:ml-10 items-center justify-between gap-4">
+          <div className="flex md:w-full md:ml-10 items-center justify-between gap-4">
             <div
               className={`fixed inset-0 w-full bg-white md:static md:bg-transparent transition-transform duration-500 ease-in-out md:translate-x-0 md:flex md:items-center md:gap-8 ${isMenuOpen ? 'translate-x-0' : 'translate-x-full'
                 } z-40`}
@@ -335,11 +327,11 @@ export default function Header() {
 
 
           </div>
-          {/* <div className='md:w-[60%]  w-[70%]'>
+          <div className='md:w-[60%] md:ml-0 ml-4 w-full'>
             <BranchFilter allHospitals={allHospitals} />
-        </div> */}
+        </div>
           {/* CTA & Mobile Menu Toggle */}
-          <div className="flex w-full md:w-1/6 items-center justify-end gap-3">
+          <div className="flex w-auto md:mr-0 mr-4 md:w-1/6 items-center justify-end gap-3">
               {/* <button
                 className="bg-[#E22026] cursor-pointer md:block hidden hover:bg-[#74BF44] text-white font-medium px-5 py-2 rounded-md shadow-md transition-all"
                 onClick={openModal}

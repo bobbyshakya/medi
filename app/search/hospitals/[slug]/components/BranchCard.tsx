@@ -59,14 +59,14 @@ const BranchCard = ({ data }: { data: any }) => {
         <div className="mb-2">
           <p className="text-lg md:text-sm text-gray-600 line-clamp-1">{address || firstCity}, {firstSpeciality} Speciality</p>
         </div>
-        <div className="mb-2">
+        {/* <div className="mb-2">
           <div className="flex items-center gap-1">
             {Array.from({ length: 5 }, (_, i) => (
               <span key={i} className={`text-sm ${i < 4 ? 'text-yellow-400' : 'text-gray-300'}`}>★</span>
             ))}
             <span className="text-sm text-gray-600 ml-1">4.0 (120 reviews)</span>
           </div>
-        </div>
+        </div> */}
         <div className="grid grid-cols-3 gap-2">
           <div className="text-center p-2 bg-gray-50 rounded-xs border border-gray-100">
             <p className="md:text-sm text-base font-medium text-gray-700">{yearEstablished || 'N/A'}</p>

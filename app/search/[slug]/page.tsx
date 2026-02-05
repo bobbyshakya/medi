@@ -146,7 +146,7 @@ export default function HospitalDetail({ params }: { params: Promise<{ slug: str
             <main className="lg:col-span-9 space-y-10 md:space-y-8">
               {/* Description */}
               {hospital.description && (
-                <section className="bg-white rounded-xl border border-gray-100 p-4 md:p-8 shadow-md">
+                <section className="bg-white rounded-xl first-heading border border-gray-100 p-4 md:p-8 shadow-md">
                   <RichTextDisplay htmlContent={hospital.description} className="mt-0" />
                 </section>
               )}

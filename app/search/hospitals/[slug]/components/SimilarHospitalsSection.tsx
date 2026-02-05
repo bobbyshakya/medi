@@ -36,7 +36,7 @@ const SimilarHospitalsSection = ({ currentHospitalId, currentBranchId, currentCi
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
   const [searchTerm, setSearchTerm] = useState("")
-  const [emblaRef, emblaApi] = useEmblaCarousel({ loop: false, align: 'start', dragFree: false, containScroll: 'keepSnaps' })
+  const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true, align: 'start', dragFree: false, containScroll: 'keepSnaps' })
   const [prevBtnDisabled, setPrevBtnDisabled] = useState(true)
   const [nextBtnDisabled, setNextBtnDisabled] = useState(true)
 
@@ -53,8 +53,8 @@ const SimilarHospitalsSection = ({ currentHospitalId, currentBranchId, currentCi
       setLoading(true)
       setError(false)
 
-      // Use the new unified CMS API for faster data fetching
-      const res = await fetch(`/api/cms?action=all&pageSize=500`)
+      // Use pagination for large datasets - fetch only needed data
+      const res = await fetch(`/api/cms?action=all&page=0&pageSize=50`)
       if (!res.ok) throw new Error('Failed to fetch hospitals')
       const data = await res.json()
       const hospitals = data.hospitals || []
@@ -71,6 +71,17 @@ const SimilarHospitalsSection = ({ currentHospitalId, currentBranchId, currentCi
         .filter((b: any) => b?.branchName)
         .sort((a: any, b: any) => (a.branchName || '').localeCompare(b.branchName || ''))
 
+      // Find current branch data once before filtering (prevent redundant computation)
+      const currentBranchData = allHospitalBranches.find((b: any) => b._id === currentBranchId)
+      
+      // Pre-compute current branch cities and states (computed once, not in filter loop)
+      const currentCities = new Set<string>()
+      const currentStates = new Set<string>()
+      currentBranchData?.city?.forEach((c: any) => {
+        if (c?.cityName) currentCities.add(c.cityName.toLowerCase())
+        if (c?.state) currentStates.add(c.state.toLowerCase())
+      })
+
       // Filter similar branches (same city or state, different hospital)
       const similarBranches = allHospitalBranches
         .filter((b: any) => {
@@ -82,24 +93,13 @@ const SimilarHospitalsSection = ({ currentHospitalId, currentBranchId, currentCi
             if (c?.state) branchStates.add(c.state.toLowerCase())
           })
           
-          // Current hospital cities and states
-          const currentCities = new Set<string>()
-          const currentStates = new Set<string>()
-          allHospitalBranches
-            .filter((ab: any) => ab._id === currentBranchId)
-            .forEach((cb: any) => {
-              cb.city?.forEach((c: any) => {
-                if (c?.cityName) currentCities.add(c.cityName.toLowerCase())
-                if (c?.state) currentStates.add(c.state.toLowerCase())
-              })
-            })
-          
           const isInSameCity = [...currentCities].some((city) => branchCities.has(city))
           const isInSameState = [...currentStates].some((state) => branchStates.has(state))
           const isDifferentBranch = b._id !== currentBranchId
           return (isInSameCity || isInSameState) && isDifferentBranch
         })
-        .slice(0, 10)
+        // Limit to 12 similar hospitals for carousel display
+        .slice(0, 12)
 
       setBranches(similarBranches)
       setAllBranches(allHospitalBranches)
@@ -113,7 +113,7 @@ const SimilarHospitalsSection = ({ currentHospitalId, currentBranchId, currentCi
         setLoading(false)
       }
     }
-  }, [currentHospitalId, currentBranchId, currentCity])
+  }, [currentHospitalId, currentBranchId])
 
   useEffect(() => {
     fetchData()
@@ -175,8 +175,8 @@ const SimilarHospitalsSection = ({ currentHospitalId, currentBranchId, currentCi
         <div className="relative px-2 md:px-4 pb-8">
           <div className={EMBLA_CLASSES.viewport} ref={emblaRef}>
             <div className={EMBLA_CLASSES.container}>
-              {branches.map(branch => (
-                <div key={branch._id} className={classNames(EMBLA_CLASSES.slide, EMBLA_SLIDE_SIZES.xs, EMBLA_SLIDE_SIZES.sm, EMBLA_SLIDE_SIZES.lg)}>
+              {branches.map((branch, index) => (
+                <div key={branch._id || `${branch.branchName}-${index}`} className={classNames(EMBLA_CLASSES.slide, EMBLA_SLIDE_SIZES.xs, EMBLA_SLIDE_SIZES.sm, EMBLA_SLIDE_SIZES.lg)}>
                   <BranchCard data={branch} />
                 </div>
               ))}

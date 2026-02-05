@@ -2,7 +2,7 @@
 "use client"
 import { useState, useMemo, useCallback, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
-import { Building2, MapPin, Stethoscope, Users, X, Search } from "lucide-react"
+import { Building2, MapPin, Activity, Users, X, Search, UserRoundCog  } from "lucide-react"
 
 // --- Types ---
 interface UniversalOption {
@@ -152,15 +152,15 @@ const SearchDropdown = ({
   }, [])
 
   const icon = (type: UniversalOption['type']) => {
-    const map = { branch: Building2, city: MapPin, treatment: Stethoscope, doctor: Users, specialty: Search }
+    const map = { branch: Building2, city: MapPin, treatment: Activity, doctor: Users, specialty: UserRoundCog  }
     const Icon = map[type]
     return <Icon className="w-4 h-4 text-gray-500 mr-2 flex-shrink-0" />
   }
 
   const badge = (type: UniversalOption['type']) => {
-    const colors = { branch: 'bg-blue-100 text-blue-700', city: 'bg-green-100 text-green-700', 
-                     treatment: 'bg-purple-100 text-purple-700', doctor: 'bg-red-100 text-red-700', specialty: 'bg-orange-100 text-orange-700' }
-    return <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${colors[type]}`}>{type.charAt(0).toUpperCase() + type.slice(1)}</span>
+    if (type === 'city') return null
+    const labels: Record<string, string> = { branch: 'Hospital', treatment: 'Treatment', doctor: 'Doctor', specialty: 'Specialty' }
+    return <span className="text-xs font-medium text-gray-500">{labels[type]}</span>
   }
 
   return (
@@ -172,7 +172,7 @@ const SearchDropdown = ({
           onChange={e => { onChange(e.target.value); setIsOpen(true); }}
           onFocus={() => setIsOpen(true)}
           placeholder={placeholder}
-          className="w-full pl-10 pr-10 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+          className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
         />
         {value && (
           <button onClick={onClear} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
@@ -188,14 +188,25 @@ const SearchDropdown = ({
               onClick={() => { onOptionSelect(opt.id, opt.type); setIsOpen(false); }}
               className="w-full text-left px-4 py-3 flex items-start hover:bg-gray-50 border-b border-gray-100 last:border-b-0"
             >
-              {icon(opt.type)}
+              
               <div className="flex-1 min-w-0">
                 <div className="font-medium text-gray-900 truncate">{opt.name}</div>
                 <div className="flex items-center gap-2 mt-1 text-xs text-gray-500">
+                  <div>{icon(opt.type)}</div>
                   {badge(opt.type)}
-                  {opt.hospitalName && <span className="truncate">{opt.hospitalName}</span>}
-                  {opt.city && <span className="flex items-center gap-1"><MapPin className="w-3 h-3" />{opt.city}</span>}
-                </div>
+                    
+                    {/* Show city for city type */}
+                    {opt.type === 'branch' && opt.city && <span className="flex items-center gap-1"><MapPin className="w-3 h-3" />{opt.city}</span>}
+                    
+                    {/* Show city for city type */}
+                    {opt.type === 'city' && opt.city && <span className="flex items-center gap-1"><MapPin className="w-3 h-3" />{opt.city}</span>}
+                    
+                    {(opt.type === 'doctor' || opt.type === 'specialty') && opt.hospitalName && <span className="truncate">{opt.hospitalName}</span>}
+                    
+                    {/* Show city for doctor/specialty types (not treatment) */}
+                    {(opt.type === 'doctor' || opt.type === 'specialty') && opt.city && <span className="flex items-center gap-1"><MapPin className="w-3 h-3" />{opt.city}</span>}
+          
+                  </div>
               </div>
             </button>
           ))}

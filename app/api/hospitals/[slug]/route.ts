@@ -517,7 +517,10 @@ async function enrichHospitals(
       ...b,
       doctors: b.doctors.map((d: any) => doctors[d._id] || d),
       city: b.city.map((c: any) => cities[c._id] || c),
-      treatments: b.treatments.map((t: any) => treatments[t._id] || t),
+      // Collect treatments from specialists for proper mapping
+      treatments: [...b.treatments, ...b.specialization
+        .filter((s: any) => !s.isTreatment && !s.isDepartment)
+        .flatMap((s: any) => specialists[s._id]?.treatments || [])],
       specialization: b.specialization.map((s: any) => allSpecializations[s._id] || s),
       accreditation: b.accreditation.map((a: any) => accreditations[a._id] || a),
     }));
@@ -728,11 +731,17 @@ async function enrichSingleHospital(hospital: any, branches: any[]) {
   // Enrich branches
   const enrichedBranches = branches.map(b => {
     const mapped = DataMappers.branch(b);
+    
+    // Collect treatments from specialists for this branch
+    const specialistTreatments = mapped.specialization
+      .filter((s: any) => !s.isTreatment && !s.isDepartment)
+      .flatMap((s: any) => specialists[s._id]?.treatments || []);
+    
     return {
       ...mapped,
       doctors: mapped.doctors.map((d: any) => doctors[d._id] || d),
       city: mapped.city.map((c: any) => cities[c._id] || c),
-      treatments: mapped.treatments.map((t: any) => treatments[t._id] || t),
+      treatments: [...mapped.treatments, ...specialistTreatments],
       specialization: mapped.specialization.map((s: any) => allSpecializations[s._id] || s),
       accreditation: mapped.accreditation.map((a: any) => accreditations[a._id] || a),
     };
@@ -803,12 +812,17 @@ async function enrichStandaloneBranch(branch: any) {
   ]);
 
   // Enrich branch
+  // Collect treatments from specialists for proper mapping
+  const specialistTreatments = mappedBranch.specialization
+    .filter((s: any) => !s.isTreatment && !s.isDepartment)
+    .flatMap((s: any) => enrichedSpecialists[s._id]?.treatments || []);
+  
   const enrichedBranch = {
     ...mappedBranch,
     doctors: mappedBranch.doctors.map((d: any) => doctors[d._id] || d),
     city: mappedBranch.city.map((c: any) => cities[c._id] || c),
     accreditation: mappedBranch.accreditation.map((a: any) => accreditations[a._id] || a),
-    treatments: mappedBranch.treatments.map((t: any) => treatments[t._id] || t),
+    treatments: [...mappedBranch.treatments, ...specialistTreatments],
     specialization: mappedBranch.specialization.map((s: any) => {
       if (s.isTreatment) {
         return treatments[s._id] || s;

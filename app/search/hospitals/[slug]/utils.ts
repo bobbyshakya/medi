@@ -50,104 +50,111 @@ export const generateSlug = (name: string | null | undefined): string => {
   return name.toLowerCase().trim().replace(/[^\w\s-]/g, '').replace(/\s+/g, '-').replace(/-+/g, '-')
 }
 
-export const extractUniqueTreatments = (branch: any): any[] => {
+export const extractUniqueTreatments = (branch: any, hospitalTreatments?: any[]): any[] => {
   const uniqueTreatments = {} as { [key: string]: any }
+  const processedKeys = new Set<string>(); // Track processed keys to prevent undefined keys
+
+  // Helper to normalize treatment data from CMS
+  // This ensures field names match what TreatmentCard component expects
+  const normalizeTreatment = (treatment: any, specialistName: string): any => {
+    if (!treatment) return null;
+    
+    // Get unique key - ensure it's not empty/undefined
+    const id = treatment._id || treatment.ID;
+    const treatmentName = treatment.name || treatment.treatmentName || treatment.title;
+    const key = id || treatmentName || `treatment-${JSON.stringify(treatment)}`;
+    
+    if (processedKeys.has(key)) return null; // Already processed
+    processedKeys.add(key);
+    
+    return {
+      _id: id || key,
+      name: treatmentName || treatment.title || 'Unknown Treatment',
+      title: treatmentName || treatment.title || 'Unknown Treatment',
+      description: treatment.description || treatment.Description || '',
+      startingCost: treatment.cost || treatment.startingCost || treatment.averageCost || null,
+      cost: treatment.cost || treatment.startingCost || treatment.averageCost || null,
+      treatmentImage: treatment.treatmentImage || treatment.image || treatment.treatmentimage || null,
+      image: treatment.treatmentImage || treatment.image || treatment.treatmentimage || null,
+      specialistName: specialistName,
+      popular: treatment.popular === true || treatment.popular === 'true',
+    };
+  };
+
+  // First, add hospital-level treatments (these have full details from CMS)
+  if (hospitalTreatments && Array.isArray(hospitalTreatments)) {
+    hospitalTreatments.forEach((treatment: any) => {
+      const normalized = normalizeTreatment(treatment, 'Hospital Treatment');
+      if (normalized) uniqueTreatments[normalized._id] = normalized;
+    });
+  }
 
   // Include treatments directly associated with the branch
   if (branch?.treatments && Array.isArray(branch.treatments)) {
     branch.treatments.forEach((treatment: any) => {
-      if (treatment && (treatment._id || treatment.name)) {
-        const key = treatment._id || treatment.name
-        if (!uniqueTreatments[key]) {
-          uniqueTreatments[key] = {
-            ...treatment,
-            specialistName: 'Direct Treatment',
-            _id: treatment._id || key,
-            name: treatment.name || treatment.treatmentName,
-            description: treatment.description || '',
-            startingCost: treatment.startingCost || treatment.averageCost,
-            treatmentImage: treatment.treatmentImage || treatment.image
-          }
+      const normalized = normalizeTreatment(treatment, 'Direct Treatment');
+      if (normalized) {
+        // Don't override if hospital treatment already exists with more info
+        if (!uniqueTreatments[normalized._id]) {
+          uniqueTreatments[normalized._id] = normalized;
         }
       }
-    })
+    });
   }
 
   // Include treatments from specialists (enriched data from Wix CMS)
   if (branch?.specialists && Array.isArray(branch.specialists)) {
     branch.specialists.forEach((specialist: any) => {
-      const specialistName = specialist.name || specialist.specialty || 'Unknown Specialist'
+      const specialistName = specialist.name || specialist.specialty || 'Unknown Specialist';
       if (specialist.treatments && Array.isArray(specialist.treatments)) {
         specialist.treatments.forEach((treatment: any) => {
-          if (treatment && (treatment._id || treatment.name)) {
-            const key = treatment._id || `${treatment.name || 'n/a'}-${specialistName}`
-            if (!uniqueTreatments[key]) {
-              uniqueTreatments[key] = {
-                ...treatment,
-                specialistName,
-                _id: treatment._id || key,
-                name: treatment.name || treatment.treatmentName,
-                description: treatment.description || '',
-                startingCost: treatment.startingCost || treatment.averageCost,
-                treatmentImage: treatment.treatmentImage || treatment.image
-              }
+          const normalized = normalizeTreatment(treatment, specialistName);
+          if (normalized) {
+            if (!uniqueTreatments[normalized._id]) {
+              uniqueTreatments[normalized._id] = normalized;
             }
           }
-        })
+        });
       }
-    })
+    });
   }
 
   // Include treatments from specialization that are marked as treatments
   if (branch?.specialization && Array.isArray(branch.specialization)) {
     branch.specialization.forEach((spec: any) => {
-      if (spec && spec.isTreatment && (spec._id || spec.name)) {
-        const key = spec._id || spec.name
-        if (!uniqueTreatments[key]) {
-          uniqueTreatments[key] = {
-            ...spec,
-            specialistName: 'Specialized Treatment',
-            _id: spec._id || key,
-            name: spec.name || spec.treatmentName,
-            description: spec.description || '',
-            startingCost: spec.startingCost || spec.averageCost,
-            treatmentImage: spec.treatmentImage || spec.image
+      if (spec && spec.isTreatment) {
+        const normalized = normalizeTreatment(spec, 'Specialized Treatment');
+        if (normalized) {
+          if (!uniqueTreatments[normalized._id]) {
+            uniqueTreatments[normalized._id] = normalized;
           }
         }
       }
-    })
+    });
   }
 
   // Include treatments from doctors' specializations
   if (branch?.doctors && Array.isArray(branch.doctors)) {
     branch.doctors.forEach((doctor: any) => {
-      const doctorName = doctor.doctorName || doctor.name || 'Unknown Doctor'
+      const doctorName = doctor.doctorName || doctor.name || 'Unknown Doctor';
       if (doctor.specialization && Array.isArray(doctor.specialization)) {
         doctor.specialization.forEach((spec: any) => {
           if (spec && spec.treatments && Array.isArray(spec.treatments)) {
             spec.treatments.forEach((treatment: any) => {
-              if (treatment && (treatment._id || treatment.name)) {
-                const key = treatment._id || `${treatment.name || 'n/a'}-${doctorName}`
-                if (!uniqueTreatments[key]) {
-                  uniqueTreatments[key] = {
-                    ...treatment,
-                    specialistName: doctorName,
-                    _id: treatment._id || key,
-                    name: treatment.name || treatment.treatmentName,
-                    description: treatment.description || '',
-                    startingCost: treatment.startingCost || treatment.averageCost,
-                    treatmentImage: treatment.treatmentImage || treatment.image
-                  }
+              const normalized = normalizeTreatment(treatment, doctorName);
+              if (normalized) {
+                if (!uniqueTreatments[normalized._id]) {
+                  uniqueTreatments[normalized._id] = normalized;
                 }
               }
-            })
+            });
           }
-        })
+        });
       }
-    })
+    });
   }
 
-  return Object.values(uniqueTreatments)
+  return Object.values(uniqueTreatments);
 }
 
 /**
@@ -157,25 +164,45 @@ export const extractUniqueTreatments = (branch: any): any[] => {
  */
 export const extractTreatmentsFromAllBranches = (hospitalData: any): any[] => {
   const uniqueTreatments = {} as { [key: string]: any }
+  const processedKeys = new Set<string>(); // Track processed keys to prevent undefined keys
 
-  // Helper to add a treatment to the unique collection
+  console.log('=== extractTreatmentsFromAllBranches DEBUG ===');
+  console.log('hospitalData.branches:', hospitalData.branches?.length);
+  
+  // Helper to normalize treatment data from CMS
+  // This ensures field names match what TreatmentCard component expects
   const addTreatment = (treatment: any, sourceName: string) => {
-    if (!treatment || !(treatment._id || treatment.name)) return
-    const key = treatment._id || treatment.name
-    if (!uniqueTreatments[key]) {
-      uniqueTreatments[key] = {
-        ...treatment,
-        specialistName: sourceName,
-        _id: treatment._id || key,
-        name: treatment.name || treatment.treatmentName,
-        description: treatment.description || '',
-        startingCost: treatment.startingCost || treatment.averageCost,
-        treatmentImage: treatment.treatmentImage || treatment.image
-      }
+    if (!treatment) return;
+    
+    // Get unique key - ensure it's not empty/undefined
+    const id = treatment._id || treatment.ID;
+    const treatmentName = treatment.name || treatment.treatmentName || treatment.title;
+    const key = id || treatmentName || `treatment-${JSON.stringify(treatment)}`;
+    
+    if (processedKeys.has(key)) {
+      console.log('Skipping duplicate treatment:', treatmentName);
+      return; // Already processed
     }
-  }
+    processedKeys.add(key);
+    
+    console.log('Adding treatment:', treatmentName, 'from', sourceName);
+    
+    // Normalize all field names to match TreatmentCard expectations
+    uniqueTreatments[key] = {
+      _id: id || key,
+      name: treatmentName || treatment.title || 'Unknown Treatment',
+      title: treatmentName || treatment.title || 'Unknown Treatment',
+      description: treatment.description || treatment.Description || '',
+      startingCost: treatment.cost || treatment.startingCost || treatment.averageCost || null,
+      cost: treatment.cost || treatment.startingCost || treatment.averageCost || null,
+      treatmentImage: treatment.treatmentImage || treatment.image || treatment.treatmentimage || null,
+      image: treatment.treatmentImage || treatment.image || treatment.treatmentimage || null,
+      specialistName: sourceName.split(' - ').pop() || sourceName, // Just the specialist name without branch prefix
+      popular: treatment.popular === true || treatment.popular === 'true',
+    };
+  };
 
-  // 1. Include treatments directly associated with the hospital (main treatments)
+  // 1. Include treatments directly associated with the hospital (main treatments) - these have full details from CMS
   if (hospitalData?.treatments && Array.isArray(hospitalData.treatments)) {
     hospitalData.treatments.forEach((treatment: any) => {
       addTreatment(treatment, 'Hospital Treatment')
@@ -233,7 +260,10 @@ export const extractTreatmentsFromAllBranches = (hospitalData: any): any[] => {
     })
   }
 
-  return Object.values(uniqueTreatments)
+  const result = Object.values(uniqueTreatments)
+  console.log('Total unique treatments extracted:', result.length);
+  console.log('=== END extractTreatmentsFromAllBranches DEBUG ===');
+  return result
 }
 
 // NEW: Function to fetch hospital data by slug using unified CMS API
@@ -274,5 +304,93 @@ export const fetchHospitalBySlug = async (slug: string) => {
     console.error('Error fetching hospital by slug:', error)
     console.timeEnd('fetchHospitalBySlug total')
     return null
+  }
+}
+
+// NEW: Fetch treatments from CMS and match to hospital specialties
+// This is used when treatments are not directly linked to hospital/branch in CMS
+import { getAllCMSData } from '@/lib/cms'
+
+export const fetchTreatmentsByHospitalSpecialties = async (hospitalData: any): Promise<any[]> => {
+  try {
+    const { treatments: allTreatments } = await getAllCMSData()
+    
+    if (!allTreatments || allTreatments.length === 0) {
+      console.log('No treatments found in CMS')
+      return []
+    }
+    
+    // Collect all specialty names from hospital
+    const specialtyNames = new Set<string>()
+    
+    // Add specialist names
+    hospitalData.branches?.forEach((branch: any) => {
+      branch.specialists?.forEach((spec: any) => {
+        if (spec.name) specialtyNames.add(spec.name.toLowerCase())
+        // Also add specialty field if it exists
+        if (spec.specialty) specialtyNames.add(spec.specialty.toLowerCase())
+      })
+      
+      // Add specialization names
+      branch.specialization?.forEach((spec: any) => {
+        if (spec.name) {
+          // Remove (Treatment) suffix for matching
+          const cleanName = spec.name.replace(/\s*\(Treatment\)\s*/gi, '').trim()
+          specialtyNames.add(cleanName.toLowerCase())
+        }
+      })
+      
+      // Add doctors' specialization names
+      branch.doctors?.forEach((doctor: any) => {
+        doctor.specialization?.forEach((spec: any) => {
+          if (spec.name) specialtyNames.add(spec.name.toLowerCase())
+        })
+      })
+    })
+    
+    console.log('Hospital specialties:', Array.from(specialtyNames))
+    
+    // Match treatments to specialties
+    const matchedTreatments = allTreatments.filter((treatment: any) => {
+      const treatmentName = (treatment.name || '').toLowerCase()
+      
+      // Check if treatment name contains any specialty name
+      for (const specialty of specialtyNames) {
+        if (treatmentName.includes(specialty) || specialty.includes(treatmentName)) {
+          console.log('Matched treatment:', treatment.name, 'with specialty:', specialty)
+          return true
+        }
+      }
+      
+      // Also check if specialty is in treatment description
+      const treatmentDesc = (treatment.description || '').toLowerCase()
+      for (const specialty of specialtyNames) {
+        if (treatmentDesc.includes(specialty)) {
+          console.log('Matched treatment by description:', treatment.name, 'with specialty:', specialty)
+          return true
+        }
+      }
+      
+      return false
+    })
+    
+    console.log('Matched treatments count:', matchedTreatments.length)
+    
+    // Normalize matched treatments to match TreatmentCard expectations
+    return matchedTreatments.map((treatment: any) => ({
+      _id: treatment._id,
+      name: treatment.name || treatment.title || 'Unknown Treatment',
+      title: treatment.name || treatment.title || 'Unknown Treatment',
+      description: treatment.description || treatment.Description || '',
+      startingCost: treatment.cost || treatment.startingCost || treatment.averageCost || null,
+      cost: treatment.cost || treatment.startingCost || treatment.averageCost || null,
+      treatmentImage: treatment.treatmentImage || treatment.image || null,
+      image: treatment.treatmentImage || treatment.image || null,
+      specialistName: 'Available Treatment',
+      popular: treatment.popular === true || treatment.popular === 'true',
+    }))
+  } catch (error) {
+    console.error('Error fetching treatments by specialties:', error)
+    return []
   }
 }

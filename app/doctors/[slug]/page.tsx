@@ -34,11 +34,12 @@ import {
 } from "lucide-react"
 import HospitalSearch from "@/components/BranchFilter"
 import Link from "next/link"
-import { useRouter, useSearchParams } from "next/navigation" // MODIFIED: Added useSearchParams
+import { useRouter, useSearchParams } from "next/navigation"
 import classNames from "classnames"
 import ContactForm from "@/components/ContactForm"
 import { Inter } from "next/font/google"
 import useEmblaCarousel, { EmblaOptionsType } from 'embla-carousel-react'
+import { findDoctorBySlug, getAllHospitalsData, getAllDoctorsWithLocations } from "./utils"
 
 const inter = Inter({
   subsets: ["latin"],
@@ -1189,20 +1190,18 @@ export default function DoctorDetail({ params }: { params: Promise<{ slug: strin
       try {
         const resolvedParams = await params
         const doctorSlug = resolvedParams.slug
-        const res = await fetch('/api/hospitals')
-        if (!res.ok) throw new Error("Failed to fetch hospitals")
-        const data = await res.json()
-
-        if (data.items?.length > 0) {
-          const extendedDoctors = getAllExtendedDoctors(data.items)
-          const foundDoctor = extendedDoctors.find((d: ExtendedDoctorType) => generateSlug(d.doctorName) === doctorSlug)
-          setAllHospitals(data.items)
-          setDoctor(foundDoctor || null)
-          if (!foundDoctor) {
-            setError("Doctor not found. The URL might be incorrect or the doctor does not exist.")
-          }
+        
+        // Use the new utility function for efficient doctor fetching
+        const [doctorData, hospitalsData] = await Promise.all([
+          findDoctorBySlug(doctorSlug),
+          getAllHospitalsData()
+        ])
+        
+        if (doctorData) {
+          setDoctor(doctorData as unknown as ExtendedDoctorType)
+          setAllHospitals(hospitalsData as unknown as HospitalType[])
         } else {
-          setError("No hospital data available.")
+          setError("Doctor not found. The URL might be incorrect or the doctor does not exist.")
         }
       } catch (e) {
         setError(e instanceof Error ? e.message : "An unknown error occurred while fetching doctor details")

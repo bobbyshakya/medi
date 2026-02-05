@@ -181,8 +181,8 @@ export const pngExpendedMetadata: Metadata = {
 
     images: [
       {
-        url: 'https://medivisorindiatreatment.com/png-banner.jpg',
-        secureUrl: 'https://medivisorindiatreatment.com/png-banner.jpg',
+        url: 'https://medivisorindiatreatment.com/PNG-Web-Banner-fb.jpg',
+        secureUrl: 'https://medivisorindiatreatment.com/PNG-Web-Banner-fb.jpg',
         width: 1200,
         height: 630,
         alt: 'Medivisor Community Health Partners PNG',
@@ -196,7 +196,7 @@ export const pngExpendedMetadata: Metadata = {
     title: 'Medivisor Community Health Partners PNG | Join Our Healthcare Network',
     description:
       'Join the Medivisor Expanded Patient Support Network (PNG) as a Community Health Partner.',
-    images: ['https://medivisorindiatreatment.com/png-banner.jpg'],
+    images: ['https://medivisorindiatreatment.com/PNG-Web-Banner-fb.jpg'],
   },
 };
 
@@ -618,7 +618,7 @@ export const pngNetworkMetadata: Metadata = {
     siteName: 'Medivisor India Treatment',
     images: [
       {
-        url: 'https://medivisorindiatreatment.com/png-banner.jpg',
+        url: 'https://medivisorindiatreatment.com/PNG-Web-Banner-fb.jpg',
         width: 1200,
         height: 630,
         alt: 'Medivisor Community Health Partners PNG',
@@ -632,6 +632,6 @@ export const pngNetworkMetadata: Metadata = {
     title: 'Medivisor Community Health Partners PNG | Join Our Healthcare Network',
     description: 'Join the Medivisor Expanded Patient Support Network (PNG) as a Community Health Partner.',
     site: '@MedivisorIndia',
-    images: ['https://medivisorindiatreatment.com/png-banner.jpg'],
+    images: ['https://medivisorindiatreatment.com/PNG-Web-Banner-fb.jpg'],
   },
 };

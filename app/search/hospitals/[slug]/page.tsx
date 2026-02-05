@@ -1,7 +1,17 @@
 import React from "react"
 import ContactForm from "@/components/ContactForm"
 import { Inter } from "next/font/google"
-import { extractUniqueTreatments, extractTreatmentsFromAllBranches, getBranchImage, getHospitalImage, getHospitalLogo, getWixImageUrl, generateSlug, fetchHospitalBySlug } from "./utils"
+import { 
+  extractUniqueTreatments, 
+  extractTreatmentsFromAllBranches, 
+  getBranchImage, 
+  getHospitalImage, 
+  getHospitalLogo, 
+  getWixImageUrl, 
+  generateSlug, 
+  fetchHospitalBySlug,
+  fetchTreatmentsByHospitalSpecialties 
+} from "./utils"
 import HeroSection from "./components/HeroSection"
 import Breadcrumb from "./components/Breadcrumb"
 import OverviewSection from "./components/OverviewSection"
@@ -87,7 +97,7 @@ export default async function BranchDetail({ params }: { params: Promise<{ slug:
     foundBranch = {
       ...hospitalData,
       branchName: hospitalData.hospitalName || 'Main Branch',
-      address: hospitalData.address || '',
+      address: hospitalData.branches[0]?.address || '',
       city: Array.isArray(hospitalData.branches) && hospitalData.branches[0]?.city ? hospitalData.branches[0].city : [],
       specialization: Array.isArray(hospitalData.branches) && hospitalData.branches[0]?.specialization ? hospitalData.branches[0].specialization : [],
       description: hospitalData.description || '',
@@ -98,7 +108,7 @@ export default async function BranchDetail({ params }: { params: Promise<{ slug:
       doctors: Array.isArray(hospitalData.doctors) ? hospitalData.doctors : [],
       specialists: Array.isArray(hospitalData.specialists) ? hospitalData.specialists : [],
       treatments: Array.isArray(hospitalData.treatments) ? hospitalData.treatments : [],
-      accreditation: Array.isArray(hospitalData.accreditation) ? hospitalData.accreditation : [],
+      accreditation: Array.isArray(hospitalData.accreditations) ? hospitalData.accreditations : [],
       _id: hospitalData.originalBranchId || hospitalData._id
     };
   }
@@ -107,7 +117,7 @@ export default async function BranchDetail({ params }: { params: Promise<{ slug:
   if (!foundBranch && hospitalData.hospitalName && (generateSlug(hospitalData.hospitalName) === slug || slug.startsWith(generateSlug(hospitalData.hospitalName) + '-'))) {
     foundBranch = {
       branchName: hospitalData.hospitalName,
-      address: hospitalData.address || '',
+      address: hospitalData.branches[0]?.address || '',
       city: Array.isArray(hospitalData.branches) && hospitalData.branches[0]?.city ? hospitalData.branches[0].city : [],
       specialization: Array.isArray(hospitalData.branches) && hospitalData.branches[0]?.specialization ? hospitalData.branches[0].specialization : [],
       description: hospitalData.description || '',
@@ -118,7 +128,7 @@ export default async function BranchDetail({ params }: { params: Promise<{ slug:
       doctors: Array.isArray(hospitalData.doctors) ? hospitalData.doctors : [],
       specialists: Array.isArray(hospitalData.specialists) ? hospitalData.specialists : [],
       treatments: Array.isArray(hospitalData.treatments) ? hospitalData.treatments : [],
-      accreditation: Array.isArray(hospitalData.accreditation) ? hospitalData.accreditation : [],
+      accreditation: Array.isArray(hospitalData.accreditations) ? hospitalData.accreditations : [],
       _id: hospitalData._id
     };
   }
@@ -130,14 +140,51 @@ export default async function BranchDetail({ params }: { params: Promise<{ slug:
   const hospital = hospitalData;
   const branch = foundBranch;
   
+  // DEBUG: Log treatment data sources
+  console.log('=== DEBUG TREATMENT DATA ===');
+  
   // Calculate derived data with validation
   // For group hospitals (multiple branches), collect treatments from ALL branches
   const isGroupHospital = Array.isArray(hospitalData.branches) && hospitalData.branches.length > 1
-  const allTreatments = isGroupHospital 
-    ? extractTreatmentsFromAllBranches(hospitalData)  // Get treatments from ALL branches
-    : (branch ? extractUniqueTreatments(branch) : [])  // Single branch or standalone
   
-  // Build unified specialists list from all branches for group hospitals
+  // Use hospital-level treatments as the primary source (these have full details from CMS)
+  const hospitalTreatments = hospitalData.treatments || []
+  
+  console.log('isGroupHospital:', isGroupHospital);
+  console.log('hospitalData._id:', hospitalData._id);
+  console.log('hospitalData.hospitalName:', hospitalData.hospitalName);
+  console.log('hospitalData.branches?.length:', hospitalData.branches?.length);
+  console.log('hospitalData.treatments:', hospitalData.treatments);
+  console.log('hospitalTreatments:', hospitalTreatments);
+  
+  // Check branch treatments
+  console.log('branch._id:', branch?._id);
+  console.log('branch.branchName:', branch?.branchName);
+  console.log('branch.treatments:', branch?.treatments);
+  console.log('branch.specialists:', branch?.specialists?.map((s: any) => ({ name: s.name, treatments: s.treatments })));
+  console.log('branch.specialization:', branch?.specialization?.filter((s: any) => s.isTreatment));
+  
+  // Check if extractUniqueTreatments returns data
+  const branchTreatments = branch ? extractUniqueTreatments(branch, hospitalTreatments) : []
+  console.log('branchTreatments:', branchTreatments);
+  
+  // If no treatments found, fetch from CMS by matching specialties
+  let allTreatments = isGroupHospital 
+    ? extractTreatmentsFromAllBranches(hospitalData)  // Get treatments from ALL branches
+    : branchTreatments  // Use branch treatments directly
+  
+  // If still no treatments, try fetching by hospital specialties
+  if (allTreatments.length === 0) {
+    console.log('No treatments found directly, fetching by hospital specialties...');
+    const specialtyMatchedTreatments = await fetchTreatmentsByHospitalSpecialties(hospitalData);
+    console.log('Specialty-matched treatments:', specialtyMatchedTreatments.length);
+    allTreatments = specialtyMatchedTreatments;
+  }
+  
+  console.log('final allTreatments:', allTreatments.length, allTreatments.map((t: any) => ({ _id: t._id, name: t.name, specialistName: t.specialistName })));
+  console.log('=== END DEBUG ===');
+  
+  // Build unified specialists list from all branches for group hospitals (used in Specialists section)
   const allSpecialists = (() => {
     if (isGroupHospital) {
       const specialistsMap = new Map()
@@ -152,6 +199,7 @@ export default async function BranchDetail({ params }: { params: Promise<{ slug:
     }
     return branch?.specialists || []
   })()
+
   
   // Build unified doctors list from all branches for group hospitals
   const allDoctors = (() => {
@@ -168,43 +216,58 @@ export default async function BranchDetail({ params }: { params: Promise<{ slug:
     }
     return branch?.doctors || []
   })()
-  const sortedFacilities = (() => {
-    if (!branch?.facilities || !Array.isArray(branch.facilities)) return [];
-    return [...branch.facilities]
+  // Get facilities from branch - CMS data may have this field
+  const facilitiesRaw = (branch as any)?.facilities;
+  const sortedFacilities = Array.isArray(facilitiesRaw) 
+    ? facilitiesRaw
       .filter(facility => facility && typeof facility === 'object')
-      .sort((a, b) => (a.name || '').localeCompare(b.name || ''));
-  })();
-  const currentCity = Array.isArray(branch?.city) && branch.city[0]?.cityName ? branch.city[0].cityName : null;
-  const isDelhiNCR = currentCity && ['delhi', 'gurugram', 'gurgaon', 'noida', 'faridabad', 'ghaziabad'].some(city =>
-    currentCity.toLowerCase().includes(city.toLowerCase())
+      .sort((a, b) => (a.name || '').localeCompare(b.name || ''))
+    : [];
+  // Get current city name with fallback
+  const currentCityName = Array.isArray(branch?.city) && branch.city[0]?.cityName ? branch.city[0].cityName : 'Unknown Location';
+  const isDelhiNCR = currentCityName && ['delhi', 'gurugram', 'gurgaon', 'noida', 'faridabad', 'ghaziabad'].some(city =>
+    currentCityName.toLowerCase().includes(city.toLowerCase())
   );
-  const displayCityName = isDelhiNCR ? 'Delhi NCR' : (currentCity || 'Nearby Locations');
+  const displayCityName = isDelhiNCR ? 'Delhi NCR' : (currentCityName || 'Nearby Locations');
 
 
 
+  // Collect and deduplicate accreditation images
   const accreditationImages = (() => {
-    const images = [];
+    const uniqueAccreditations = new Map();
+    
+    // Add branch accreditations first
     if (Array.isArray(branch?.accreditation) && branch.accreditation.length > 0) {
-      images.push(...branch.accreditation
+      branch.accreditation
         .filter((acc: any) => acc && typeof acc === 'object')
-        .map((acc: any) => ({
-          image: getWixImageUrl(acc.image),
-          title: acc.title || 'Accreditation',
-          _id: acc._id
-        }))
-        .filter((acc: any) => acc.image));
+        .forEach((acc: any) => {
+          if (acc._id) {
+            uniqueAccreditations.set(acc._id, {
+              image: getWixImageUrl(acc.image),
+              title: acc.title || 'Accreditation',
+              _id: acc._id
+            });
+          }
+        });
     }
-    if (Array.isArray(hospital?.accreditation) && hospital.accreditation.length > 0) {
-      images.push(...hospital.accreditation
+    
+    // Add hospital accreditations (skip duplicates)
+    if (Array.isArray(hospital?.accreditations) && hospital.accreditations.length > 0) {
+      hospital.accreditations
         .filter((acc: any) => acc && typeof acc === 'object')
-        .map((acc: any) => ({
-          image: getWixImageUrl(acc.image),
-          title: acc.title || 'Accreditation',
-          _id: acc._id
-        }))
-        .filter((acc: any) => acc.image));
+        .forEach((acc: any) => {
+          if (acc._id && !uniqueAccreditations.has(acc._id)) {
+            uniqueAccreditations.set(acc._id, {
+              image: getWixImageUrl(acc.image),
+              title: acc.title || 'Accreditation',
+              _id: acc._id
+            });
+          }
+        });
     }
-    return images;
+    
+    // Filter out any items with invalid images and return as array
+    return Array.from(uniqueAccreditations.values()).filter((acc: any) => acc.image);
   })();
 
   const branchImage = getBranchImage(branch.branchImage)
@@ -231,7 +294,14 @@ export default async function BranchDetail({ params }: { params: Promise<{ slug:
               <OverviewSection branch={branch} firstSpecialityName={firstSpecialityName} />
               {branch.description && <AboutSection description={branch.description} hospitalName={hospital.hospitalName} hospitalSlug={hospitalSlug} />}
               {sortedFacilities.length > 0 && <FacilitiesSection facilities={sortedFacilities} />}
-              {allTreatments.length > 0 && <InteractiveCarouselSection title="Available Treatments" items={allTreatments} type='treatment' searchPlaceholder="Search treatments by name or specialist..." />}
+              {allTreatments?.length > 0 && (
+                <InteractiveCarouselSection 
+                  title="Available Treatments" 
+                  items={allTreatments} 
+                  type="treatment" 
+                  searchPlaceholder="Search treatments by name or specialist..." 
+                />
+              )}
               {(isGroupHospital ? allDoctors.length > 0 : branch.doctors?.length > 0) && (
                 <InteractiveCarouselSection 
                   title="Our Specialist Doctors" 
@@ -240,7 +310,7 @@ export default async function BranchDetail({ params }: { params: Promise<{ slug:
                   searchPlaceholder="Search doctors by name or Speciality..." 
                 />
               )}
-              <SimilarHospitalsSection currentHospitalId={hospital._id} currentBranchId={branch._id} currentCity={currentCity} displayCityName={displayCityName} />
+              <SimilarHospitalsSection currentHospitalId={hospital._id} currentBranchId={branch._id} currentCity={currentCityName} displayCityName={displayCityName} />
             </div>
             <aside className="lg:col-span-3 space-y-8"><ContactForm /></aside>
           </div>

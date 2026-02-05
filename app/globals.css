@@ -103,6 +103,11 @@ body {
   color: #241d1f;
   font-family: 'Poppins', sans-serif !important;
 }
+.first-heading .font_4:first-child {
+   font-weight: 400;
+  font-size: 28px;
+}
+
 .font_8 strong{
   font-weight: 600;
 }

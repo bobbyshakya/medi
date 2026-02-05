@@ -972,6 +972,8 @@ export async function getAllCMSData(): Promise<CMSDataResponse> {
               }
               const entry = allSpecialistTreatments.get(treatmentId)!
               if (!entry.branches.has(branch._id)) {
+                // Find treatment data from treatmentsMap
+                const treatmentData = treatmentsMap[treatmentId]
                 entry.branches.set(branch._id, {
                   branchId: branch._id,
                   branchName: branch.branchName,
@@ -979,7 +981,23 @@ export async function getAllCMSData(): Promise<CMSDataResponse> {
                   hospitalId: hospital._id,
                   cities: branch.city,
                   departments: [],
-                  cost: null,
+                  cost: treatmentData?.cost || null,
+                })
+              }
+              // Also add to treatmentBranchMap for direct lookup
+              if (!treatmentBranchMap.has(treatmentId)) {
+                treatmentBranchMap.set(treatmentId, new Map())
+              }
+              if (!treatmentBranchMap.get(treatmentId)!.has(branch._id)) {
+                const treatmentData = treatmentsMap[treatmentId]
+                treatmentBranchMap.get(treatmentId)!.set(branch._id, {
+                  branchId: branch._id,
+                  branchName: branch.branchName,
+                  hospitalName: hospital.hospitalName,
+                  hospitalId: hospital._id,
+                  cities: branch.city,
+                  departments: [],
+                  cost: treatmentData?.cost || null,
                 })
               }
             })
@@ -1003,6 +1021,21 @@ export async function getAllCMSData(): Promise<CMSDataResponse> {
               }
               if (!entry.branches.has(branch._id)) {
                 entry.branches.set(branch._id, {
+                  branchId: branch._id,
+                  branchName: branch.branchName,
+                  hospitalName: hospital.hospitalName,
+                  hospitalId: hospital._id,
+                  cities: branch.city,
+                  departments: [],
+                  cost: treatment.cost || treatment.averageCost || null,
+                })
+              }
+              // Also add to treatmentBranchMap for direct lookup
+              if (!treatmentBranchMap.has(treatmentId)) {
+                treatmentBranchMap.set(treatmentId, new Map())
+              }
+              if (!treatmentBranchMap.get(treatmentId)!.has(branch._id)) {
+                treatmentBranchMap.get(treatmentId)!.set(branch._id, {
                   branchId: branch._id,
                   branchName: branch.branchName,
                   hospitalName: hospital.hospitalName,

@@ -9,6 +9,7 @@ import { Inter } from "next/font/google"
 import SearchDropdown from "./SearchDropdown"
 import DoctorCard from "./DoctorCard"
 import TreatmentCard from "./TreatmentCard"
+import { generateSlug } from "../utils"
 
 const inter = Inter({
   subsets: ["latin"],
@@ -33,7 +34,7 @@ const CarouselSection = ({ title, items, type, searchPlaceholder, onSearchSelect
 }) => {
   const router = useRouter()
   const [searchTerm, setSearchTerm] = useState("")
-  const [emblaRef, emblaApi] = useEmblaCarousel({ loop: false, align: 'start', dragFree: false, containScroll: 'keepSnaps' })
+  const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true, align: 'start', dragFree: false, containScroll: 'keepSnaps' })
   const [prevBtnDisabled, setPrevBtnDisabled] = useState(true)
   const [nextBtnDisabled, setNextBtnDisabled] = useState(true)
 
@@ -54,7 +55,8 @@ const CarouselSection = ({ title, items, type, searchPlaceholder, onSearchSelect
 
   const searchOptions = useMemo(() => items.map(item => ({
     id: item._id,
-    name: type === 'doctor' ? `${item.doctorName} - ${item.specialization?.[0]?.name || 'General Practitioner'}` : `${item.name || item.title} (${item.specialistName || 'Treatment'})`
+    slug: generateSlug(item.name || item.title || item.doctorName || ''),
+    name: type === 'doctor' ? `${item.doctorName} - ${item.specialization?.[0]?.name || 'General Practitioner'}` : `${item.name || item.title}`
   })), [items, type])
 
   const filteredItems = useMemo(() => {
@@ -72,6 +74,12 @@ const CarouselSection = ({ title, items, type, searchPlaceholder, onSearchSelect
     </div>
   )
 
+  // Helper function to find slug by ID
+  const getSlugById = (id: string) => {
+    const option = searchOptions.find(opt => opt.id === id)
+    return option?.slug || generateSlug(option?.name || '')
+  }
+
   return (
     <section className={`bg-gray-50 rounded-xs shadow-xs border border-gray-100 ${inter.variable} font-light`}>
       <div className="md:px-4 px-2 pt-4">
@@ -80,7 +88,8 @@ const CarouselSection = ({ title, items, type, searchPlaceholder, onSearchSelect
           <div className="relative w-full md:w-80">
             <SearchDropdown value={searchTerm} onChange={setSearchTerm} placeholder={searchPlaceholder} options={searchOptions} onOptionSelect={(id) => {
               if (type === 'treatment') {
-                router.push(`/search?treatment=${id}&view=treatments`);
+                const slug = getSlugById(id);
+                router.push(`/search?treatment=${slug}&view=treatments`);
               } else {
                 onSearchSelect?.(id);
               }
@@ -91,8 +100,8 @@ const CarouselSection = ({ title, items, type, searchPlaceholder, onSearchSelect
       <div className="relative px-2 md:px-4 pb-8">
         <div className={EMBLA_CLASSES.viewport} ref={emblaRef}>
           <div className={EMBLA_CLASSES.container}>
-            {filteredItems.map((item) => (
-              <div key={item._id} className={classNames(EMBLA_CLASSES.slide, EMBLA_SLIDE_SIZES.xs, EMBLA_SLIDE_SIZES.sm, EMBLA_SLIDE_SIZES.lg)}>
+            {filteredItems.map((item, index) => (
+              <div key={item._id || `${item.name || item.title || 'item'}-${index}`} className={classNames(EMBLA_CLASSES.slide, EMBLA_SLIDE_SIZES.xs, EMBLA_SLIDE_SIZES.sm, EMBLA_SLIDE_SIZES.lg)}>
                 {type === 'doctor' ? <DoctorCard doctor={item} /> : <TreatmentCard item={item} />}
               </div>
             ))}

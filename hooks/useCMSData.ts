@@ -647,8 +647,11 @@ export const useCMSData = () => {
     }
 
     // Treatments - use ALL treatments for filter options
+    // Only include treatments that have at least one branch available
     if (visibleKeys.includes('treatment')) {
-      options.treatment = allTreatments.map((t) => ({ id: t._id || '', name: t.name || '' }))
+      options.treatment = allTreatments
+        .filter((t) => t.branchesAvailableAt && t.branchesAvailableAt.length > 0)
+        .map((t) => ({ id: t._id || '', name: t.name || '' }))
     }
 
     // Doctors

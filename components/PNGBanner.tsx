@@ -7,27 +7,81 @@ export default function PNGBanner() {
 
     return (
         <section
-            onClick={scrollToForm}
-            className="relative w-full h-auto md:min-h-[88vh] overflow-hidden cursor-pointer"
+
+            className="relative w-full overflow-hidden cursor-pointer"
         >
-            {/* Background Image */}
-           
+            {/* ================= DESKTOP BANNER ================= */}
+            <div className="relative hidden md:block min-h-[88vh] w-full">
+                {/* Background */}
                 <img
-                    src="/png-banner.jpg"
-                    alt="Medivisor Community Health Partners"
-                    className="w-full h-full object-contain md:object-cover object-center"
-                    loading="eager"
+                    src="/png-banner.png"
+                    alt="Medivisor PNG Banner"
+                    className="absolute inset-0 w-full h-full object-cover"
                 />
-                {/* Overlay */}
 
+                {/* Left content is already baked into image */}
 
-            {/* Logo */}
-            <div className="absolute top-4 left-4 md:top-8 md:left-20 z-40">
+                {/* Right Content */}
+                <div className="absolute right-20 top-10 z-30 max-w-xl text-white">
+                    <h1 className="text-4xl lg:text-5xl font-bold leading-tight uppercase">
+                        Medivisor Expanded <br />
+                        Patient Support <br />
+                        Network (PNG)
+                    </h1>
+
+                    <button
+                        onClick={scrollToForm}
+                        className="
+        
+              hover:bg-[#E22026] cursor-pointer md:block hidden mt-5 bg-[#74BF44] text-white font-medium px-5 py-2 rounded-md shadow-md transition-all
+             
+        inline-flex items-center justify-center font-medium tracking-wide transition duration-300 ease-in-out
+        text-base px-12 py-3 rounded-lg"
+                    >
+                        JOIN US
+                    </button>
+                </div>
+
+                {/* Whale Logo */}
+                <div className="absolute  left-20 z-40">
+                    <img
+                        src="/icon/Whale-logo.png"
+                        alt="Whale Certified"
+                        className="w-28"
+                    />
+                </div>
+            </div>
+
+            {/* ================= MOBILE BANNER ================= */}
+            <div className="relative md:hidden w-full">
+                {/* Mobile Image */}
                 <img
-                    src="/icon/Whale-logo.png"
-                    alt="Medivisor Logo"
-                    className="w-12 md:w-28"
+                    src="/png-banner-mobile.png"
+                    alt="Medivisor PNG Mobile Banner"
+                    className="w-full h-auto object-cover"
                 />
+
+                {/* Overlay Content */}
+                <div className="absolute top-5 right-2 w-[85%] flex flex-col justify-end px-5 pb-6 text-right">
+                    <h1 className="text-lg  text-right font-bold text-white leading-snug uppercase">
+                        Medivisor Expanded Patient Support Network (PNG)
+                    </h1>
+
+                    <button
+                        className="mt-4  text-right ml-auto  text-right w-fit bg-green-500 text-white font-semibold px-6 py-2 rounded-md"
+                    >
+                        JOIN US
+                    </button>
+                </div>
+
+                {/* Mobile Logo */}
+                <div className="absolute top-0 left-4">
+                    <img
+                        src="/icon/Whale-logo.png"
+                        alt="Whale Certified"
+                        className="w-12"
+                    />
+                </div>
             </div>
         </section>
     );

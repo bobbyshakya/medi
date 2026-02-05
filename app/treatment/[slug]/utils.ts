@@ -1,188 +1,302 @@
 // app/treatment/[slug]/utils.ts
-// Utility functions for treatment slug page
+// Optimized utility functions for treatment slug page with direct CMS integration
 
-import { getTreatmentBySlug, getAllCMSData, generateSlug } from '@/lib/cms'
+import { getAllCMSData, generateSlug as cmsGenerateSlug } from '@/lib/cms'
+import type {
+  HospitalData,
+  BranchData,
+  DoctorData,
+  TreatmentData,
+  ExtendedTreatmentData,
+  CityData,
+  DepartmentData,
+  SpecializationData,
+} from '@/lib/cms/types'
 
 /**
- * Get treatment data by slug with branch availability
- * Uses direct CMS library call to avoid API route issues in production
+ * Extended treatment with hospitals and doctors data
  */
-export const fetchTreatmentBySlug = async (slug: string) => {
-  try {
-    const treatment = await getTreatmentBySlug(slug)
-    return treatment
-  } catch (error) {
-    console.error('Error fetching treatment by slug:', error)
-    return null
-  }
+export interface TreatmentWithHospitalsAndDoctors {
+  treatment: ExtendedTreatmentData
+  hospitals: HospitalTreatmentInfo[]
+  allDoctors: DoctorInfo[]
+  totalHospitals: number
+  totalDoctors: number
 }
 
 /**
- * Get all treatments with extended data (for treatment page)
- * Uses direct CMS library call
+ * Hospital info with treatment-specific data
  */
-export const fetchAllTreatmentsData = async () => {
+export interface HospitalTreatmentInfo {
+  hospital: HospitalData
+  branches: BranchTreatmentInfo[]
+  doctors: DoctorInfo[]
+}
+
+/**
+ * Branch info with treatment-specific data
+ */
+export interface BranchTreatmentInfo {
+  branch: BranchData
+  treatmentCost: string | null
+  treatmentDuration: string | null
+  matchingDoctors: DoctorInfo[]
+}
+
+/**
+ * Doctor info with location data
+ */
+export interface DoctorInfo {
+  doctor: DoctorData
+  hospitals: {
+    hospitalId: string
+    hospitalName: string
+    hospitalLogo: string | null
+    branchId?: string
+    branchName?: string
+    cities: CityData[]
+  }[]
+  departments: DepartmentData[]
+  totalExperience: number
+}
+
+/**
+ * Generate URL-friendly slug from treatment name
+ */
+export function generateSlug(name: string | null | undefined): string {
+  return cmsGenerateSlug(name)
+}
+
+/**
+ * Normalize slug for comparison
+ */
+function normalizeSlug(slug: string): string {
+  return slug.toLowerCase().trim().replace(/[-_]+/g, '-')
+}
+
+/**
+ * Check if treatment matches by name (case-insensitive)
+ */
+function treatmentMatchesName(treatment: TreatmentData, name: string): boolean {
+  const treatmentName = treatment.name?.toLowerCase() || ''
+  const searchName = name.toLowerCase()
+  return treatmentName === searchName || treatmentName.includes(searchName)
+}
+
+/**
+ * Find treatment and map hospital/doctor data properly
+ * Uses direct CMS library for efficient data access
+ */
+export async function findTreatmentWithHospitalsAndDoctors(
+  slug: string
+): Promise<TreatmentWithHospitalsAndDoctors | null> {
   try {
+    // Fetch all CMS data using the centralized service
     const { treatments, hospitals } = await getAllCMSData()
-    return { treatments, hospitals }
-  } catch (error) {
-    console.error('Error fetching treatments data:', error)
-    return { treatments: [], hospitals: [] }
-  }
-}
-
-/**
- * Extended treatment with matching doctors
- */
-export interface TreatmentWithDoctors {
-  treatment: any
-  branchesOfferingTreatment: any[]
-  allMatchingDoctors: any[]
-}
-
-/**
- * Find treatment and collect matching doctors
- * This replaces the getAllExtendedTreatments and getAllExtendedDoctors logic
- */
-export const findTreatmentWithDoctors = async (slug: string): Promise<TreatmentWithDoctors | null> => {
-  try {
-    const { treatments, hospitals } = await fetchAllTreatmentsData()
+    
+    if (!treatments || !hospitals) {
+      console.warn('CMS data not available')
+      return null
+    }
     
     // Normalize slug
-    const normalizedSlug = slug.toLowerCase().trim().replace(/[-_]+/g, '-')
+    const normalizedSlug = normalizeSlug(slug)
     
-    // Find treatment
-    const treatment = treatments.find((t: any) => {
+    // Find treatment by slug
+    const treatment = treatments.find((t: ExtendedTreatmentData) => {
       const treatmentSlug = generateSlug(t.name)
       return treatmentSlug === normalizedSlug || treatmentSlug === slug
     })
     
     if (!treatment) {
+      console.warn('Treatment not found for slug:', slug)
       return null
     }
     
-    // Collect all extended doctors
-    const allExtendedDoctors = getAllExtendedDoctors(hospitals)
+    // Build treatment name for matching
+    const treatmentName = treatment.name?.toLowerCase() || ''
     
-    // Get treatment department names for matching
-    const lowerTreatmentDepts = treatment.departments?.map((d: any) => d.name.toLowerCase()) || []
+    // Build treatment-department lookup
+    const treatmentDeptNames = new Set(
+      treatment.departments?.map(d => d.name?.toLowerCase()) || []
+    )
     
-    // Collect all branches offering this treatment with matching doctors
-    const branchesOfferingTreatment: any[] = []
-    const uniqueDoctorsIds = new Set<string>()
+    // Map hospitals and branches offering this treatment
+    const hospitalTreatmentMap = new Map<string, HospitalTreatmentInfo>()
+    const allDoctorsMap = new Map<string, DoctorInfo>()
     
-    hospitals.forEach((hospital: any) => {
-      hospital.branches.forEach((branch: any) => {
+    for (const hospital of hospitals) {
+      let hospitalHasTreatment = false
+      const branchesWithTreatment: BranchTreatmentInfo[] = []
+      
+      for (const branch of hospital.branches || []) {
+        // Check if branch offers this treatment
         const branchTreatments = [
           ...(branch.treatments || []),
-          ...(branch.specialists || []).flatMap((s: any) => s.treatments || [])
+          ...(branch.specialists || []).flatMap((s: SpecializationData) => s.treatments || [])
         ]
         
-        if (branchTreatments.some((t: any) => generateSlug(t.name) === generateSlug(treatment.name))) {
-          // Find matching doctors for this branch
-          const matchingDoctorsForBranch = allExtendedDoctors.filter((doctor: any) => {
-            const hasLocationInThisBranch = doctor.locations?.some((loc: any) =>
-              loc.hospitalId === hospital._id &&
-              (loc.branchId === branch._id || !loc.branchId)
-            )
-            const deptMatch = doctor.departments?.some((dept: any) =>
-              lowerTreatmentDepts.includes(dept.name.toLowerCase())
-            )
-            return hasLocationInThisBranch && deptMatch
-          })
+        const offersTreatment = branchTreatments.some((t: TreatmentData) =>
+          treatmentMatchesName(t, treatmentName) ||
+          generateSlug(t.name) === generateSlug(treatment.name)
+        )
+        
+        if (!offersTreatment) continue
+        hospitalHasTreatment = true
+        
+        // Find matching doctors for this branch/treatment
+        const matchingDoctors: DoctorInfo[] = []
+        
+        // Get all doctors for this branch (including hospital-level doctors)
+        const branchDoctors = [
+          ...(branch.doctors || []),
+          ...(hospital.doctors || [])
+        ]
+        
+        for (const doc of branchDoctors) {
+          // Check if doctor matches this treatment via departments
+          const docDepts = doc.specialization?.flatMap((s: SpecializationData) =>
+            s.department?.map(d => d.name?.toLowerCase() || '') || []
+          ) || []
           
-          // Add doctors to unique set
-          matchingDoctorsForBranch.forEach((doc: any) => {
-            uniqueDoctorsIds.add(doc._id)
-          })
+          const deptMatch = docDepts.some(d =>
+            treatmentDeptNames.has(d) ||
+            treatmentDeptNames.has(d.replace('department of ', ''))
+          )
           
-          branchesOfferingTreatment.push({
-            ...branch,
-            hospitalName: hospital.hospitalName,
-            hospitalId: hospital._id,
-            hospitalLogo: hospital.logo,
-            matchingDoctors: matchingDoctorsForBranch
-          })
+          if (!deptMatch) continue
+          
+          // Build doctor info
+          if (!allDoctorsMap.has(doc._id)) {
+            const doctorLocations: DoctorInfo['hospitals'] = []
+            
+            doctorLocations.push({
+              hospitalId: hospital._id,
+              hospitalName: hospital.hospitalName,
+              hospitalLogo: hospital.logo || null,
+              branchId: branch._id,
+              branchName: branch.branchName,
+              cities: branch.city || []
+            })
+            
+            const expYears = parseInt(doc.experienceYears || '0', 10)
+            
+            const allDepts: DepartmentData[] = []
+            doc.specialization?.forEach((s: SpecializationData) => {
+              s.department?.forEach((d: DepartmentData) => {
+                if (!allDepts.some(existing => existing._id === d._id)) {
+                  allDepts.push(d)
+                }
+              })
+            })
+            
+            allDoctorsMap.set(doc._id, {
+              doctor: doc,
+              hospitals: doctorLocations,
+              departments: allDepts,
+              totalExperience: expYears
+            })
+          } else {
+            // Add branch location to existing doctor
+            const existingDoc = allDoctorsMap.get(doc._id)!
+            const hasLocation = existingDoc.hospitals.some(
+              loc => loc.hospitalId === hospital._id && loc.branchId === branch._id
+            )
+            if (!hasLocation) {
+              existingDoc.hospitals.push({
+                hospitalId: hospital._id,
+                hospitalName: hospital.hospitalName,
+                hospitalLogo: hospital.logo || null,
+                branchId: branch._id,
+                branchName: branch.branchName,
+                cities: branch.city || []
+              })
+            }
+          }
+          
+          const docInfo = allDoctorsMap.get(doc._id)!
+          if (!matchingDoctors.some(m => m.doctor._id === doc._id)) {
+            matchingDoctors.push(docInfo)
+          }
         }
-      })
-    })
+        
+        // Extract treatment cost and duration from branch data
+        const treatmentData = branch.treatments?.find((t: TreatmentData) =>
+          generateSlug(t.name) === generateSlug(treatment.name)
+        )
+        
+        branchesWithTreatment.push({
+          branch,
+          treatmentCost: treatmentData?.cost || null,
+          treatmentDuration: treatmentData?.duration || null,
+          matchingDoctors
+        })
+      }
+      
+      if (branchesWithTreatment.length > 0) {
+        // Collect doctors for this hospital (from all branches)
+        const hospitalDoctors: DoctorInfo[] = []
+        const doctorIds = new Set<string>()
+        
+        for (const b of branchesWithTreatment) {
+          for (const doc of b.matchingDoctors) {
+            if (!doctorIds.has(doc.doctor._id)) {
+              doctorIds.add(doc.doctor._id)
+              hospitalDoctors.push(doc)
+            }
+          }
+        }
+        
+        hospitalTreatmentMap.set(hospital._id, {
+          hospital,
+          branches: branchesWithTreatment,
+          doctors: hospitalDoctors
+        })
+      }
+    }
     
-    // Collect unique matching doctors across ALL branches
-    const allMatchingDoctors = Array.from(uniqueDoctorsIds)
-      .map((id: string) => allExtendedDoctors.find((d: any) => d._id === id))
-      .filter(Boolean)
-      .sort((a: any, b: any) => {
-        const expA = parseInt(a.experienceYears || '0', 10)
-        const expB = parseInt(b.experienceYears || '0', 10)
-        return expB - expA
-      })
+    // Convert maps to arrays and sort
+    const hospitalsArray = Array.from(hospitalTreatmentMap.values())
+      .sort((a, b) => a.hospital.hospitalName.localeCompare(b.hospital.hospitalName))
+    
+    const doctorsArray = Array.from(allDoctorsMap.values())
+      .sort((a, b) => b.totalExperience - a.totalExperience)
     
     return {
       treatment,
-      branchesOfferingTreatment,
-      allMatchingDoctors
+      hospitals: hospitalsArray,
+      allDoctors: doctorsArray,
+      totalHospitals: hospitalsArray.length,
+      totalDoctors: doctorsArray.length
     }
   } catch (error) {
-    console.error('Error finding treatment with doctors:', error)
+    console.error('Error finding treatment with hospitals and doctors:', error)
     return null
   }
 }
 
 /**
- * Get all extended doctors from hospitals (copied from treatment page)
+ * Legacy function - kept for backward compatibility
  */
-function getAllExtendedDoctors(hospitals: any[]): any[] {
-  const extendedMap = new Map<string, any>()
+export async function findTreatmentWithDoctors(slug: string) {
+  const result = await findTreatmentWithHospitalsAndDoctors(slug)
   
-  hospitals.forEach((h) => {
-    const processDoctor = (item: any, branch?: any) => {
-      const baseId = item._id
-      
-      const doctorDepartments: any[] = []
-      item.specialization?.forEach((spec: any) => {
-        spec.department?.forEach((dept: any) => {
-          doctorDepartments.push(dept)
-        })
-      })
-      const uniqueDepartments = Array.from(new Map(doctorDepartments.map((dept: any) => [dept._id, dept])).values())
-      
-      const location = {
-        hospitalName: h.hospitalName,
-        hospitalId: h._id,
-        branchName: branch?.branchName,
-        branchId: branch?._id,
-        cities: branch?.city || [],
-      }
-      
-      if (extendedMap.has(baseId)) {
-        const existingDoctor = extendedMap.get(baseId)
-        
-        const isLocationDuplicate = existingDoctor.locations?.some(
-          (loc: any) => loc.hospitalId === h._id && (loc.branchId === branch?._id || (!loc.branchId && !branch?._id))
-        )
-        
-        if (!isLocationDuplicate) {
-          existingDoctor.locations.push(location)
-        }
-        
-        const allDepts = [...existingDoctor.departments, ...uniqueDepartments]
-        existingDoctor.departments = Array.from(new Map(allDepts.map((dept: any) => [dept._id, dept])).values())
-        
-      } else {
-        extendedMap.set(baseId, {
-          ...item,
-          locations: [location],
-          departments: uniqueDepartments,
-        })
-      }
-    }
-    
-    h.doctors?.forEach((d: any) => processDoctor(d))
-    
-    h.branches?.forEach((b: any) => {
-      b.doctors?.forEach((d: any) => processDoctor(d, b))
-    })
-  })
+  if (!result) return null
   
-  return Array.from(extendedMap.values())
+  // Convert to legacy format
+  const branchesOfferingTreatment = result.hospitals.flatMap(h =>
+    h.branches.map(b => ({
+      ...b.branch,
+      hospitalName: h.hospital.hospitalName,
+      hospitalId: h.hospital._id,
+      hospitalLogo: h.hospital.logo,
+      matchingDoctors: b.matchingDoctors
+    }))
+  )
+  
+  return {
+    treatment: result.treatment,
+    branchesOfferingTreatment,
+    allMatchingDoctors: result.allDoctors.map(d => d.doctor)
+  }
 }

@@ -229,9 +229,7 @@ export default function Header() {
               priority // Add this line
             />
           </Link>
-        {/* <div className='w-[50%]'>
-            <BranchFilter allHospitals={allHospitals} />
-        </div> */}
+        
           {/* Navigation */}
           <div className="flex w-full md:ml-10 items-center justify-between gap-4">
             <div
@@ -337,15 +335,18 @@ export default function Header() {
 
 
           </div>
+          <div className='w-[60%]'>
+            <BranchFilter allHospitals={allHospitals} />
+        </div>
           {/* CTA & Mobile Menu Toggle */}
           <div className="flex w-full md:w-1/6 items-center justify-end gap-3">
-              <button
+              {/* <button
                 className="bg-[#E22026] cursor-pointer md:block hidden hover:bg-[#74BF44] text-white font-medium px-5 py-2 rounded-md shadow-md transition-all"
                 onClick={openModal}
                 type="button"
               >
                 Enquire Now
-              </button>
+              </button> */}
 
               <button
                 className="text-[#241d1f] md:hidden p-2 rounded-md hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-300 transition"

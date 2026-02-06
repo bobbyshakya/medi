@@ -142,7 +142,6 @@ const SearchDropdown = ({
   // Lightweight, real-time filtered results with relevance scoring
   const filtered = useMemo(() => {
     if (!value) return options.slice(0, 6)
-    const q = value.toLowerCase().trim()
     
     return options
       .map(opt => ({
@@ -182,7 +181,7 @@ const SearchDropdown = ({
           onChange={e => { onChange(e.target.value); setIsOpen(true); }}
           onFocus={() => setIsOpen(true)}
           placeholder={placeholder}
-          className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 md:text-base text-sm bg-white"
+          className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
         />
         {value && (
           <button onClick={onClear} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
@@ -309,7 +308,7 @@ const BranchFilter = ({ allHospitals, initialSearch = "" }: BranchFilterProps) =
 
           // Specialist-level treatments
           b.specialists?.forEach((s) => {
-            s.treatments?.forEach((t) => {
+            s.treatments?.forEach((t: any) => {
               const name = getName(t)
               if (name && name !== 'Unknown') {
                 const id = t._id || t.id || slug(name)

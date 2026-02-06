@@ -353,7 +353,7 @@ export default function Header() {
       </motion.header>
 
       {/* Spacer */}
-      <div className={`transition-all duration-300 ease-in-out ${isScrolled ? 'h-[75px]' : 'md:h-[75px] h-[50px]'
+      <div className={`transition-all duration-300 ease-in-out ${isScrolled ? 'h-[75px]' : 'md:h-[75px] h-[56px]'
         }`} />
 
       <ContactModal isOpen={isModalOpen} onClose={closeModal} />

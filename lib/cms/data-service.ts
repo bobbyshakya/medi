@@ -19,106 +19,6 @@ import type {
 } from './types'
 
 // =============================================================================
-// STATE INFERENCE HELPER
-// =============================================================================
-
-/**
- * Infers the Indian state from a city name.
- * This is used as a fallback when city-state mapping from CMS is missing.
- */
-function inferStateFromCityName(cityName: string | null | undefined): string {
-  if (!cityName || typeof cityName !== 'string') return 'Unknown State';
-
-  const city = cityName.toLowerCase().trim();
-
-  // Delhi NCR handling
-  const delhiNCRCities = ['delhi', 'new delhi', 'gurugram', 'gurgaon', 'noida', 'faridabad', 'ghaziabad', 'greater noida'];
-  if (delhiNCRCities.some(c => city.includes(c))) return 'Delhi NCR';
-
-  // Maharashtra
-  const maharashtraCities = ['mumbai', 'pune', 'nashik', 'nagpur', 'aurangabad', 'kolhapur', 'navi mumbai', 'thane', 'solapur', 'akola', 'amaravati'];
-  if (maharashtraCities.some(c => city === c || city.includes(c))) return 'Maharashtra';
-
-  // Gujarat
-  const gujaratCities = ['ahmedabad', 'surat', 'vadodara', 'rajkot', 'jamnagar', 'bhavnagar', 'junagadh', 'gandhinagar', 'bharuch', 'anand', 'navsari', 'valsad'];
-  if (gujaratCities.some(c => city === c || city.includes(c))) return 'Gujarat';
-
-  // Karnataka
-  const karnatakaCities = ['bangalore', 'bengaluru', 'mysore', 'mangalore', 'hubli', 'belgaum', 'belagavi', 'dharwad'];
-  if (karnatakaCities.some(c => city === c || city.includes(c))) return 'Karnataka';
-
-  // Tamil Nadu
-  const tamilNaduCities = ['chennai', 'coimbatore', 'madurai', 'trichy', 'tiruchirappalli', 'salem', 'vellore', 'tirunelveli'];
-  if (tamilNaduCities.some(c => city === c || city.includes(c))) return 'Tamil Nadu';
-
-  // Telangana / Andhra Pradesh
-  const telanganaCities = ['hyderabad', 'secunderabad', 'warangal', 'karimnagar', 'khammam', 'nizamabad'];
-  const andhraCities = ['vizag', 'visakhapatnam', 'vijayawada', 'guntur', 'nellore', 'tirupati', 'kurnool'];
-  if (telanganaCities.some(c => city === c || city.includes(c))) return 'Telangana';
-  if (andhraCities.some(c => city === c || city.includes(c))) return 'Andhra Pradesh';
-
-  // West Bengal
-  const westBengalCities = ['kolkata', 'howrah', 'asansol', 'durgapur', 'siliguri'];
-  if (westBengalCities.some(c => city === c || city.includes(c))) return 'West Bengal';
-
-  // Rajasthan
-  const rajasthanCities = ['jaipur', 'jodhpur', 'udaipur', 'kota', 'bikaner', 'ajmer'];
-  if (rajasthanCities.some(c => city === c || city.includes(c))) return 'Rajasthan';
-
-  // Uttar Pradesh
-  const upCities = ['lucknow', 'kanpur', 'varanasi', 'prayagraj', 'agra', 'meerut', 'aligarh', 'bareilly'];
-  if (upCities.some(c => city === c || city.includes(c))) return 'Uttar Pradesh';
-
-  // Kerala
-  const keralaCities = ['kochi', 'thiruvananthapuram', 'kozhikode', 'kollam', 'palakkad', 'thrissur', 'kannur'];
-  if (keralaCities.some(c => city === c || city.includes(c))) return 'Kerala';
-
-  // Madhya Pradesh
-  const mpCities = ['indore', 'bhopal', 'gwalior', 'jabalpur', 'ujjain'];
-  if (mpCities.some(c => city === c || city.includes(c))) return 'Madhya Pradesh';
-
-  // Punjab
-  const punjabCities = ['amritsar', 'ludhiana', 'jalandhar', 'patiala', 'bathinda'];
-  if (punjabCities.some(c => city === c || city.includes(c))) return 'Punjab';
-
-  // Chandigarh
-  if (city.includes('chandigarh')) return 'Chandigarh';
-
-  // Odisha
-  const odishaCities = ['bhubaneswar', 'cuttack', 'rourkela', 'sambalpur'];
-  if (odishaCities.some(c => city === c || city.includes(c))) return 'Odisha';
-
-  // Bihar
-  const biharCities = ['patna', 'muzaffarpur', 'gaya', 'bhagalpur', 'darbhanga'];
-  if (biharCities.some(c => city === c || city.includes(c))) return 'Bihar';
-
-  // Jharkhand
-  const jharkhandCities = ['ranchi', 'jamshedpur', 'dhanbad', 'bokaro'];
-  if (jharkhandCities.some(c => city === c || city.includes(c))) return 'Jharkhand';
-
-  // Uttarakhand
-  const uttarakhandCities = ['dehradun', 'haridwar', 'roorkee', 'haldwani'];
-  if (uttarakhandCities.some(c => city === c || city.includes(c))) return 'Uttarakhand';
-
-  // Northeast states
-  const neCities: Record<string, string[]> = {
-    'Assam': ['guwahati', 'silchar', 'dibrugarh'],
-    'Manipur': ['imphal'],
-    'Meghalaya': ['shillong', 'tura'],
-    'Nagaland': ['kohima', 'dimapur'],
-    'Tripura': ['agartala'],
-    'Mizoram': ['aizawl'],
-    'Arunachal Pradesh': ['itanagar']
-  };
-
-  for (const [state, citiesList] of Object.entries(neCities)) {
-    if (citiesList.some(c => city === c || city.includes(c))) return state;
-  }
-
-  return 'Unknown State';
-}
-
-// =============================================================================
 // COLLECTION NAMES
 // =============================================================================
 
@@ -276,23 +176,83 @@ export function generateSlug(name: string | null | undefined): string {
 // STATE & CITY MAPPING
 // =============================================================================
 
-// Enhanced mapCity function that resolves state from StateMaster
+// Fallback city-to-state mapping for special cases (only used when CMS data is missing)
+const CITY_TO_STATE_FALLBACK: Record<string, string> = {
+  // Delhi NCR
+  'delhi': 'Delhi NCR',
+  'delhi ncr': 'Delhi NCR',
+  'new delhi': 'Delhi NCR',
+  'noida': 'Delhi NCR',
+  'gurgaon': 'Delhi NCR',
+  'gurugram': 'Delhi NCR',
+  'faridabad': 'Delhi NCR',
+  'ghaziabad': 'Delhi NCR',
+  // Maharashtra
+  'mumbai': 'Maharashtra',
+  'pune': 'Maharashtra',
+  'nagpur': 'Maharashtra',
+  // Karnataka
+  'bangalore': 'Karnataka',
+  'bengaluru': 'Karnataka',
+  'mysore': 'Karnataka',
+  // Tamil Nadu
+  'chennai': 'Tamil Nadu',
+  'coimbatore': 'Tamil Nadu',
+  // Telangana
+  'hyderabad': 'Telangana',
+  // Gujarat
+  'ahmedabad': 'Gujarat',
+  'surat': 'Gujarat',
+  'vadodara': 'Gujarat',
+  'rajkot': 'Gujarat',
+  // West Bengal
+  'kolkata': 'West Bengal',
+  // Uttar Pradesh
+  'lucknow': 'Uttar Pradesh',
+  'kanpur': 'Uttar Pradesh',
+  // Rajasthan
+  'jaipur': 'Rajasthan',
+  // Madhya Pradesh
+  'bhopal': 'Madhya Pradesh',
+  'indore': 'Madhya Pradesh',
+}
+
+// Enhanced mapCity function that resolves state from Wix CMS StateMaster
+// Falls back to static mapping only when CMS data is unavailable
 function mapCityWithStateRef(item: any, stateMap: Record<string, { _id: string; name: string }>): CityData {
   const cityName = getValue(item, 'cityName', 'city name', 'name', 'City Name') || 'Unknown City'
   
-  // Try to get state from reference first (Wix CMS stores state as a reference)
+  // Try to get state from Wix CMS StateMaster reference
   let state = 'Unknown State'
   let stateId: string | undefined = undefined
   
+  // Check for state reference in various Wix CMS field formats
   const stateRef = item.state || item.State || item.stateRef || item.state_master || item.stateMaster || item.StateMaster || item.StateMaster_state
   
   if (stateRef) {
-    if (typeof stateRef === 'object') {
-      // Direct state object with name
+    if (Array.isArray(stateRef)) {
+      // Multi-reference array from Wix CMS
+      const firstRef = stateRef[0]
+      if (firstRef) {
+        if (typeof firstRef === 'object') {
+          // Array of state objects - get name from first item
+          state = getValue(firstRef, 'state', 'State Name', 'name', 'title', 'State', 'stateName', 'StateName') || 'Unknown State'
+          stateId = firstRef._id || firstRef.ID
+        } else if (typeof firstRef === 'string') {
+          // Array of IDs - lookup in stateMap
+          stateId = firstRef
+          const resolvedState = stateMap[firstRef]
+          if (resolvedState) {
+            state = resolvedState.name
+          }
+        }
+      }
+    } else if (typeof stateRef === 'object') {
+      // Direct state object from Wix CMS - get name from state fields
       state = getValue(stateRef, 'state', 'State Name', 'name', 'title', 'State', 'stateName', 'StateName') || 'Unknown State'
       stateId = stateRef._id || stateRef.ID
     } else if (typeof stateRef === 'string') {
-      // It's an ID reference - lookup in stateMap
+      // It's an ID reference - lookup in stateMap (fetched from StateMaster)
       stateId = stateRef
       const resolvedState = stateMap[stateRef]
       if (resolvedState) {
@@ -301,20 +261,17 @@ function mapCityWithStateRef(item: any, stateMap: Record<string, { _id: string; 
     }
   }
   
-  // Direct string fallback
+  // If still no state, try direct state field on city item
   if (state === 'Unknown State') {
     state = getValue(item, 'state', 'State Name', 'stateName') || 'Unknown State'
   }
   
-  // Gujarat fallback cities including Navsari (for cities without proper state reference)
-  const lowerCityName = cityName.toLowerCase()
+  // Final fallback: use static city-to-state mapping for known cities
   if (state === 'Unknown State') {
-    if (lowerCityName.includes("navsari") || lowerCityName.includes("ahmedabad") || 
-        lowerCityName.includes("surat") || lowerCityName.includes("vadodara") ||
-        lowerCityName.includes("rajkot") || lowerCityName.includes("bharuch") ||
-        lowerCityName.includes("jamnagar") || lowerCityName.includes("gandhinagar") ||
-        lowerCityName.includes(" Anand") || lowerCityName.includes("anand")) {
-      state = "Gujarat"
+    const normalizedCity = cityName.toLowerCase().trim()
+    const fallbackState = CITY_TO_STATE_FALLBACK[normalizedCity]
+    if (fallbackState) {
+      state = fallbackState
     }
   }
   
@@ -538,9 +495,9 @@ async function fetchAllStates(): Promise<Record<string, { _id: string; name: str
   if (cached) return cached
 
   return memoryCache.dedupe(cacheKey, async () => {
+    // Fetch all states (no limit)
     const res = await wixClient.items
       .query(COLLECTIONS.STATES)
-      .limit(500)
       .find()
 
     const stateMap: Record<string, { _id: string; name: string }> = {}
@@ -563,11 +520,10 @@ async function fetchAllCities(): Promise<any[]> {
   if (cached) return cached
 
   return memoryCache.dedupe(cacheKey, async () => {
-    // Fetch cities with state reference included
+    // Fetch cities with state reference included (all cities, no limit)
     const res = await wixClient.items
       .query(COLLECTIONS.CITIES)
-      .include('state', 'State', 'stateRef', 'stateMaster')
-      .limit(500)
+      .include('state', 'State', 'stateRef', 'stateMaster', 'state_master')
       .find()
 
     memoryCache.set(cacheKey, res.items, CACHE_CONFIG.CITIES * 1000)
@@ -654,15 +610,19 @@ async function enrichBranchesWithRelatedData(
     ...branch,
     doctors: branch.doctors.map((d: any) => (doctors as Record<string, DoctorData>)[d._id] || d),
     city: branch.city.map((c: any) => {
+      // Try to get enriched city from cache first
       const enrichedCity = (cities as Record<string, CityData>)[c._id]
       if (enrichedCity && enrichedCity.state && enrichedCity.state !== 'Unknown State') {
         return enrichedCity
       }
-      const inferredState = inferStateFromCityName(c.name || c.cityName)
+      // Apply fallback: use city data with CITY_TO_STATE_FALLBACK mapping
+      const cityName = c.name || c.cityName || 'Unknown City'
+      const normalizedCity = cityName.toLowerCase().trim()
+      const fallbackState = CITY_TO_STATE_FALLBACK[normalizedCity] || 'Unknown State'
       return {
         _id: c._id,
-        cityName: c.name || c.cityName || 'Unknown City',
-        state: inferredState,
+        cityName,
+        state: fallbackState,
         country: 'India',
       }
     }),
@@ -684,7 +644,7 @@ export async function getAllCMSData(): Promise<CMSDataResponse> {
   if (cached) return cached
 
   return memoryCache.dedupe(cacheKey, async () => {
-    // Fetch all base data in parallel including states
+    // Fetch all base data in parallel
     const [rawHospitals, rawBranches, rawTreatments, rawCities, rawSpecialists] = await Promise.all([
       fetchAllHospitals(),
       fetchAllBranches(),
@@ -710,6 +670,24 @@ export async function getAllCMSData(): Promise<CMSDataResponse> {
     const specialistDepartmentMap = new Map<string, Set<string>>()
     const treatmentNameToId = new Map<string, string>()
 
+    // Fallback specialty-to-treatment name mapping (common variations)
+    const SPECIALTY_TREATMENT_ALIASES: Record<string, string[]> = {
+      'ophthalmology': ['cataract', 'lasik', 'retina', 'cornea', 'glaucoma', 'eye surgery', 'eye treatment'],
+      'cardiology': ['heart', 'cardiac', 'bypass', 'angioplasty', 'heart surgery'],
+      'orthopedics': ['bone', 'joint', 'knee', 'hip', 'spine', 'orthopedic', 'fracture'],
+      'neurology': ['brain', 'neural', 'spine surgery', 'neuro'],
+      'oncology': ['cancer', 'tumor', 'chemotherapy', 'radiation therapy'],
+      'gastroenterology': ['stomach', 'digestive', 'liver', 'gastro', 'intestine'],
+      'dermatology': ['skin', 'hair', 'cosmetic dermatology'],
+      'urology': ['urinary', 'kidney', 'bladder'],
+      'ent': ['ear', 'nose', 'throat', 'sinus'],
+      'pediatrics': ['child', 'children', 'pediatric'],
+      'gynecology': ['pregnancy', 'maternity', 'women health', 'obstetrics'],
+      'psychiatry': ['mental', 'psychological', 'depression', 'anxiety'],
+      'dentistry': ['dental', 'tooth', 'teeth', 'cavity'],
+      'plastic surgery': ['cosmetic', 'reconstructive', 'aesthetic'],
+    }
+
     // First, build treatment name-to-ID map from TreatmentMaster
     rawTreatments.forEach((item: any) => {
       const id = item._id || item.ID
@@ -723,6 +701,9 @@ export async function getAllCMSData(): Promise<CMSDataResponse> {
     rawSpecialists.forEach((spec: any) => {
       const specId = spec._id || spec.ID
       if (!specId) return
+
+      // Get specialist name for alias matching
+      const specName = (spec.name || spec.specialty || spec.title || '').toLowerCase()
 
       // Get treatments from specialist
       const treatments = spec.treatment || spec.data?.treatment || []
@@ -738,6 +719,16 @@ export async function getAllCMSData(): Promise<CMSDataResponse> {
           if (masterId) treatmentIds.add(masterId)
         }
       })
+
+      // Use alias mapping to find additional treatments for this specialty
+      const aliases = SPECIALTY_TREATMENT_ALIASES[specName] || []
+      aliases.forEach((alias: string) => {
+        const treatmentId = treatmentNameToId.get(alias.toLowerCase())
+        if (treatmentId) {
+          treatmentIds.add(treatmentId)
+        }
+      })
+
       specialistTreatmentMap.set(specId, treatmentIds)
 
       // Get departments from specialist
@@ -812,11 +803,14 @@ export async function getAllCMSData(): Promise<CMSDataResponse> {
             if (enrichedCity && enrichedCity.state && enrichedCity.state !== 'Unknown State') {
               return enrichedCity
             }
-            const inferredState = inferStateFromCityName(c.name || c.cityName)
+            // Apply fallback: use city data with CITY_TO_STATE_FALLBACK mapping
+            const cityName = c.name || c.cityName || 'Unknown City'
+            const normalizedCity = cityName.toLowerCase().trim()
+            const fallbackState = CITY_TO_STATE_FALLBACK[normalizedCity] || 'Unknown State'
             return {
               _id: c._id,
-              cityName: c.name || c.cityName || 'Unknown City',
-              state: inferredState,
+              cityName,
+              state: fallbackState,
               country: 'India',
             }
           }),
@@ -857,11 +851,14 @@ export async function getAllCMSData(): Promise<CMSDataResponse> {
           if (enrichedCity && enrichedCity.state && enrichedCity.state !== 'Unknown State') {
             return enrichedCity
           }
-          const inferredState = inferStateFromCityName(c.name || c.cityName)
+          // Apply fallback: use city data with CITY_TO_STATE_FALLBACK mapping
+          const cityName = c.name || c.cityName || 'Unknown City'
+          const normalizedCity = cityName.toLowerCase().trim()
+          const fallbackState = CITY_TO_STATE_FALLBACK[normalizedCity] || 'Unknown State'
           return {
             _id: c._id,
-            cityName: c.name || c.cityName || 'Unknown City',
-            state: inferredState,
+            cityName,
+            state: fallbackState,
             country: 'India',
           }
         }),
@@ -884,27 +881,8 @@ export async function getAllCMSData(): Promise<CMSDataResponse> {
     const treatmentBranchMap = new Map<string, Map<string, TreatmentLocation>>()
 
     // Then map branches to treatments (using treatmentNameToId from above)
-  hospitals.forEach((hospital) => {
-    console.log(`[CMS] Processing hospital: ${hospital.hospitalName} with ${hospital.branches?.length || 0} branches`)
-    
-    hospital.branches.forEach((branch) => {
-      console.log(`[CMS] Branch: ${branch.branchName}, treatments count: ${branch.treatments?.length || 0}`)
-      console.log(`[CMS] Branch specialists count: ${branch.specialists?.length || 0}`)
-      
-      // Debug: Log treatment IDs
-      if (branch.treatments?.length > 0) {
-        console.log(`[CMS] Branch treatment IDs:`, branch.treatments.map(t => ({ id: t._id, name: t.name })))
-      }
-      
-      // Debug: Log specialist treatment info
-      branch.specialists?.forEach((spec: any, idx: number) => {
-        if (spec.treatments?.length > 0) {
-          console.log(`[CMS] Specialist[${idx}] ${spec.name} has ${spec.treatments?.length || 0} treatments`) 
-          if (spec.treatments?.length > 0) {
-            console.log(`[CMS] Specialist[${idx}] treatments:`, spec.treatments.map((t: any) => ({ id: t._id, name: t.name })))
-          }
-        }
-      })
+    hospitals.forEach((hospital) => {
+      hospital.branches.forEach((branch) => {
         // Map treatments by ID
         branch.treatments.forEach((treatment: TreatmentData) => {
           if (!treatmentBranchMap.has(treatment._id)) {
@@ -1091,8 +1069,6 @@ export async function getAllCMSData(): Promise<CMSDataResponse> {
         }
       }
       
-      console.log(`[CMS] Treatment "${treatment.name}" branches: ${branchesMap?.size || 0}`)
-      
       return {
         ...treatment,
         branchesAvailableAt: branchesMap ? Array.from(branchesMap.values()) : [],
@@ -1127,22 +1103,6 @@ export async function getAllCMSData(): Promise<CMSDataResponse> {
       totalHospitals: hospitals.length,
       totalTreatments: treatments.length,
       lastUpdated: new Date().toISOString(),
-    }
-    
-    // Debug logging
-    console.log(`[CMS] Final - Hospitals: ${hospitals.length}, Treatments: ${treatments.length}`)
-    
-    // Debug: Check first hospital's branch treatments
-    if (hospitals.length > 0 && hospitals[0].branches?.length > 0) {
-      const firstBranch = hospitals[0].branches[0]
-      console.log(`[CMS] First branch (${firstBranch.branchName}) treatments: ${firstBranch.treatments?.length || 0}`)
-      
-      // Also check treatments from specialists
-      let specialistTreatmentsCount = 0
-      firstBranch.specialists?.forEach((spec: any) => {
-        specialistTreatmentsCount += spec.treatments?.length || 0
-      })
-      console.log(`[CMS] First branch specialist treatments: ${specialistTreatmentsCount}`)
     }
     
     memoryCache.set(cacheKey, response, CACHE_CONFIG.HOSPITALS * 1000)
@@ -1334,19 +1294,49 @@ export async function getTreatmentBySlug(slug: string): Promise<ExtendedTreatmen
 
 /**
  * Search hospitals by query
+ * Fixed: Added debug logging for treatment verification
  */
 export async function searchHospitals(query: string): Promise<HospitalData[]> {
+  console.log(`[DEBUG] searchHospitals: Starting with query="${query}"`)
+  
   const { hospitals } = await getAllCMSData()
+  console.log(`[DEBUG] searchHospitals: Retrieved ${hospitals.length} hospitals from cache`)
+  
+  // Debug: Log treatment counts per hospital
+  hospitals.forEach((h, idx) => {
+    const treatmentCount = h.treatments?.length || 0
+    const branchCount = h.branches?.length || 0
+    console.log(`[DEBUG] searchHospitals: Hospital ${idx+1}: "${h.hospitalName}" - ${branchCount} branches, ${treatmentCount} treatments`)
+    
+    // Debug: Log first few treatments
+    if (treatmentCount > 0) {
+      const treatmentNames = h.treatments.slice(0, 5).map((t: any) => t.name).join(', ')
+      console.log(`[DEBUG] searchHospitals:   Treatments: ${treatmentNames}${treatmentCount > 5 ? '...' : ''}`)
+    }
+  })
+  
   const normalizedQuery = query.toLowerCase().trim()
-
-  if (!normalizedQuery) return hospitals
-
-  return hospitals.filter((h) => {
+  
+  if (!normalizedQuery) {
+    console.log(`[DEBUG] searchHospitals: No query, returning all ${hospitals.length} hospitals`)
+    return hospitals
+  }
+  
+  const filtered = hospitals.filter((h) => {
     const nameMatch = h.hospitalName.toLowerCase().includes(normalizedQuery)
     const cityMatch = h.branches.some((b) => b.city.some((c) => c.cityName.toLowerCase().includes(normalizedQuery)))
     const treatmentMatch = h.treatments.some((t) => t.name.toLowerCase().includes(normalizedQuery))
+    
+    if (nameMatch || cityMatch || treatmentMatch) {
+      console.log(`[DEBUG] searchHospitals: Matched "${h.hospitalName}" - name:${nameMatch}, city:${cityMatch}, treatment:${treatmentMatch}`)
+    }
+    
     return nameMatch || cityMatch || treatmentMatch
   })
+  
+  console.log(`[DEBUG] searchHospitals: Query "${query}" matched ${filtered.length} hospitals`)
+  
+  return filtered
 }
 
 // Export cached version for server components

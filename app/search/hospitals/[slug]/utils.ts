@@ -54,10 +54,6 @@ export const extractUniqueTreatments = (branch: any, hospitalTreatments?: any[])
   const uniqueTreatments = {} as { [key: string]: any }
   const processedKeys = new Set<string>(); // Track processed keys to prevent undefined keys
 
-  console.log('=== extractUniqueTreatments DEBUG ===');
-  console.log('branch:', branch?.branchName);
-  console.log('hospitalTreatments length:', hospitalTreatments?.length);
-
   // Helper to normalize treatment data from CMS
   // This ensures field names match what TreatmentCard component expects
   const normalizeTreatment = (treatment: any, specialistName: string): any => {
@@ -78,12 +74,9 @@ export const extractUniqueTreatments = (branch: any, hospitalTreatments?: any[])
     }
     
     if (processedKeys.has(key)) {
-      console.log('Skipping duplicate treatment:', treatmentName, 'key:', key);
       return null; // Already processed
     }
     processedKeys.add(key);
-    
-    console.log('Adding treatment:', treatmentName, 'from', specialistName, 'key:', key);
     
     return {
       _id: id || key,
@@ -101,7 +94,6 @@ export const extractUniqueTreatments = (branch: any, hospitalTreatments?: any[])
 
   // First, add hospital-level treatments (these have full details from CMS)
   if (hospitalTreatments && Array.isArray(hospitalTreatments)) {
-    console.log('Processing hospital-level treatments:', hospitalTreatments.length);
     hospitalTreatments.forEach((treatment: any) => {
       const normalized = normalizeTreatment(treatment, 'Hospital Treatment');
       if (normalized) uniqueTreatments[normalized._id] = normalized;
@@ -110,7 +102,6 @@ export const extractUniqueTreatments = (branch: any, hospitalTreatments?: any[])
 
   // Include treatments directly associated with the branch
   if (branch?.treatments && Array.isArray(branch.treatments)) {
-    console.log('Processing branch treatments:', branch.treatments.length);
     branch.treatments.forEach((treatment: any) => {
       const normalized = normalizeTreatment(treatment, 'Direct Treatment');
       if (normalized) {
@@ -124,10 +115,8 @@ export const extractUniqueTreatments = (branch: any, hospitalTreatments?: any[])
 
   // Include treatments from specialists (enriched data from Wix CMS)
   if (branch?.specialists && Array.isArray(branch.specialists)) {
-    console.log('Processing specialists:', branch.specialists.length);
     branch.specialists.forEach((specialist: any) => {
       const specialistName = specialist.name || specialist.specialty || 'Unknown Specialist';
-      console.log(`  - Specialist ${specialistName}: ${specialist.treatments?.length || 0} treatments`);
       if (specialist.treatments && Array.isArray(specialist.treatments)) {
         specialist.treatments.forEach((treatment: any) => {
           const normalized = normalizeTreatment(treatment, specialistName);
@@ -143,7 +132,6 @@ export const extractUniqueTreatments = (branch: any, hospitalTreatments?: any[])
 
   // Include treatments from specialization that are marked as treatments
   if (branch?.specialization && Array.isArray(branch.specialization)) {
-    console.log('Processing specializations:', branch.specialization.length);
     branch.specialization.forEach((spec: any) => {
       if (spec && spec.isTreatment) {
         const normalized = normalizeTreatment(spec, 'Specialized Treatment');
@@ -158,7 +146,6 @@ export const extractUniqueTreatments = (branch: any, hospitalTreatments?: any[])
 
   // Include treatments from doctors' specializations
   if (branch?.doctors && Array.isArray(branch.doctors)) {
-    console.log('Processing doctors:', branch.doctors.length);
     branch.doctors.forEach((doctor: any) => {
       const doctorName = doctor.doctorName || doctor.name || 'Unknown Doctor';
       if (doctor.specialization && Array.isArray(doctor.specialization)) {
@@ -178,10 +165,7 @@ export const extractUniqueTreatments = (branch: any, hospitalTreatments?: any[])
     });
   }
 
-  const result = Object.values(uniqueTreatments);
-  console.log('Total unique treatments:', result.length);
-  console.log('=== END extractUniqueTreatments DEBUG ===\n');
-  return result;
+  return Object.values(uniqueTreatments);
 }
 
 /**
@@ -193,9 +177,6 @@ export const extractTreatmentsFromAllBranches = (hospitalData: any): any[] => {
   const uniqueTreatments = {} as { [key: string]: any }
   const processedKeys = new Set<string>(); // Track processed keys to prevent undefined keys
 
-  console.log('=== extractTreatmentsFromAllBranches DEBUG ===');
-  console.log('hospitalData.branches:', hospitalData.branches?.length);
-  
   // Helper to normalize treatment data from CMS
   // This ensures field names match what TreatmentCard component expects
   const addTreatment = (treatment: any, sourceName: string) => {
@@ -217,13 +198,10 @@ export const extractTreatmentsFromAllBranches = (hospitalData: any): any[] => {
     
     // Check if already processed
     if (processedKeys.has(key)) {
-      console.log('Skipping duplicate treatment:', treatmentName, 'key:', key);
       return; // Already processed - but check if we should update with more info
     }
     
     processedKeys.add(key);
-    
-    console.log('Adding treatment:', treatmentName, 'from', sourceName, 'key:', key);
     
     // Normalize all field names to match TreatmentCard expectations
     uniqueTreatments[key] = {
@@ -242,7 +220,6 @@ export const extractTreatmentsFromAllBranches = (hospitalData: any): any[] => {
 
   // 1. Include treatments directly associated with the hospital (main treatments) - these have full details from CMS
   if (hospitalData?.treatments && Array.isArray(hospitalData.treatments)) {
-    console.log('Processing hospital-level treatments:', hospitalData.treatments.length);
     hospitalData.treatments.forEach((treatment: any) => {
       addTreatment(treatment, 'Hospital Treatment')
     })
@@ -252,11 +229,9 @@ export const extractTreatmentsFromAllBranches = (hospitalData: any): any[] => {
   if (hospitalData?.branches && Array.isArray(hospitalData.branches)) {
     hospitalData.branches.forEach((branch: any, branchIndex: number) => {
       const branchName = branch.branchName || `Branch ${branchIndex + 1}`
-      console.log(`\nProcessing branch: ${branchName}`);
 
       // Treatments directly on branch
       if (branch.treatments && Array.isArray(branch.treatments)) {
-        console.log(`  - Direct treatments: ${branch.treatments.length}`);
         branch.treatments.forEach((treatment: any) => {
           addTreatment(treatment, `${branchName} - Direct`)
         })
@@ -264,11 +239,9 @@ export const extractTreatmentsFromAllBranches = (hospitalData: any): any[] => {
 
       // Treatments from specialists in this branch
       if (branch.specialists && Array.isArray(branch.specialists)) {
-        console.log(`  - Specialists: ${branch.specialists.length}`);
         branch.specialists.forEach((specialist: any) => {
           const specialistName = specialist.name || specialist.specialty || 'Unknown Specialist'
           if (specialist.treatments && Array.isArray(specialist.treatments)) {
-            console.log(`    - Specialist ${specialistName}: ${specialist.treatments.length} treatments`);
             specialist.treatments.forEach((treatment: any) => {
               addTreatment(treatment, `${branchName} - ${specialistName}`)
             })
@@ -278,7 +251,6 @@ export const extractTreatmentsFromAllBranches = (hospitalData: any): any[] => {
 
       // Treatments from specialization
       if (branch.specialization && Array.isArray(branch.specialization)) {
-        console.log(`  - Specializations: ${branch.specialization.length}`);
         branch.specialization.forEach((spec: any) => {
           if (spec && spec.isTreatment) {
             addTreatment(spec, `${branchName} - Specialized`)
@@ -288,7 +260,6 @@ export const extractTreatmentsFromAllBranches = (hospitalData: any): any[] => {
 
       // Treatments from doctors' specializations
       if (branch.doctors && Array.isArray(branch.doctors)) {
-        console.log(`  - Doctors: ${branch.doctors.length}`);
         branch.doctors.forEach((doctor: any) => {
           const doctorName = doctor.doctorName || doctor.name || 'Unknown Doctor'
           if (doctor.specialization && Array.isArray(doctor.specialization)) {
@@ -305,10 +276,7 @@ export const extractTreatmentsFromAllBranches = (hospitalData: any): any[] => {
     })
   }
 
-  const result = Object.values(uniqueTreatments)
-  console.log('\nTotal unique treatments extracted:', result.length);
-  console.log('=== END extractTreatmentsFromAllBranches DEBUG ===');
-  return result
+  return Object.values(uniqueTreatments)
 }
 
 // NEW: Function to fetch hospital data by slug using unified CMS API
@@ -317,37 +285,27 @@ export const extractTreatmentsFromAllBranches = (hospitalData: any): any[] => {
 import { getHospitalBySlug as getHospitalFromCMS } from '@/lib/cms'
 
 export const fetchHospitalBySlug = async (slug: string) => {
-  console.time('fetchHospitalBySlug total')
-
   try {
-    console.time('CMS direct call')
     // Direct call to CMS library - avoids API route issues in production
     const result = await getHospitalFromCMS(slug)
-    console.timeEnd('CMS direct call')
     
     if (result.hospital) {
-      console.timeEnd('fetchHospitalBySlug total')
       return result.hospital
     }
     
     // Try fallback with normalized slug
     const normalizedSlug = slug.toLowerCase().trim().replace(/[-_]+/g, '-')
     if (normalizedSlug !== slug) {
-      console.time('CMS fallback call')
       const fallbackResult = await getHospitalFromCMS(normalizedSlug)
-      console.timeEnd('CMS fallback call')
       
       if (fallbackResult.hospital) {
-        console.timeEnd('fetchHospitalBySlug total')
         return fallbackResult.hospital
       }
     }
     
-    console.timeEnd('fetchHospitalBySlug total')
     return null
   } catch (error) {
     console.error('Error fetching hospital by slug:', error)
-    console.timeEnd('fetchHospitalBySlug total')
     return null
   }
 }
@@ -361,7 +319,6 @@ export const fetchTreatmentsByHospitalSpecialties = async (hospitalData: any): P
     const { treatments: allTreatments } = await getAllCMSData()
     
     if (!allTreatments || allTreatments.length === 0) {
-      console.log('No treatments found in CMS')
       return []
     }
     
@@ -393,8 +350,6 @@ export const fetchTreatmentsByHospitalSpecialties = async (hospitalData: any): P
       })
     })
     
-    console.log('Hospital specialties:', Array.from(specialtyNames))
-    
     // Match treatments to specialties
     const matchedTreatments = allTreatments.filter((treatment: any) => {
       const treatmentName = (treatment.name || '').toLowerCase()
@@ -402,7 +357,6 @@ export const fetchTreatmentsByHospitalSpecialties = async (hospitalData: any): P
       // Check if treatment name contains any specialty name
       for (const specialty of specialtyNames) {
         if (treatmentName.includes(specialty) || specialty.includes(treatmentName)) {
-          console.log('Matched treatment:', treatment.name, 'with specialty:', specialty)
           return true
         }
       }
@@ -411,15 +365,12 @@ export const fetchTreatmentsByHospitalSpecialties = async (hospitalData: any): P
       const treatmentDesc = (treatment.description || '').toLowerCase()
       for (const specialty of specialtyNames) {
         if (treatmentDesc.includes(specialty)) {
-          console.log('Matched treatment by description:', treatment.name, 'with specialty:', specialty)
           return true
         }
       }
       
       return false
     })
-    
-    console.log('Matched treatments count:', matchedTreatments.length)
     
     // Normalize matched treatments to match TreatmentCard expectations
     return matchedTreatments.map((treatment: any) => ({

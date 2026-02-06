@@ -1796,13 +1796,13 @@ export default function DoctorDetail({ params }: { params: Promise<{ slug: strin
                 relatedTreatments={doctor.relatedTreatments || []}
               />
 
-              {doctorBranches.length > 0 && <AffiliatedBranchesList
+              {/* {doctorBranches.length > 0 && <AffiliatedBranchesList
                 allBranches={doctorBranches}
                 cityFilter={filters.city}
                 branchFilter={filters.branch}
                 treatmentFilter={filters.treatment}
                 doctorFilter={filters.doctor}
-              />}
+              />} */}
 
               {similarDoctors.length > 0 && <SimilarDoctorsList
                 similarDoctors={similarDoctors}

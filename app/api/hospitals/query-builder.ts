@@ -1,5 +1,6 @@
 // app/api/hospitals/query-builder.ts
 // Optimized query building logic with filter pushdown
+// Fixed: Removed all limits, pagination, slicing for complete data retrieval
 
 import { wixClient } from "@/lib/wixClient"
 import { COLLECTIONS } from './collections'
@@ -13,6 +14,7 @@ import type { HospitalFilters } from './types'
 /**
  * Builds an optimized Wix query with filter pushdown
  * This pushes filters to the API level rather than filtering in memory
+ * Fixed: NO LIMITS - fetch all matching data
  */
 export function buildOptimizedBranchesQuery(filters: {
   branchIds?: string[]
@@ -23,9 +25,10 @@ export function buildOptimizedBranchesQuery(filters: {
   treatmentIds?: string[]
   specialistIds?: string[]
   hospitalIds?: string[]
-  limit?: number
 }) {
-  const { branchIds, cityIds, doctorIds, specialtyIds, accreditationIds, treatmentIds, specialistIds, hospitalIds, limit = 100 } = filters
+  const { branchIds, cityIds, doctorIds, specialtyIds, accreditationIds, treatmentIds, specialistIds, hospitalIds } = filters
+
+  console.log(`[DEBUG] buildOptimizedBranchesQuery: Building query with filters - branchIds: ${branchIds?.length}, cityIds: ${cityIds?.length}, treatmentIds: ${treatmentIds?.length}, specialistIds: ${specialistIds?.length}`)
 
   let query = wixClient.items
     .query(COLLECTIONS.BRANCHES)
@@ -40,53 +43,56 @@ export function buildOptimizedBranchesQuery(filters: {
       "specialist",
     )
 
-  // Push filters to API level
+  // Push filters to API level (NO SLICING)
   if (branchIds?.length) {
-    query = query.hasSome("_id", branchIds.slice(0, 100)) // Wix limit
+    query = query.hasSome("_id", branchIds)
   }
   
   if (cityIds?.length) {
-    query = query.hasSome("city", cityIds.slice(0, 100))
+    query = query.hasSome("city", cityIds)
   }
   
   if (doctorIds?.length) {
-    query = query.hasSome("doctor", doctorIds.slice(0, 100))
+    query = query.hasSome("doctor", doctorIds)
   }
   
   if (specialtyIds?.length) {
-    query = query.hasSome("specialty", specialtyIds.slice(0, 100))
+    query = query.hasSome("specialty", specialtyIds)
   }
   
   if (accreditationIds?.length) {
-    query = query.hasSome("accreditation", accreditationIds.slice(0, 100))
+    query = query.hasSome("accreditation", accreditationIds)
   }
   
   if (treatmentIds?.length) {
-    query = query.hasSome("treatment", treatmentIds.slice(0, 100))
+    query = query.hasSome("treatment", treatmentIds)
   }
   
   if (specialistIds?.length) {
-    query = query.hasSome("specialist", specialistIds.slice(0, 100))
+    query = query.hasSome("specialist", specialistIds)
   }
   
   if (hospitalIds?.length) {
     // Query both hospital reference fields
-    query = query.hasSome("hospital", hospitalIds.slice(0, 100))
+    query = query.hasSome("hospital", hospitalIds)
   }
 
-  return query.limit(limit)
+  // NO LIMIT - fetch all matching branches
+  return query
 }
 
 /**
  * Builds an optimized hospitals query with filter pushdown
+ * Fixed: NO LIMITS for complete data retrieval
  */
 export function buildOptimizedHospitalsQuery(filters: {
   hospitalIds?: string[]
   specialtyIds?: string[]
   showHospitalOnly?: boolean
-  limit?: number
 }) {
-  const { hospitalIds, specialtyIds, showHospitalOnly = true, limit = 100 } = filters
+  const { hospitalIds, specialtyIds, showHospitalOnly = true } = filters
+
+  console.log(`[DEBUG] buildOptimizedHospitalsQuery: Building query with filters - hospitalIds: ${hospitalIds?.length}, specialtyIds: ${specialtyIds?.length}`)
 
   let query = wixClient.items
     .query(COLLECTIONS.HOSPITALS)
@@ -94,14 +100,15 @@ export function buildOptimizedHospitalsQuery(filters: {
     .descending("_createdDate")
 
   if (hospitalIds?.length) {
-    query = query.hasSome("_id", hospitalIds.slice(0, 100))
+    query = query.hasSome("_id", hospitalIds)
   }
 
   if (specialtyIds?.length) {
-    query = query.hasSome("specialty", specialtyIds.slice(0, 100))
+    query = query.hasSome("specialty", specialtyIds)
   }
 
-  return query.limit(limit)
+  // NO LIMIT - fetch all matching hospitals
+  return query
 }
 
 // =============================================================================
@@ -110,10 +117,13 @@ export function buildOptimizedHospitalsQuery(filters: {
 
 /**
  * Gets hospital IDs based on filters with optimized query
+ * Fixed: NO LIMITS, proper debug logging
  */
 export async function getHospitalIds(filters: HospitalFilters): Promise<string[]> {
   let { branchIds, cityIds, doctorIds, specialtyIds, accreditationIds, treatmentIds, specialistIds, departmentIds } =
     filters
+
+  console.log(`[DEBUG] getHospitalIds: Starting with filters - branchIds: ${branchIds?.length}, cityIds: ${cityIds?.length}, specialtyIds: ${specialtyIds?.length}, treatmentIds: ${treatmentIds?.length}, specialistIds: ${specialistIds?.length}`)
 
   if (
     !branchIds?.length &&
@@ -124,19 +134,22 @@ export async function getHospitalIds(filters: HospitalFilters): Promise<string[]
     !treatmentIds?.length &&
     !specialistIds?.length &&
     !departmentIds?.length
-  )
+  ) {
+    console.log('[DEBUG] getHospitalIds: No filters provided, returning empty array')
     return []
+  }
 
   // Resolve department IDs to specialty IDs first
   if (departmentIds?.length) {
+    console.log(`[DEBUG] getHospitalIds: Resolving ${departmentIds.length} department IDs to specialty IDs`)
     const res = await wixClient.items
       .query(COLLECTIONS.SPECIALTIES)
       .hasSome("department", departmentIds)
-      .limit(500)
       .find()
     
     const addIds = res.items.map((i) => i._id).filter(Boolean)
     specialistIds = [...(specialistIds || []), ...addIds]
+    console.log(`[DEBUG] getHospitalIds: Resolved to ${addIds.length} specialty IDs, total specialistIds: ${specialistIds?.length}`)
   }
 
   // Build optimized query with all filters pushed to API
@@ -152,21 +165,27 @@ export async function getHospitalIds(filters: HospitalFilters): Promise<string[]
 
   const result = await query.find()
   
+  console.log(`[DEBUG] getHospitalIds: Found ${result.items.length} branches matching filters`)
+  
   // Extract unique hospital IDs from branches
   const hospitalIds = new Set<string>()
   result.items.forEach((b: any) => {
     ReferenceMapper.extractHospitalIds(b).forEach((id) => hospitalIds.add(id))
   })
   
+  console.log(`[DEBUG] getHospitalIds: Extracted ${hospitalIds.size} unique hospital IDs`)
   return Array.from(hospitalIds)
 }
 
 /**
  * Gets filtered branch IDs with optimized query
+ * Fixed: NO LIMITS
  */
 export async function getBranchIds(filters: HospitalFilters): Promise<string[]> {
   let { branchIds, cityIds, doctorIds, specialtyIds, accreditationIds, treatmentIds, specialistIds, departmentIds } =
     filters
+
+  console.log(`[DEBUG] getBranchIds: Starting with filters`)
 
   if (
     !branchIds?.length &&
@@ -185,7 +204,6 @@ export async function getBranchIds(filters: HospitalFilters): Promise<string[]> 
     const res = await wixClient.items
       .query(COLLECTIONS.SPECIALTIES)
       .hasSome("department", departmentIds)
-      .limit(500)
       .find()
     
     const addIds = res.items.map((i) => i._id).filter(Boolean)
@@ -203,6 +221,7 @@ export async function getBranchIds(filters: HospitalFilters): Promise<string[]> 
   })
 
   const result = await query.find()
+  console.log(`[DEBUG] getBranchIds: Found ${result.items.length} branches`)
   return result.items.map((i: any) => i._id).filter(Boolean)
 }
 
@@ -234,7 +253,6 @@ export async function getFilteredCount(filters: HospitalFilters, collection: 'ho
     const res = await wixClient.items
       .query(COLLECTIONS.SPECIALTIES)
       .hasSome("department", departmentIds)
-      .limit(500)
       .find()
     
     const addIds = res.items.map((i) => i._id).filter(Boolean)
@@ -253,11 +271,10 @@ export async function getFilteredCount(filters: HospitalFilters, collection: 'ho
         specialistIds,
       })
 
-  // Note: Wix may not support count() directly, so we fetch with limit 1
+  // Fetch with limit 1 just to get total count
   const result = await query.limit(1).find()
   
-  // If Wix returns total in metadata, use it
-  // Otherwise, we'd need a different approach
+  // Use totalCount if available, otherwise estimate from metadata
   return result.totalCount || result.items.length
 }
 
@@ -267,6 +284,7 @@ export async function getFilteredCount(filters: HospitalFilters, collection: 'ho
 
 /**
  * Fetches multiple collections in parallel for efficiency
+ * Fixed: NO LIMITS on batch operations
  */
 export async function batchFetchReferenceData(params: {
   cityIds?: string[]
@@ -278,6 +296,8 @@ export async function batchFetchReferenceData(params: {
 }) {
   const { cityIds, doctorIds, specialtyIds, accreditationIds, treatmentIds, departmentIds } = params
 
+  console.log(`[DEBUG] batchFetchReferenceData: Fetching - cities: ${cityIds?.length}, doctors: ${doctorIds?.length}, specialties: ${specialtyIds?.length}, treatments: ${treatmentIds?.length}`)
+
   // Build parallel fetch promises
   const promises: Promise<any>[] = []
 
@@ -285,7 +305,7 @@ export async function batchFetchReferenceData(params: {
     promises.push(
       wixClient.items
         .query(COLLECTIONS.CITIES)
-        .hasSome("_id", cityIds.slice(0, 100))
+        .hasSome("_id", cityIds)
         .find()
         .catch(() => ({ items: [] }))
     )
@@ -295,7 +315,7 @@ export async function batchFetchReferenceData(params: {
     promises.push(
       wixClient.items
         .query(COLLECTIONS.DOCTORS)
-        .hasSome("_id", doctorIds.slice(0, 100))
+        .hasSome("_id", doctorIds)
         .include("specialization")
         .find()
         .catch(() => ({ items: [] }))
@@ -306,7 +326,7 @@ export async function batchFetchReferenceData(params: {
     promises.push(
       wixClient.items
         .query(COLLECTIONS.SPECIALTIES)
-        .hasSome("_id", specialtyIds.slice(0, 100))
+        .hasSome("_id", specialtyIds)
         .include("department", "treatment")
         .find()
         .catch(() => ({ items: [] }))
@@ -317,7 +337,7 @@ export async function batchFetchReferenceData(params: {
     promises.push(
       wixClient.items
         .query(COLLECTIONS.ACCREDITATIONS)
-        .hasSome("_id", accreditationIds.slice(0, 100))
+        .hasSome("_id", accreditationIds)
         .find()
         .catch(() => ({ items: [] }))
     )
@@ -327,7 +347,7 @@ export async function batchFetchReferenceData(params: {
     promises.push(
       wixClient.items
         .query(COLLECTIONS.TREATMENTS)
-        .hasSome("_id", treatmentIds.slice(0, 100))
+        .hasSome("_id", treatmentIds)
         .find()
         .catch(() => ({ items: [] }))
     )
@@ -337,13 +357,15 @@ export async function batchFetchReferenceData(params: {
     promises.push(
       wixClient.items
         .query(COLLECTIONS.DEPARTMENTS)
-        .hasSome("_id", departmentIds.slice(0, 100))
+        .hasSome("_id", departmentIds)
         .find()
         .catch(() => ({ items: [] }))
     )
   }
 
   const results = await Promise.all(promises)
+
+  console.log(`[DEBUG] batchFetchReferenceData: Results - cities: ${results[0]?.items?.length}, doctors: ${results[1]?.items?.length}, specialties: ${results[2]?.items?.length}, treatments: ${results[4]?.items?.length}`)
 
   return {
     cities: results[0]?.items || [],

@@ -114,18 +114,108 @@ function getTreatmentDuration(treatment: any): string | null {
 }
 
 /**
+ * Check if a branch offers a specific treatment by checking all treatment references
+ * This is a helper function to improve treatment matching
+ */
+function findMatchingTreatmentOnBranch(
+  branch: any,
+  treatmentName: string,
+  treatmentSlug: string,
+  treatmentId: string
+): TreatmentData | null {
+  // Check branch treatments directly
+  const branchTreatments = branch.treatments || []
+  
+  for (const t of branchTreatments) {
+    const tSlug = generateSlug(t.name)
+    const tId = t._id
+    const tName = t.name?.toLowerCase() || ""
+    
+    if (tId === treatmentId || tSlug === treatmentSlug || tName === treatmentName.toLowerCase()) {
+      return t
+    }
+    
+    // Also check via treatmentMatchesName
+    if (treatmentMatchesName(t, treatmentName)) {
+      return t
+    }
+  }
+  
+  // Check specialization treatments (including isTreatment flag)
+  for (const spec of branch.specialization || []) {
+    // Check if the specialization itself is marked as a treatment
+    if (spec.isTreatment && spec.name) {
+      const specSlug = generateSlug(spec.name)
+      if (specSlug === treatmentSlug || spec.name?.toLowerCase() === treatmentName.toLowerCase()) {
+        return spec
+      }
+    }
+    
+    // Check treatments within specialization
+    for (const t of spec.treatments || []) {
+      const tSlug = generateSlug(t.name)
+      if (tSlug === treatmentSlug || t.name?.toLowerCase() === treatmentName.toLowerCase()) {
+        return t
+      }
+      if (treatmentMatchesName(t, treatmentName)) {
+        return t
+      }
+    }
+  }
+  
+  // Check specialist treatments
+  for (const spec of branch.specialists || []) {
+    // Check if the specialist is marked as a treatment
+    if (spec.isTreatment && spec.name) {
+      const specSlug = generateSlug(spec.name)
+      if (specSlug === treatmentSlug || spec.name?.toLowerCase() === treatmentName.toLowerCase()) {
+        return spec
+      }
+    }
+    
+    // Check treatments within specialists
+    for (const t of spec.treatments || []) {
+      const tSlug = generateSlug(t.name)
+      if (tSlug === treatmentSlug || t.name?.toLowerCase() === treatmentName.toLowerCase()) {
+        return t
+      }
+      if (treatmentMatchesName(t, treatmentName)) {
+        return t
+      }
+    }
+  }
+  
+  return null
+}
+
+/**
  * Build a mapping of branch IDs that offer each treatment
  * Uses the pre-populated branchesAvailableAt from getAllCMSData
+ * Stores mappings by: treatment slug, treatment ID, and treatment name
  */
 function buildTreatmentToBranchesMap(treatments: ExtendedTreatmentData[]): Map<string, TreatmentLocation[]> {
   const treatmentToBranches = new Map<string, TreatmentLocation[]>()
   
   treatments.forEach((treatment) => {
     const treatmentSlug = generateSlug(treatment.name)
+    const treatmentId = treatment._id
+    const treatmentName = treatment.name?.toLowerCase()
     const branches = treatment.branchesAvailableAt || []
     
     if (branches.length > 0) {
+      // Store by slug
       treatmentToBranches.set(treatmentSlug, branches)
+      
+      // Also store by ID
+      if (treatmentId) {
+        treatmentToBranches.set(treatmentId, branches)
+      }
+      
+      // Also store by name (normalized)
+      if (treatmentName) {
+        treatmentToBranches.set(treatmentName, branches)
+      }
+      
       console.log(`[TreatmentPage] Treatment "${treatment.name}" -> branches: ${branches.length}`)
     }
   })
@@ -237,7 +327,12 @@ export async function findTreatmentWithHospitalsAndDoctors(
         let offersTreatment = false
         let matchingTreatment: TreatmentData | null = null
         
-        if (branchId && targetBranchIds.has(branchId)) {
+        // First, try using the new helper function to find matching treatment on branch
+        const foundTreatment = findMatchingTreatmentOnBranch(branch, treatmentName, treatmentSlug, treatment._id)
+        if (foundTreatment) {
+          offersTreatment = true
+          matchingTreatment = foundTreatment
+        } else if (branchId && targetBranchIds.has(branchId)) {
           // This branch is in the target treatment's branches
           offersTreatment = true
           // Find the matching treatment from the treatments collection
@@ -246,7 +341,7 @@ export async function findTreatmentWithHospitalsAndDoctors(
             generateSlug(t.name) === treatmentSlug
           ) || null
         } else {
-          // Fallback: Check treatments directly on branch
+          // Fallback: Check treatments directly on branch (old logic kept for compatibility)
           const branchTreatments = [
             ...(branch.treatments || []),
             ...(branch.specialization || []).flatMap((s: SpecializationData) => s.treatments || []),

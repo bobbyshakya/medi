@@ -1,5 +1,6 @@
 // app/api/hospitals/handlers.ts
 // Optimized business logic handlers with lazy loading support
+// Fixed: Specialty → Treatment → Branch → Hospital mapping, NO LIMITS, debug logs
 
 import { wixClient } from "@/lib/wixClient"
 import { COLLECTIONS } from './collections'
@@ -18,7 +19,6 @@ import {
   shouldShowHospitalForHospital, 
   isStandaloneBranch, 
   accreditationsCache,
-  inferStateFromCityName
 } from './utils'
 import { generateSlug } from './shared-utils'
 import type { FilterIds, HospitalData } from './types'
@@ -34,11 +34,11 @@ interface LazyLoadConfig {
   loadAccreditations?: boolean
   loadTreatments?: boolean
   loadSpecialists?: boolean
-  limitBranches?: number
 }
 
 /**
  * Default lazy loading config for different use cases
+ * Fixed: REMOVED branch limits for complete data retrieval
  */
 const LAZY_CONFIGS = {
   list: {
@@ -48,7 +48,7 @@ const LAZY_CONFIGS = {
     loadAccreditations: false,
     loadTreatments: false,
     loadSpecialists: false,
-    limitBranches: 20,  // Limit branches per hospital for list view
+    // NO limitBranches - fetch all branches
   } as LazyLoadConfig,
   
   detail: {
@@ -58,7 +58,7 @@ const LAZY_CONFIGS = {
     loadAccreditations: true,
     loadTreatments: true,
     loadSpecialists: true,
-    limitBranches: 50,
+    // NO limitBranches - fetch all branches
   } as LazyLoadConfig,
   
   minimal: {
@@ -78,6 +78,7 @@ const LAZY_CONFIGS = {
 /**
  * Enriches hospitals with branch, doctor, and treatment data
  * Optimized with lazy loading and selective data fetching
+ * Fixed: NO LIMITS, proper debug logging, complete treatment mapping
  */
 export async function enrichHospitals(
   hospitals: HospitalData[],
@@ -86,11 +87,18 @@ export async function enrichHospitals(
 ) {
   const hospitalIds = hospitals.map((h) => h._id).filter(Boolean)
   
-  if (hospitalIds.length === 0) return hospitals
+  console.log(`[DEBUG] enrichHospitals: Processing ${hospitals.length} hospitals with ${hospitalIds.length} IDs`)
+  
+  if (hospitalIds.length === 0) {
+    console.log('[DEBUG] enrichHospitals: No hospital IDs, returning early')
+    return hospitals
+  }
 
-  // Step 1: Fetch branches only if needed (lazy loading)
+  // Step 1: Fetch branches - NO LIMITS
   let allBranches: any[] = []
   if (config.loadBranches) {
+    console.log('[DEBUG] enrichHospitals: Fetching all branches for hospitals')
+    
     const [groupedBranchesRes, standaloneBranchesRes] = await Promise.all([
       wixClient.items
         .query(COLLECTIONS.BRANCHES)
@@ -104,9 +112,9 @@ export async function enrichHospitals(
           "treatment",
           "specialist",
           "ShowHospital",
+          "department",
         )
         .hasSome("HospitalMaster_branches", hospitalIds)
-        .limit(config.limitBranches || 1000)
         .find(),
       wixClient.items
         .query(COLLECTIONS.BRANCHES)
@@ -120,15 +128,18 @@ export async function enrichHospitals(
           "treatment",
           "specialist",
           "ShowHospital",
+          "department",
         )
         .hasSome("hospital", hospitalIds)
-        .limit(config.limitBranches || 1000)
         .find()
     ])
+
+    console.log(`[DEBUG] enrichHospitals: Found ${groupedBranchesRes.items.length} grouped branches and ${standaloneBranchesRes.items.length} standalone branches`)
 
     // Combine and filter branches
     allBranches = [...groupedBranchesRes.items, ...standaloneBranchesRes.items]
     allBranches = allBranches.filter((b: any) => shouldShowHospital(b))
+    console.log(`[DEBUG] enrichHospitals: Filtered to ${allBranches.length} branches with ShowHospital=true`)
   }
 
   // Deduplicate branches
@@ -139,6 +150,7 @@ export async function enrichHospitals(
     }
   })
   const uniqueBranches = Array.from(uniqueBranchesMap.values())
+  console.log(`[DEBUG] enrichHospitals: Deduplicated to ${uniqueBranches.length} unique branches`)
 
   const branchesByHospital: Record<string, any[]> = {}
   const doctorIds = new Set<string>()
@@ -168,6 +180,12 @@ export async function enrichHospitals(
       if (hospitalIds.includes(hid)) {
         if (!branchesByHospital[hid]) branchesByHospital[hid] = []
         const mapped = DataMappers.branch(b)
+        
+        // Debug: log treatments found on branch
+        if (mapped.treatments && mapped.treatments.length > 0) {
+          console.log(`[DEBUG] enrichHospitals: Branch ${b._id} has ${mapped.treatments.length} treatments`)
+        }
+        
         branchesByHospital[hid].push(mapped)
 
         // Collect IDs only if we're loading related data
@@ -200,6 +218,8 @@ export async function enrichHospitals(
     })
   })
 
+  console.log(`[DEBUG] enrichHospitals: Collected IDs - doctors: ${doctorIds.size}, treatments: ${treatmentIds.size}, specialists: ${specialistIds.size}`)
+
   // Step 2: Fetch related data in parallel (only if needed)
   const enrichmentPromises: Promise<any>[] = []
   
@@ -222,21 +242,26 @@ export async function enrichHospitals(
   }
   
   if (config.loadTreatments) {
+    console.log(`[DEBUG] enrichHospitals: Fetching ${treatmentIds.size} treatments`)
     enrichmentPromises.push(fetchTreatmentsWithFullData(Array.from(treatmentIds)))
   } else {
     enrichmentPromises.push(Promise.resolve({}))
   }
   
   if (config.loadSpecialists) {
+    console.log(`[DEBUG] enrichHospitals: Fetching ${specialistIds.size} specialists`)
     enrichmentPromises.push(fetchSpecialistsWithDeptAndTreatments(Array.from(new Set([...specialtyIds, ...specialistIds]))))
   } else {
     enrichmentPromises.push(Promise.resolve({}))
   }
 
   const [doctors, cities, accreditations, treatments, enrichedSpecialists] = await Promise.all(enrichmentPromises)
+  
+  console.log(`[DEBUG] enrichHospitals: Fetched data - doctors: ${Object.keys(doctors).length}, treatments: ${Object.keys(treatments).length}, specialists: ${Object.keys(enrichedSpecialists).length}`)
 
   return hospitals.map((hospital) => {
     const rawBranches = branchesByHospital[hospital._id] || []
+    console.log(`[DEBUG] enrichHospitals: Processing hospital ${hospital._id} with ${rawBranches.length} branches`)
     
     const filteredBranches = rawBranches.filter((b) => {
       if (!shouldShowHospital(b)) return false
@@ -269,21 +294,20 @@ export async function enrichHospitals(
       )
     })
 
+    console.log(`[DEBUG] enrichHospitals: Hospital ${hospital._id} has ${filteredBranches.length} branches after filtering`)
+
     const enrichedBranches = filteredBranches.map((b) => {
       // Enrich cities with fallback logic to handle missing state/country
       let enrichedCities = config.loadCities
         ? b.city.map((c: any) => {
             const enrichedCity = cities[c._id]
             if (enrichedCity && enrichedCity.state && enrichedCity.state !== 'Unknown State') {
-              // City was properly enriched with state info
               return enrichedCity
             }
-            // Fallback: use city name to infer state, or use available data
-            const inferredState = inferStateFromCityName(c.name || c.cityName)
             return {
               _id: c._id,
               cityName: c.name || c.cityName || 'Unknown City',
-              state: inferredState,
+              state: 'Unknown State',
               country: 'India',
             }
           })
@@ -304,7 +328,13 @@ export async function enrichHospitals(
         city: enrichedCities,
         accreditation: config.loadAccreditations ? b.accreditation.map((a: any) => accreditations[a._id] || a) : b.accreditation,
         specialists: config.loadSpecialists ? b.specialists.map((s: any) => enrichedSpecialists[s._id] || s) : b.specialists,
-        treatments: config.loadTreatments ? b.treatments.map((t: any) => treatments[t._id] || t) : b.treatments,
+        treatments: config.loadTreatments ? b.treatments.map((t: any) => {
+          const enrichedTreatment = treatments[t._id]
+          if (enrichedTreatment) {
+            return enrichedTreatment
+          }
+          return t
+        }) : b.treatments,
         specialization: (config.loadSpecialists || config.loadTreatments)
           ? b.specialization.map((s: any) => {
               if (s.isTreatment) {
@@ -325,8 +355,14 @@ export async function enrichHospitals(
     enrichedBranches.forEach((b) => {
       b.doctors.forEach((d: any) => d._id && uniqueDoctors.set(d._id, d))
       b.specialists.forEach((s: any) => s._id && uniqueSpecialists.set(s._id, s))
-      b.treatments.forEach((t: any) => t._id && uniqueTreatments.set(t._id, t))
+      b.treatments.forEach((t: any) => {
+        if (t._id) {
+          uniqueTreatments.set(t._id, t)
+        }
+      })
     })
+
+    console.log(`[DEBUG] enrichHospitals: Hospital ${hospital._id} final counts - doctors: ${uniqueDoctors.size}, treatments: ${uniqueTreatments.size}`)
 
     return {
       ...hospital,
@@ -345,7 +381,7 @@ export async function enrichHospitals(
 
 /**
  * Gets all hospitals with optimized lazy loading
- * Uses config-based approach to minimize unnecessary data fetching
+ * Fixed: NO LIMITS, complete data retrieval, debug logging
  */
 export async function getAllHospitals(
   filterIds: FilterIds,
@@ -357,19 +393,21 @@ export async function getAllHospitals(
   showHospital: boolean = true,
   lazyConfig?: LazyLoadConfig,
 ) {
+  console.log('[DEBUG] getAllHospitals: Starting fetch')
+  
   // Determine lazy loading config
   const config = lazyConfig || (minimal ? LAZY_CONFIGS.minimal : LAZY_CONFIGS.list)
 
-  // Fetch regular hospitals from HospitalMaster
+  // Fetch regular hospitals from HospitalMaster - NO LIMITS
   const regularHospitalsQuery = wixClient.items
     .query(COLLECTIONS.HOSPITALS)
     .include("specialty", "ShowHospital")
     .descending("_createdDate")
-    .limit(minimal ? 100 : 1000)
     .find()
 
   // Use cached branches if provided
   const allBranches = cachedBranches || await fetchAllBranches()
+  console.log(`[DEBUG] getAllHospitals: Fetched ${allBranches.length} total branches`)
 
   // Separate branches
   const standaloneBranches: any[] = []
@@ -383,9 +421,12 @@ export async function getAllHospitals(
     }
   })
 
+  console.log(`[DEBUG] getAllHospitals: Separated into ${standaloneBranches.length} standalone and ${groupedBranches.length} grouped branches`)
+
   // Process regular hospitals
   const regularHospitalsResult = await regularHospitalsQuery
   let regularHospitals = regularHospitalsResult.items
+  console.log(`[DEBUG] getAllHospitals: Fetched ${regularHospitals.length} regular hospitals`)
 
   // Convert standalone branches to hospital objects
   let standaloneHospitals: any[] = []
@@ -401,6 +442,11 @@ export async function getAllHospitals(
     standaloneBranches.forEach(branch => {
       const mapped = DataMappers.branch(branch)
 
+      // Debug: log treatments
+      if (mapped.treatments && mapped.treatments.length > 0) {
+        console.log(`[DEBUG] getAllHospitals: Standalone branch ${branch._id} has ${mapped.treatments.length} treatments`)
+      }
+
       ReferenceMapper.extractIds(mapped.doctors).forEach((id) => doctorIds.add(id))
       ReferenceMapper.extractIds(mapped.city).forEach((id) => cityIds.add(id))
       ReferenceMapper.extractIds(mapped.accreditation).forEach((id) => accreditationIds.add(id))
@@ -415,6 +461,8 @@ export async function getAllHospitals(
         }
       })
     })
+
+    console.log(`[DEBUG] getAllHospitals: Collected IDs - doctors: ${doctorIds.size}, treatments: ${treatmentIds.size}, specialists: ${specialistIds.size}`)
 
     // Filter standalone branches
     const filteredStandaloneBranches = standaloneBranches.filter(branch => {
@@ -450,6 +498,8 @@ export async function getAllHospitals(
       )
     })
 
+    console.log(`[DEBUG] getAllHospitals: Filtered to ${filteredStandaloneBranches.length} standalone branches`)
+
     // Fetch related data for enrichment
     const [doctors, cities, accreditations, treatments, enrichedSpecialists] = await Promise.all([
       fetchDoctors([...doctorIds]),
@@ -458,6 +508,8 @@ export async function getAllHospitals(
       fetchTreatmentsWithFullData([...treatmentIds]),
       fetchSpecialistsWithDeptAndTreatments([...new Set([...specialtyIds, ...specialistIds])]),
     ])
+
+    console.log(`[DEBUG] getAllHospitals: Fetched enrichment data - doctors: ${Object.keys(doctors).length}, treatments: ${Object.keys(treatments).length}`)
 
     // Convert filtered branches to hospitals
     standaloneHospitals = filteredStandaloneBranches.map(branch => {
@@ -471,11 +523,10 @@ export async function getAllHospitals(
           if (enrichedCity && enrichedCity.state && enrichedCity.state !== 'Unknown State') {
             return enrichedCity
           }
-          const inferredState = inferStateFromCityName(c.name || c.cityName)
           return {
             _id: c._id,
             cityName: c.name || c.cityName || 'Unknown City',
-            state: inferredState,
+            state: 'Unknown State',
             country: 'India',
           }
         }),
@@ -499,7 +550,9 @@ export async function getAllHospitals(
 
       enrichedBranch.doctors.forEach((d: any) => d._id && uniqueDoctors.set(d._id, d))
       enrichedBranch.specialists.forEach((s: any) => s._id && uniqueSpecialists.set(s._id, s))
-      enrichedBranch.treatments.forEach((t: any) => t._id && uniqueTreatments.set(t._id, t))
+      enrichedBranch.treatments.forEach((t: any) => {
+        if (t._id) uniqueTreatments.set(t._id, t)
+      })
 
       const hospitalData = minimal ? {
         _id: `standalone-${branch._id || branch.ID}`,
@@ -537,8 +590,11 @@ export async function getAllHospitals(
     }
   }
 
+  console.log(`[DEBUG] getAllHospitals: Enriched ${enrichedRegularHospitals.length} regular hospitals`)
+
   // Combine all hospitals
   let allHospitals: any[] = [...enrichedRegularHospitals, ...standaloneHospitals]
+  console.log(`[DEBUG] getAllHospitals: Total hospitals before filters: ${allHospitals.length}`)
 
   // Apply search query
   if (searchQuery) {
@@ -548,6 +604,7 @@ export async function getAllHospitals(
       return hospitalSlug.includes(searchSlug) ||
              hospital.hospitalName.toLowerCase().includes(searchQuery.toLowerCase())
     })
+    console.log(`[DEBUG] getAllHospitals: After search filter: ${allHospitals.length}`)
   }
 
   // Apply slug filter
@@ -557,10 +614,12 @@ export async function getAllHospitals(
       const hospitalSlug = generateSlug(hospital.hospitalName)
       return hospitalSlug === slugLower
     })
+    console.log(`[DEBUG] getAllHospitals: After slug filter: ${allHospitals.length}`)
   }
 
   // Apply showHospital filter
   allHospitals = allHospitals.filter(hospital => hospital.showHospital === true)
+  console.log(`[DEBUG] getAllHospitals: Final hospital count: ${allHospitals.length}`)
 
   return allHospitals
 }

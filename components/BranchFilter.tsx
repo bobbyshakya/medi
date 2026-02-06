@@ -1,14 +1,14 @@
-// File: components/BranchFilter.tsx
+
 "use client"
 import { useState, useMemo, useCallback, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
-import { Building2, MapPin, Activity, Users, X, Search, UserRoundCog  } from "lucide-react"
+import { Building2, MapPin, Activity, Users, X, Search } from "lucide-react"
 
 // --- Types ---
 interface UniversalOption {
   id: string
   name: string
-  type: "branch" | "city" | "treatment" | "doctor" | "specialty"
+  type: "branch" | "city" | "treatment" | "doctor"
   label: string
   hospitalName?: string
   city?: string
@@ -162,14 +162,14 @@ const SearchDropdown = ({
   }, [])
 
   const icon = (type: UniversalOption['type']) => {
-    const map = { branch: Building2, city: MapPin, treatment: Activity, doctor: Users, specialty: UserRoundCog  }
+    const map = { branch: Building2, city: MapPin, treatment: Activity, doctor: Users }
     const Icon = map[type]
     return <Icon className="w-4 h-4 text-gray-500 mr-2 flex-shrink-0" />
   }
 
   const badge = (type: UniversalOption['type']) => {
     if (type === 'city') return null
-    const labels: Record<string, string> = { branch: 'Hospital', treatment: 'Treatment', doctor: 'Doctor', specialty: 'Specialty' }
+    const labels: Record<string, string> = { branch: 'Hospital', treatment: 'Treatment', doctor: 'Doctor' }
     return <span className="text-xs font-medium text-gray-500">{labels[type]}</span>
   }
 
@@ -211,10 +211,10 @@ const SearchDropdown = ({
                     {/* Show city for city type */}
                     {opt.type === 'city' && opt.city && <span className="flex items-center gap-1"><MapPin className="w-3 h-3" />{opt.city}</span>}
                     
-                    {(opt.type === 'doctor' || opt.type === 'specialty') && opt.hospitalName && <span className="truncate">{opt.hospitalName}</span>}
+                    {(opt.type === 'doctor') && opt.hospitalName && <span className="truncate">{opt.hospitalName}</span>}
                     
-                    {/* Show city for doctor/specialty types (not treatment) */}
-                    {(opt.type === 'doctor' || opt.type === 'specialty') && opt.city && <span className="flex items-center gap-1"><MapPin className="w-3 h-3" />{opt.city}</span>}
+                    {/* Show city for doctor types */}
+                    {(opt.type === 'doctor') && opt.city && <span className="flex items-center gap-1"><MapPin className="w-3 h-3" />{opt.city}</span>}
           
                   </div>
               </div>
@@ -256,8 +256,9 @@ const BranchFilter = ({ allHospitals, initialSearch = "" }: BranchFilterProps) =
       wixTreatmentsData.forEach((t) => {
         if (t._id && t.name) {
           const loc = t.branchesAvailableAt?.[0]
+          const treatmentSlug = slug(t.name)
           addTreatment({
-            id: t._id,
+            id: treatmentSlug, // Use slug from name instead of Wix ID
             name: t.name,
             type: 'treatment',
             label: 'Treatment',
@@ -343,20 +344,6 @@ const BranchFilter = ({ allHospitals, initialSearch = "" }: BranchFilterProps) =
 
     const add = (opt: UniversalOption) => { if (!seen.has(`${opt.type}-${opt.id}`)) { opts.push(opt); seen.add(`${opt.type}-${opt.id}`); } }
 
-    // Specialties
-    const specs = new Map<string, string>()
-    allHospitals.forEach(h => {
-      h.doctors?.forEach((d: DoctorData) => {
-        (Array.isArray(d.specialization) ? d.specialization : [d.specialization]).forEach(s => {
-          if (s) { const id = s._id || slug(s.name || ''); if (id) specs.set(id, s.name || '') }
-        })
-      })
-      h.branches?.forEach(b => {
-        b.specialists?.forEach(s => { const id = s._id || slug(s.name || ''); if (id && s.name) specs.set(id, s.name) })
-      })
-    })
-    specs.forEach((name, id) => add({ id, name, type: 'specialty', label: 'Specialty' }))
-
     // Doctors - HIDDEN from dropdown (only accessible via specialties)
     // allHospitals.forEach(h => {
     //   const hname = h.hospitalName || ''
@@ -424,12 +411,10 @@ const BranchFilter = ({ allHospitals, initialSearch = "" }: BranchFilterProps) =
     if (!opt) return
     const s = slug(opt.name)
     let url = ''
-    const isUUID = (str: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str)
     switch (type) {
       case 'doctor': url = `/doctors/${s}`; break
-      case 'specialty': url = `/search/?view=doctors&specialization=${s}`; break
-      case 'treatment': url = `/search/?treatment/=${isUUID(opt.id) ? opt.id : s}`; break
-      case 'city': url = `/search/?view=hospitals&city=${s}`; break  // City now shows only hospitals
+      case 'treatment': url = `/treatment/${s}`; break
+      case 'city': url = `/search/?view=hospitals&city=${s}`; break
       case 'branch': url = `/search/hospitals/${s}`; break
     }
     router.push(url)

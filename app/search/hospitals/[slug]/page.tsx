@@ -313,14 +313,14 @@ export default async function BranchDetail({ params }: { params: Promise<{ slug:
                   searchPlaceholder="Search treatment by name" 
                 />
               )}
-              {(isGroupHospital ? allDoctors.length > 0 : branch.doctors?.length > 0) && (
+              {/* {(isGroupHospital ? allDoctors.length > 0 : branch.doctors?.length > 0) && (
                 <InteractiveCarouselSection 
                   title="Our Specialist Doctors" 
                   items={isGroupHospital ? allDoctors : branch.doctors} 
                   type="doctor" 
                   searchPlaceholder="Search doctors by name or Speciality..." 
                 />
-              )}
+              )} */}
               <SimilarHospitalsSection currentHospitalId={hospital._id} currentBranchId={branch._id} currentCity={currentCityName} displayCityName={displayCityName} />
             </div>
             <aside className="lg:col-span-3 space-y-8"><ContactForm /></aside>

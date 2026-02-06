@@ -27,8 +27,6 @@ function HospitalsPageContent() {
   const {
     loading,
     isLoadingMore,
-    isFullDataLoaded,
-    totalCount,
     filters,
     updateFilter,
     updateSubFilter,

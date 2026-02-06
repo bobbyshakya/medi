@@ -82,21 +82,21 @@ const SimilarHospitalsSection = ({ currentHospitalId, currentBranchId, currentCi
         if (c?.state) currentStates.add(c.state.toLowerCase())
       })
 
-      // Filter similar branches (same city or state, different hospital)
+      // Filter similar branches (ONLY same city, not state)
       const similarBranches = allHospitalBranches
         .filter((b: any) => {
-          // Collect cities and states for this branch
+          // Collect cities for this branch
           const branchCities = new Set<string>()
-          const branchStates = new Set<string>()
           b.city?.forEach((c: any) => {
             if (c?.cityName) branchCities.add(c.cityName.toLowerCase())
-            if (c?.state) branchStates.add(c.state.toLowerCase())
           })
           
-          const isInSameCity = [...currentCities].some((city) => branchCities.has(city))
-          const isInSameState = [...currentStates].some((state) => branchStates.has(state))
+          // Check if this branch's city matches current branch's city
+          // Also check against the currentCity prop directly for accuracy
+          const currentCityLower = currentCity?.toLowerCase() || ''
+          const isInSameCity = branchCities.has(currentCityLower) || [...currentCities].some((city) => branchCities.has(city))
           const isDifferentBranch = b._id !== currentBranchId
-          return (isInSameCity || isInSameState) && isDifferentBranch
+          return isInSameCity && isDifferentBranch
         })
         // Show ALL similar hospitals (no limit)
 
@@ -138,6 +138,11 @@ const SimilarHospitalsSection = ({ currentHospitalId, currentBranchId, currentCi
     }
   }, [allBranches, router])
 
+  // Hide entire section if no similar hospitals found
+  if (!loading && !error && branches.length === 0) {
+    return null
+  }
+
   return (
     <section className={`bg-gray-50 rounded-xs shadow-xs border border-gray-100 ${inter.variable} font-light`}>
       <div className="px-2 md:px-4 py-4">
@@ -165,10 +170,6 @@ const SimilarHospitalsSection = ({ currentHospitalId, currentBranchId, currentCi
       ) : error ? (
         <div className="p-8 pt-0">
           <p className="text-red-500 text-sm italic">Failed to load similar hospitals. Please try again later.</p>
-        </div>
-      ) : branches.length === 0 ? (
-        <div className="p-8 pt-0">
-          <p className="text-gray-500 text-sm italic">No similar hospitals found in {displayCityName}. Use the search above to find all hospital branches.</p>
         </div>
       ) : (
         <div className="relative px-2 md:px-4 pb-8">

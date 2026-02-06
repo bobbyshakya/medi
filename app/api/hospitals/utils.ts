@@ -32,6 +32,7 @@ export const citiesCache = new MemoryCache<Record<string, any>>();
 export const treatmentsCache = new MemoryCache<Record<string, any>>();
 export const specialistsCache = new MemoryCache<Record<string, any>>();
 export const accreditationsCache = new MemoryCache<Record<string, any>>();
+export const branchesCache = new MemoryCache<any[]>();
 
 
 /**

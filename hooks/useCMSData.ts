@@ -122,7 +122,18 @@ const getMatchingBranches = (
       }
     })
 
-    // Step 2: Also check hospital branches for treatments by name AND ID
+    // Step 2: Also check TreatmentMaster's branchesAvailableAt when treatment ID is selected
+    if (treatment.id) {
+      allTreatments.forEach((t) => {
+        if (t._id === treatment.id) {
+          t.branchesAvailableAt?.forEach((loc) => {
+            if (loc.branchId) treatmentBranchIds.add(loc.branchId)
+          })
+        }
+      })
+    }
+
+    // Step 3: Also check hospital branches for treatments by name AND ID
     hospitals.forEach((h) => {
       // Check hospital-level treatments
       h.treatments?.forEach((t) => {
@@ -369,6 +380,26 @@ const getDoctorsByTreatment = (
     }
   })
 
+  // Also check hospital-level treatments for additional branch matches
+  if (!isTreatmentQuery && treatmentBranchIds.size === 0) {
+    hospitals.forEach((h) => {
+      h.treatments?.forEach((t) => {
+        if (t._id === treatmentId) {
+          h.branches?.forEach((b) => {
+            if (b._id) treatmentBranchIds.add(b._id)
+          })
+        }
+      })
+      
+      h.branches?.forEach((b) => {
+        const hasTreatment = b.treatments?.some((t) => t._id === treatmentId)
+        if (hasTreatment && b._id) {
+          treatmentBranchIds.add(b._id)
+        }
+      })
+    })
+  }
+
   const allDoctors = getAllExtendedDoctors(hospitals)
   return allDoctors.filter((doctor) =>
     doctor.locations.some((loc) => loc.branchId && treatmentBranchIds.has(loc.branchId))
@@ -572,8 +603,15 @@ export const useCMSData = () => {
       return allTreatments
     }
 
-    // Extract treatments from hospitals
+    // Extract treatments from hospitals and merge with TreatmentMaster data
     const treatmentMap = new Map<string, ExtendedTreatmentData>()
+    
+    // First, add all treatments from TreatmentMaster
+    allTreatments.forEach((t) => {
+      treatmentMap.set(t._id, { ...t })
+    })
+    
+    // Then, add treatments from hospitals that might not be in TreatmentMaster
     allHospitals.forEach((h) => {
       h.treatments?.forEach((t) => {
         if (!treatmentMap.has(t._id)) {

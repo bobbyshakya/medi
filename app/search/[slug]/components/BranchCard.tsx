@@ -15,7 +15,7 @@ const BranchCard = ({ branch, hospitalSlug }: { branch: any, hospitalSlug: strin
 
   const branchSlug = generateSlug(branch.branchName)
   const branchNameDisplay = branch.isMain ? `${branch.branchName || 'Unnamed Branch'} (Main)` : (branch.branchName || 'Unnamed Branch')
-  const linkHref = `/search/${branchSlug}`
+  const linkHref = `/search/hospitals/${branchSlug}`
 
   const doctorsCount = branch.noOfDoctors || branch.doctors?.length || 'N/A'
   const firstCityName = branch.city?.[0]?.name || branch.city?.[0]?.cityName || 'N/A'

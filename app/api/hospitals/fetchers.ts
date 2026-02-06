@@ -1,10 +1,11 @@
 // app/api/hospitals/fetchers.ts
 // Optimized data fetching functions for hospitals API with performance enhancements
+// Fixed: Specialty → Treatment → Branch → Hospital mapping with proper relation fetching
 
 import { wixClient } from "@/lib/wixClient"
 import { COLLECTIONS } from './collections'
 import { DataMappers, ReferenceMapper } from './mappers'
-import { MemoryCache, doctorsCache, citiesCache, treatmentsCache, specialistsCache, accreditationsCache, shouldShowHospital } from './utils'
+import { MemoryCache, doctorsCache, citiesCache, treatmentsCache, specialistsCache, accreditationsCache, shouldShowHospital, branchesCache } from './utils'
 import type { HospitalFilters } from './types'
 
 // =============================================================================
@@ -93,7 +94,7 @@ const FIELD_PROJECTIONS = {
 
 /**
  * Searches for IDs in a collection based on text fields
- * Optimized with field batching and early termination
+ * Optimized with field batching
  */
 export async function searchIds(collection: string, fields: string[], query: string, limit: number = 100): Promise<string[]> {
   if (!query.trim() || !fields.length) return []
@@ -167,7 +168,7 @@ export async function searchHospitalBySlug(slug: string): Promise<string[]> {
 // =============================================================================
 
 /**
- * Fetches items by IDs with caching and field projection
+ * Fetches items by IDs with caching
  */
 export async function fetchByIds<T>(
   collection: string, 
@@ -189,11 +190,6 @@ export async function fetchByIds<T>(
 
   // Fetch with field projection if specified
   const query = wixClient.items.query(collection).hasSome("_id", sortedIds)
-  
-  if (fields && fields.length > 0) {
-    // Note: Wix API may not support field projection directly
-    // This is for documentation purposes
-  }
   
   const res = await query.limit(sortedIds.length).find()
   
@@ -248,7 +244,7 @@ export async function fetchAllStates() {
   try {
     const res = await wixClient.items
       .query(COLLECTIONS.STATES)
-      .limit(500)
+      .limit(2000) // Fetch all states
       .include("country", "CountryMaster_state")
       .find()
 
@@ -296,7 +292,6 @@ export async function fetchCitiesWithStateAndCountry(ids: string[]) {
       .query(COLLECTIONS.CITIES)
       .hasSome("_id", ids)
       .include("state", "State", "stateRef", "stateMaster", "StateMaster_state")
-      .limit(Math.min(ids.length, 500))
       .find()
 
     // Collect state IDs from cities
@@ -325,7 +320,6 @@ export async function fetchCitiesWithStateAndCountry(ids: string[]) {
         .query(COLLECTIONS.STATES)
         .hasSome("_id", Array.from(stateIds))
         .include("country", "CountryMaster_state")
-        .limit(Math.min(stateIds.size, 500))
         .find()
 
       // Build states map
@@ -347,7 +341,6 @@ export async function fetchCitiesWithStateAndCountry(ids: string[]) {
         const countriesRes = await wixClient.items
           .query(COLLECTIONS.COUNTRIES)
           .hasSome("_id", Array.from(countryIds))
-          .limit(Math.min(countryIds.size, 500))
           .find()
 
         countriesRes.items.forEach((item: any) => {
@@ -415,25 +408,42 @@ export async function fetchStatesWithCountry(ids: string[]) {
   }
 }
 
+// =============================================================================
+// DOCTOR & SPECIALIST FETCHING
+// =============================================================================
+
 /**
- * Fetches doctors by IDs with caching - optimized with limited includes
+ * Fetches doctors by IDs with caching
+ * Fixed to properly handle multi-select treatment/specialty fields
  */
 export async function fetchDoctors(ids: string[]) {
-  if (!ids.length) return {}
+  if (!ids.length) {
+    console.log('[DEBUG] fetchDoctors: No doctor IDs provided, returning empty object')
+    return {}
+  }
+
+  console.log(`[DEBUG] fetchDoctors: Fetching ${ids.length} doctors`)
 
   const cacheKey = `doctors_${[...ids].sort().join('_')}`
   const cached = doctorsCache.get(cacheKey)
-  if (cached) return cached
+  if (cached) {
+    console.log(`[DEBUG] fetchDoctors: Cache hit for ${ids.length} doctors`)
+    return cached
+  }
+
+  console.log(`[DEBUG] fetchDoctors: Cache miss, querying CMS for doctors`)
 
   const res = await wixClient.items
     .query(COLLECTIONS.DOCTORS)
     .hasSome("_id", ids)
-    .include("specialization")
-    .limit(Math.min(ids.length, 500))
+    .include("specialization", "treatment")
     .find()
 
+  console.log(`[DEBUG] fetchDoctors: Found ${res.items.length} doctors in CMS`)
+
+  // Collect specialist IDs
   const specialistIds = new Set<string>()
-  res.items.forEach((d) => {
+  res.items.forEach((d: any) => {
     const specs = d.specialization || d.data?.specialization || []
     ;(Array.isArray(specs) ? specs : [specs]).forEach((s: any) => {
       const id = s?._id || s?.ID || s
@@ -441,10 +451,14 @@ export async function fetchDoctors(ids: string[]) {
     })
   })
 
+  console.log(`[DEBUG] fetchDoctors: Collected ${specialistIds.size} specialist IDs`)
+
   const enrichedSpecialists = await fetchSpecialistsWithDeptAndTreatments(Array.from(specialistIds))
 
+  console.log(`[DEBUG] fetchDoctors: Enriched with ${Object.keys(enrichedSpecialists).length} specialists`)
+
   const doctors = res.items.reduce(
-    (acc, d) => {
+    (acc, d: any) => {
       const doctor = DataMappers.doctor(d)
       doctor.specialization = doctor.specialization.map((spec: any) => enrichedSpecialists[spec._id] || spec)
       acc[d._id!] = doctor
@@ -459,121 +473,224 @@ export async function fetchDoctors(ids: string[]) {
 
 /**
  * Fetches specialists with department and treatment data with caching
+ * Fixed to properly populate treatment arrays from CMS relations
  */
 export async function fetchSpecialistsWithDeptAndTreatments(specialistIds: string[]) {
-  if (!specialistIds.length) return {}
+  if (!specialistIds.length) {
+    console.log('[DEBUG] fetchSpecialistsWithDeptAndTreatments: No specialist IDs provided, returning empty object')
+    return {}
+  }
+
+  console.log(`[DEBUG] fetchSpecialistsWithDeptAndTreatments: Fetching ${specialistIds.length} specialists`)
 
   const cacheKey = `specialists_${[...specialistIds].sort().join('_')}`
   const cached = specialistsCache.get(cacheKey)
-  if (cached) return cached
+  if (cached) {
+    console.log(`[DEBUG] fetchSpecialistsWithDeptAndTreatments: Cache hit for ${specialistIds.length} specialists`)
+    return cached
+  }
 
+  console.log(`[DEBUG] fetchSpecialistsWithDeptAndTreatments: Cache miss, querying CMS for specialists`)
+
+  // Fetch specialists with all related data including treatments
   const res = await wixClient.items
     .query(COLLECTIONS.SPECIALTIES)
     .hasSome("_id", specialistIds)
-    .include("department", "treatment")
-    .limit(Math.min(specialistIds.length, 500))
+    .include("department", "treatment", "branches")
     .find()
 
+  console.log(`[DEBUG] fetchSpecialistsWithDeptAndTreatments: Found ${res.items.length} specialists in CMS`)
+
+  // Collect all treatment IDs from specialists
   const treatmentIds = new Set<string>()
   const departmentIds = new Set<string>()
 
-  res.items.forEach((s) => {
+  res.items.forEach((s: any) => {
+    // Get treatments from specialist - check multiple possible fields
     const treatments = s.treatment || s.data?.treatment || []
     ;(Array.isArray(treatments) ? treatments : [treatments]).forEach((t: any) => {
       const id = t?._id || t?.ID || t
-      id && treatmentIds.add(id)
+      if (id) {
+        treatmentIds.add(id)
+        console.log(`[DEBUG] fetchSpecialistsWithDeptAndTreatments: Found treatment ID ${id} on specialist ${s._id}`)
+      }
     })
 
+    // Get departments from specialist
     const dept = s.department || s.data?.department
     if (dept) {
-      const id = typeof dept === "string" ? dept : dept?._id || dept?.ID
-      id && departmentIds.add(id)
+      if (Array.isArray(dept)) {
+        dept.forEach((d: any) => {
+          const id = d?._id || d?.ID || d
+          if (id) departmentIds.add(id)
+        })
+      } else {
+        const id = typeof dept === "string" ? dept : dept?._id || dept?.ID
+        if (id) departmentIds.add(id)
+      }
     }
   })
 
+  console.log(`[DEBUG] fetchSpecialistsWithDeptAndTreatments: Collected ${treatmentIds.size} unique treatment IDs and ${departmentIds.size} department IDs`)
+
+  // Fetch treatments and departments in parallel
   const [treatments, departments] = await Promise.all([
-    fetchByIds(COLLECTIONS.TREATMENTS, Array.from(treatmentIds), DataMappers.treatment),
+    fetchTreatmentsWithFullData(Array.from(treatmentIds)),
     fetchByIds(COLLECTIONS.DEPARTMENTS, Array.from(departmentIds), DataMappers.department),
   ])
 
+  console.log(`[DEBUG] fetchSpecialistsWithDeptAndTreatments: Fetched ${Object.keys(treatments).length} treatments and ${Object.keys(departments).length} departments`)
+
+  // Build specialist map with enriched data
   const specialists = res.items.reduce(
-    (acc, item) => {
-      const spec = DataMappers.specialist(item)
-      acc[item._id!] = {
-        ...spec,
-        department: spec.department.map((d) => departments[d._id] || d),
-        treatments: spec.treatments.map((t) => treatments[t._id] || t),
+    (acc, item: any) => {
+      const specialist = DataMappers.specialist(item)
+      
+      // Enrich treatments with full data
+      const enrichedTreatments = specialist.treatments.map((t: any) => {
+        const treatmentData = treatments[t._id]
+        if (treatmentData) {
+          return treatmentData
+        }
+        return t
+      })
+      
+      // If no treatments from specialist field, try to get from CMS data
+      if (enrichedTreatments.length === 0) {
+        const cmsTreatments = item.treatment || item.data?.treatment || []
+        ;(Array.isArray(cmsTreatments) ? cmsTreatments : [cmsTreatments]).forEach((t: any) => {
+          const id = t?._id || t?.ID
+          if (id && treatments[id]) {
+            enrichedTreatments.push(treatments[id])
+          }
+        })
       }
+
+      specialist.treatments = enrichedTreatments
+      
+      console.log(`[DEBUG] fetchSpecialistsWithDeptAndTreatments: Specialist ${specialist._id} has ${specialist.treatments.length} treatments`)
+      
+      acc[item._id!] = specialist
       return acc
     },
     {} as Record<string, any>,
   )
+
+  console.log(`[DEBUG] fetchSpecialistsWithDeptAndTreatments: Built specialists map with ${Object.keys(specialists).length} specialists`)
 
   specialistsCache.set(cacheKey, specialists)
   return specialists
 }
 
 /**
- * Fetches treatments with caching
+ * Fetches treatments with full data including branches, hospitals, and cities
+ * Fixed to properly populate treatment arrays from CMS relations
  */
 export async function fetchTreatmentsWithFullData(treatmentIds: string[]) {
-  if (!treatmentIds.length) return {}
+  if (!treatmentIds.length) {
+    console.log('[DEBUG] fetchTreatmentsWithFullData: No treatment IDs provided, returning empty object')
+    return {}
+  }
 
-  const cacheKey = `treatments_${[...treatmentIds].sort().join('_')}`
+  console.log(`[DEBUG] fetchTreatmentsWithFullData: Fetching ${treatmentIds.length} treatments`)
+
+  const cacheKey = `treatments_full_${[...treatmentIds].sort().join('_')}`
   const cached = treatmentsCache.get(cacheKey)
-  if (cached) return cached
+  if (cached) {
+    console.log(`[DEBUG] fetchTreatmentsWithFullData: Cache hit for ${treatmentIds.length} treatments`)
+    return cached
+  }
 
+  console.log(`[DEBUG] fetchTreatmentsWithFullData: Cache miss, querying CMS for treatments`)
+
+  // Fetch treatments with all related data
   const res = await wixClient.items
     .query(COLLECTIONS.TREATMENTS)
     .hasSome("_id", treatmentIds)
-    .limit(Math.min(treatmentIds.length, 500))
+    .include("branches", "hospital", "city", "department", "specialty")
     .find()
 
-  const treatments = res.items.reduce(
-    (acc, item) => {
-      acc[item._id!] = DataMappers.treatment(item)
-      return acc
-    },
-    {} as Record<string, any>,
-  )
+  console.log(`[DEBUG] fetchTreatmentsWithFullData: Found ${res.items.length} treatments in CMS`)
 
-  treatmentsCache.set(cacheKey, treatments)
-  return treatments
+  // Also fetch ALL treatments to build complete ID-to-name mapping
+  const allTreatmentsRes = await wixClient.items
+    .query(COLLECTIONS.TREATMENTS)
+    .include("branches", "hospital", "city", "department")
+    .find()
+
+  console.log(`[DEBUG] fetchTreatmentsWithFullData: Total treatments in CMS: ${allTreatmentsRes.items.length}`)
+
+  // Build complete treatment map
+  const treatmentMap: Record<string, any> = {}
+  allTreatmentsRes.items.forEach((item: any) => {
+    const treatment = DataMappers.treatment(item)
+    treatmentMap[treatment._id] = treatment
+  })
+
+  // Add treatments from the filtered query (in case they weren't in allTreatments)
+  res.items.forEach((item: any) => {
+    const treatment = DataMappers.treatment(item)
+    treatmentMap[treatment._id] = treatment
+  })
+
+  console.log(`[DEBUG] fetchTreatmentsWithFullData: Built treatment map with ${Object.keys(treatmentMap).length} treatments`)
+
+  treatmentsCache.set(cacheKey, treatmentMap)
+  return treatmentMap
 }
 
 // =============================================================================
-// BRANCH FETCHING WITH PAGINATION SUPPORT
+// BRANCH FETCHING
 // =============================================================================
 
 /**
- * Fetches all branches with ShowHospital=true filter at API level
- * Uses cursor-based pagination for large datasets
+ * Fetches all branches with ShowHospital=true filter
+ * Fixed to ensure treatment arrays are properly populated - NO LIMIT
  */
-export async function fetchAllBranches(limit: number = 1000): Promise<any[]> {
-  try {
-    // Fetch branches with ShowHospital filter at query level
-    const res = await wixClient.items
-      .query(COLLECTIONS.BRANCHES)
-      .include(
-        "hospital",
-        "HospitalMaster_branches",
-        "city",
-        "doctor",
-        "specialty",
-        "accreditation",
-        "treatment",
-        "specialist",
-        "ShowHospital",
-      )
-      .limit(limit)
-      .find()
-
-    // Client-side filter as backup
-    return res.items.filter(item => shouldShowHospital(item))
-  } catch (error) {
-    console.error("Error fetching branches:", error)
-    return []
+export async function fetchAllBranches(): Promise<any[]> {
+  const cacheKey = 'all_branches'
+  const cached = branchesCache.get(cacheKey)
+  if (cached) {
+    console.log('[DEBUG] fetchAllBranches: Cache hit, returning cached branches')
+    return cached
   }
+
+  console.log('[DEBUG] fetchAllBranches: Cache miss, querying CMS for branches')
+
+  const res = await wixClient.items
+    .query(COLLECTIONS.BRANCHES)
+    .include(
+      "hospital",
+      "HospitalMaster_branches",
+      "city",
+      "doctor",
+      "specialty",
+      "accreditation",
+      "treatment",
+      "specialist",
+      "ShowHospital",
+      "department"
+    )
+    .find()
+
+  console.log(`[DEBUG] fetchAllBranches: Found ${res.items.length} branches in CMS`)
+
+  const branches = res.items.filter((b: any) => shouldShowHospital(b))
+  console.log(`[DEBUG] fetchAllBranches: Filtered to ${branches.length} branches with ShowHospital=true`)
+
+  // Collect all treatment IDs to verify they're being returned
+  const allTreatmentIds = new Set<string>()
+  branches.forEach((b: any) => {
+    const treatments = b.treatment || b.data?.treatment || []
+    ;(Array.isArray(treatments) ? treatments : [treatments]).forEach((t: any) => {
+      const id = t?._id || t?.ID || t
+      if (id) allTreatmentIds.add(id)
+    })
+  })
+  console.log(`[DEBUG] fetchAllBranches: Found ${allTreatmentIds.size} unique treatment IDs across all branches`)
+
+  branchesCache.set(cacheKey, branches)
+  return branches
 }
 
 /**
@@ -597,8 +714,9 @@ export async function fetchBranchesByIds(ids: string[]) {
         "specialist",
         "ShowHospital",
       )
-      .limit(Math.min(ids.length, 500))
       .find()
+
+    console.log(`[DEBUG] fetchBranchesByIds: Found ${res.items.length} branches for ${ids.length} IDs`)
 
     return res.items.filter(item => shouldShowHospital(item))
   } catch (error) {
@@ -615,7 +733,6 @@ export async function searchBranches(field: string, query: string) {
     const res = await wixClient.items
       .query(COLLECTIONS.BRANCHES)
       .contains(field as any, query)
-      .limit(100)
       .find()
 
     return res.items.map((i: any) => i._id).filter(Boolean)
@@ -634,7 +751,7 @@ export async function searchBranches(field: string, query: string) {
  */
 export async function fetchHospitalDetails(hospitalId: string, includeBranches: boolean = true) {
   const cacheKey = `hospital_${hospitalId}`
-  const cached = accreditationsCache.get(cacheKey) // Reusing cache for simplicity
+  const cached = accreditationsCache.get(cacheKey)
   if (cached) return cached
 
   try {

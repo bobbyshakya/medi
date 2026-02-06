@@ -28,11 +28,7 @@ interface HospitalDetailResponse {
 // UTILITY FUNCTIONS
 // =============================================================================
 
-function getHospitalCity(hospital: HospitalData): string {
-  const firstBranch = hospital.branches?.[0]
-  const firstCity = firstBranch?.city?.[0]
-  return firstCity?.cityName || "Unknown City"
-}
+// Removed unused getHospitalCity function
 
 // =============================================================================
 // MAIN COMPONENT
@@ -86,8 +82,13 @@ export default function HospitalDetail({ params }: { params: Promise<{ slug: str
 
   const visibleBranches = showAllBranches ? filteredBranches : filteredBranches.slice(0, 3)
 
-  // Extract unique doctors and treatments from branches
+  // Extract unique doctors and treatments - handles both standalone and group hospitals
   const allDoctors = useMemo(() => {
+    // For standalone hospitals, use hospital.doctors directly
+    if (hospital?.isStandalone && hospital.doctors) {
+      return hospital.doctors.map(doctor => ({ ...doctor, branch: hospital.hospitalName })).slice(0, 9)
+    }
+    // For group hospitals, extract from branches
     if (!hospital?.branches) return []
     const doctorMap = new Map()
     hospital.branches.forEach((branch) => {
@@ -101,6 +102,11 @@ export default function HospitalDetail({ params }: { params: Promise<{ slug: str
   }, [hospital])
 
   const allTreatments = useMemo(() => {
+    // For standalone hospitals, use hospital.treatments directly
+    if (hospital?.isStandalone && hospital.treatments) {
+      return hospital.treatments.map(treatment => ({ ...treatment, branch: hospital.hospitalName })).slice(0, 9)
+    }
+    // For group hospitals, extract from branches
     if (!hospital?.branches) return []
     const treatmentMap = new Map()
     hospital.branches.forEach((branch) => {
@@ -152,7 +158,7 @@ export default function HospitalDetail({ params }: { params: Promise<{ slug: str
               )}
 
               {/* Branches */}
-              {hospital.branches && hospital.branches.length > 0 && (
+              {hospital.branches && hospital.branches.length > 0 && !hospital.isStandalone && (
                 <BranchesSection
                   hospital={hospital as any}
                   selectedCity={selectedCity}

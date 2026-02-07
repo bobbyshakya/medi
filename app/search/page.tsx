@@ -16,7 +16,7 @@ import FilterSidebar from "@/components/search/FilterSidebar"
 import ViewToggle from "@/components/search/ViewToggle"
 import { ResultsHeader, MobileFilterButton, BreadcrumbNav, RenderContent } from "@/components/search/LayoutComponents"
 import { useCMSData } from "@/hooks/useCMSData"
-import type { FilterState, BranchType, DoctorType, ExtendedTreatmentType } from '@/types/search'
+import type { FilterState } from '@/types/search'
 
 /**
  * Main content component for the hospitals search page.
@@ -38,11 +38,6 @@ function HospitalsPageContent() {
     currentCount,
     getFilterValueDisplay,
   } = useCMSData()
-
-  // Type assertions for filtered data
-  const branches: BranchType[] = filteredBranches as BranchType[]
-  const doctors: DoctorType[] = filteredDoctors as DoctorType[]
-  const treatments: ExtendedTreatmentType[] = filteredTreatments as ExtendedTreatmentType[]
 
   // State for controlling mobile filter sidebar visibility
   const [showFilters, setShowFilters] = React.useState(false)
@@ -97,9 +92,9 @@ function HospitalsPageContent() {
             updateSubFilter={updateSubFilter}
             availableOptions={availableOptions}
             getFilterValueDisplay={getFilterValueDisplay}
-            filteredBranches={branches}
-            filteredDoctors={doctors}
-            filteredTreatments={treatments}
+            filteredBranches={filteredBranches}
+            filteredDoctors={filteredDoctors}
+            filteredTreatments={filteredTreatments}
           />
 
           {/* Main content area */}
@@ -129,9 +124,9 @@ function HospitalsPageContent() {
               loading={loading}
               isLoadingMore={isLoadingMore}
               currentCount={currentCount}
-              filteredBranches={branches}
-              filteredDoctors={doctors}
-              filteredTreatments={treatments}
+              filteredBranches={filteredBranches}
+              filteredDoctors={filteredDoctors}
+              filteredTreatments={filteredTreatments}
               clearFilters={clearFilters}
             />
           </main>

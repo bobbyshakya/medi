@@ -97,58 +97,97 @@ const getMatchingBranches = (
   const lowerSpec = specialization.query.toLowerCase()
   const lowerBranch = branch.query.toLowerCase()
   const lowerDept = department.query.toLowerCase()
+  const lowerTreatment = treatment.query.toLowerCase()
   const lowerDoctor = doctor.query.toLowerCase()
   const lowerLocation = location.query.toLowerCase()
-  const lowerTreatment = treatment.query.toLowerCase()
 
-  // Build treatment-to-branch mapping using multiple sources
+  // Build comprehensive treatment-to-branch mapping
   const treatmentBranchIds = new Set<string>()
   const treatmentNameMatches = new Set<string>()
 
-  // Find matching treatments and collect their branch IDs
   if (treatment.id || lowerTreatment) {
+    // Step 1: Find matching treatment IDs and names from allTreatments (TreatmentMaster)
     allTreatments.forEach((t) => {
       const matchesId = treatment.id && t._id === treatment.id
-      const matchesQuery = lowerTreatment && t.name?.toLowerCase().includes(lowerTreatment)
+      const matchesQuery = lowerTreatment && t.name && t.name.toLowerCase().includes(lowerTreatment)
+      
       if (matchesId || matchesQuery) {
+        // Add treatment name for matching in hospital branches
         if (t.name) treatmentNameMatches.add(t.name.toLowerCase())
+        
+        // Add branches from TreatmentMaster's branchesAvailableAt
         t.branchesAvailableAt?.forEach((loc) => {
           if (loc.branchId) treatmentBranchIds.add(loc.branchId)
         })
       }
     })
 
-    // Also check hospital and branch treatment arrays
+    // Step 2: Also check TreatmentMaster's branchesAvailableAt when treatment ID is selected
+    if (treatment.id) {
+      allTreatments.forEach((t) => {
+        if (t._id === treatment.id) {
+          t.branchesAvailableAt?.forEach((loc) => {
+            if (loc.branchId) treatmentBranchIds.add(loc.branchId)
+          })
+        }
+      })
+    }
+
+    // Step 3: Also check hospital branches for treatments by name AND ID
     hospitals.forEach((h) => {
-      const hospitalHasTreatment = h.treatments?.some((t) => 
-        (treatment.id && t._id === treatment.id) ||
-        (t.name && treatmentNameMatches.has(t.name.toLowerCase()))
-      )
-      
-      if (hospitalHasTreatment) {
-        h.branches?.forEach((b) => {
-          if (b._id) treatmentBranchIds.add(b._id)
-        })
-      }
-      
+      // Check hospital-level treatments
+      h.treatments?.forEach((t) => {
+        const matchesId = treatment.id && t._id === treatment.id
+        const matchesQuery = lowerTreatment && t.name && t.name.toLowerCase().includes(lowerTreatment)
+        const matchesName = t.name && treatmentNameMatches.has(t.name.toLowerCase())
+        
+        if (matchesId || matchesQuery || matchesName) {
+          // Add ALL branches of this hospital
+          h.branches?.forEach((b) => {
+            if (b._id) treatmentBranchIds.add(b._id)
+          })
+        }
+      })
+
+      // Check branch-level treatments
       h.branches?.forEach((b) => {
-        const hasTreatment = b.treatments?.some((t) =>
-          (treatment.id && t._id === treatment.id) ||
-          (t.name && treatmentNameMatches.has(t.name.toLowerCase()))
-        ) || b.specialization?.some((s) =>
-          s.isTreatment && (
-            (treatment.id && s._id === treatment.id) ||
-            (s.name && treatmentNameMatches.has(s.name.toLowerCase()))
-          )
-        ) || b.specialists?.some((spec: any) =>
-          spec.treatments?.some((t: any) =>
-            (treatment.id && t._id === treatment.id) ||
-            (t.name && treatmentNameMatches.has(t.name.toLowerCase()))
-          )
-        )
-        if (hasTreatment && b._id) treatmentBranchIds.add(b._id)
+        const hasTreatment = b.treatments?.some((t) => {
+          const matchesId = treatment.id && t._id === treatment.id
+          const matchesQuery = lowerTreatment && t.name && t.name.toLowerCase().includes(lowerTreatment)
+          const matchesName = t.name && treatmentNameMatches.has(t.name.toLowerCase())
+          return matchesId || matchesQuery || matchesName
+        })
+        
+        // Also check specialization treatments
+        const hasSpecTreatment = b.specialization?.some((s) => {
+          if (s.isTreatment) {
+            const matchesId = treatment.id && s._id === treatment.id
+            const matchesQuery = lowerTreatment && s.name && s.name.toLowerCase().includes(lowerTreatment)
+            const matchesName = s.name && treatmentNameMatches.has(s.name.toLowerCase())
+            return matchesId || matchesQuery || matchesName
+          }
+          return false
+        })
+
+        // Check specialists → treatments chain
+        const hasSpecialistTreatment = b.specialists?.some((spec: any) => {
+          // Check if specialist has matching treatments
+          return spec.treatments?.some((t: any) => {
+            const matchesId = treatment.id && t._id === treatment.id
+            const matchesQuery = lowerTreatment && t.name && t.name.toLowerCase().includes(lowerTreatment)
+            const matchesName = t.name && treatmentNameMatches.has(t.name.toLowerCase())
+            return matchesId || matchesQuery || matchesName
+          })
+        })
+        
+        if (hasTreatment || hasSpecTreatment || hasSpecialistTreatment) {
+          if (b._id) treatmentBranchIds.add(b._id)
+        }
       })
     })
+
+    // If treatment filter is active but no matching branches found, return empty
+    if (treatmentBranchIds.size === 0) return []
   }
 
   return hospitals
@@ -161,9 +200,9 @@ const getMatchingBranches = (
       })) || []
     )
     .filter((b) => {
-      // Treatment filter - show only branches with the treatment
-      if ((treatment.id || lowerTreatment) && treatmentBranchIds.size > 0) {
-        if (!treatmentBranchIds.has(b._id!)) return false
+      // Treatment filter
+      if ((treatment.id || lowerTreatment) && !treatmentBranchIds.has(b._id)) {
+        return false
       }
 
       // City filter
@@ -188,7 +227,7 @@ const getMatchingBranches = (
         return false
       }
 
-      // Location filter
+      // Location filter (city or state)
       if (
         (location.id || lowerLocation) &&
         !b.city.some(
@@ -216,7 +255,7 @@ const getMatchingBranches = (
       if (
         (department.id || lowerDept) &&
         !allDepartments.some(
-          (d: any) =>
+          (d: DepartmentData) =>
             (department.id && d._id === department.id) ||
             (lowerDept && d.name.toLowerCase().includes(lowerDept))
         )
@@ -242,7 +281,7 @@ const getMatchingBranches = (
         if (!hasSpec) return false
       }
 
-      // Doctor filter
+      // Doctor filter - show only branches where this doctor works
       if (doctor.id || lowerDoctor) {
         const hasDoctor = b.doctors?.some((d: any) => {
           const matchesId = doctor.id && d._id === doctor.id
@@ -378,27 +417,6 @@ export const useCMSData = () => {
   const queryClient = useQueryClient()
   const fullDataLoadedRef = useRef(false)
 
-  // Prefetch CMS data on mount for instant page loads
-  useEffect(() => {
-    const prefetchData = async () => {
-      try {
-        await queryClient.prefetchQuery({
-          queryKey: ['cms', 'initial'],
-          queryFn: async () => {
-            const res = await fetch('/api/cms?action=all&pageSize=20')
-            if (!res.ok) throw new Error('Failed to fetch initial CMS data')
-            return res.json() as Promise<CMSApiResponse>
-          },
-          staleTime: 5 * 60 * 1000, // 5 minutes
-          gcTime: 10 * 60 * 1000,
-        })
-      } catch (error) {
-        console.warn('Prefetch failed:', error)
-      }
-    }
-    prefetchData()
-  }, [queryClient])
-
   // Step 1: Fast initial load with first 20 items
   const { data: initialData, isLoading: initialLoading } = useQuery({
     queryKey: ['cms', 'initial'],
@@ -409,14 +427,13 @@ export const useCMSData = () => {
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000,
-    placeholderData: (previousData) => previousData,
   })
 
   // Step 2: Background load ALL data after initial load completes
   const { data: fullData, isLoading: fullLoading } = useQuery({
     queryKey: ['cms', 'full'],
     queryFn: async () => {
-      const res = await fetch('/api/cms?action=all&pageSize=0')
+      const res = await fetch('/api/cms?action=all&pageSize=1000')
       if (!res.ok) throw new Error('Failed to fetch full CMS data')
       const data = await res.json() as CMSApiResponse
       fullDataLoadedRef.current = true
@@ -425,7 +442,6 @@ export const useCMSData = () => {
     enabled: !initialLoading && !!initialData, // Only start after initial load
     staleTime: 10 * 60 * 1000, // 10 minutes
     gcTime: 15 * 60 * 1000,
-    placeholderData: (previousData) => previousData,
   })
 
   // Use full data if available, otherwise use initial data
@@ -530,8 +546,10 @@ export const useCMSData = () => {
           const matchesQuery = lowerDoctorQuery && d.doctorName?.toLowerCase().includes(lowerDoctorQuery)
           
           if (matchesId || matchesQuery) {
+            // Get treatments from doctor's specializations
             const specs = Array.isArray(d.specialization) ? d.specialization : d.specialization ? [d.specialization] : []
             specs.forEach((spec: any) => {
+              // Get treatments from specialist
               spec.treatments?.forEach((t: any) => {
                 if (t._id) doctorTreatmentIds.add(t._id)
                 if (t.name) doctorTreatmentNames.add(t.name.toLowerCase())
@@ -540,17 +558,20 @@ export const useCMSData = () => {
           }
         })
 
+        // Also check branch-level doctors
         h.branches?.forEach((b) => {
           b.doctors?.forEach((d: any) => {
             const matchesId = filters.doctor.id && d._id === filters.doctor.id
             const matchesQuery = lowerDoctorQuery && d.doctorName?.toLowerCase().includes(lowerDoctorQuery)
             
             if (matchesId || matchesQuery) {
+              // Get treatments from this branch
               b.treatments?.forEach((t: any) => {
                 if (t._id) doctorTreatmentIds.add(t._id)
                 if (t.name) doctorTreatmentNames.add(t.name.toLowerCase())
               })
 
+              // Get treatments from specialists at this branch
               b.specialists?.forEach((spec: any) => {
                 spec.treatments?.forEach((t: any) => {
                   if (t._id) doctorTreatmentIds.add(t._id)
@@ -558,6 +579,7 @@ export const useCMSData = () => {
                 })
               })
 
+              // Get treatments from doctor's specializations
               const specs = Array.isArray(d.specialization) ? d.specialization : d.specialization ? [d.specialization] : []
               specs.forEach((spec: any) => {
                 spec.treatments?.forEach((t: any) => {
@@ -570,6 +592,7 @@ export const useCMSData = () => {
         })
       })
 
+      // Filter treatments by doctor's related treatments
       return allTreatments.filter((t) => {
         return doctorTreatmentIds.has(t._id) || 
                (t.name && doctorTreatmentNames.has(t.name.toLowerCase()))
@@ -580,15 +603,15 @@ export const useCMSData = () => {
       return allTreatments
     }
 
-    // Default case: hospitals view - merge treatments from hospitals
+    // Extract treatments from hospitals and merge with TreatmentMaster data
     const treatmentMap = new Map<string, ExtendedTreatmentData>()
     
-    // Add all treatments from TreatmentMaster
+    // First, add all treatments from TreatmentMaster
     allTreatments.forEach((t) => {
       treatmentMap.set(t._id, { ...t })
     })
     
-    // Add treatments from hospitals that might not be in TreatmentMaster
+    // Then, add treatments from hospitals that might not be in TreatmentMaster
     allHospitals.forEach((h) => {
       h.treatments?.forEach((t) => {
         if (!treatmentMap.has(t._id)) {
@@ -600,7 +623,6 @@ export const useCMSData = () => {
         }
       })
     })
-    
     return Array.from(treatmentMap.values())
   }, [allHospitals, filters.view, filters.treatment, filters.doctor, allTreatments])
 
@@ -662,9 +684,11 @@ export const useCMSData = () => {
       options.branch = filteredBranches.map((b) => ({ id: b._id || '', name: b.branchName || '' }))
     }
 
-    // Treatments - show ALL treatments in filter options for visibility
+    // Treatments - use ALL treatments for filter options
+    // Only include treatments that have at least one branch available
     if (visibleKeys.includes('treatment')) {
       options.treatment = allTreatments
+        .filter((t) => t.branchesAvailableAt && t.branchesAvailableAt.length > 0)
         .map((t) => ({ id: t._id || '', name: t.name || '' }))
     }
 
@@ -751,8 +775,8 @@ export const useCMSData = () => {
 
   return {
     loading,
-    isLoadingMore,
-    isFullDataLoaded: fullDataLoadedRef.current || !!fullData,
+    isLoadingMore, // New: indicates background loading
+    isFullDataLoaded: fullDataLoadedRef.current || !!fullData, // New: indicates all data loaded
     filters,
     updateFilter,
     updateSubFilter,
@@ -762,7 +786,7 @@ export const useCMSData = () => {
     filteredDoctors,
     filteredTreatments,
     currentCount,
-    totalCount: cmsData?.totalHospitals || 0,
+    totalCount: cmsData?.totalHospitals || 0, // New: total count from API
     getFilterValueDisplay,
     // Raw data access
     allHospitals,

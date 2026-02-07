@@ -1,27 +1,12 @@
 // app/api/cms/route.ts
 // Unified CMS API endpoint - single source of truth for all CMS data
-// OPTIMIZED: Smart caching for instant page loads
 
 import { NextResponse } from 'next/server'
 import { getAllCMSData, getHospitalBySlug, searchHospitals } from '@/lib/cms'
 
-// Cache configuration for different data types
-const CACHE_CONFIG = {
-  // Static data that rarely changes - long cache time
-  ALL_DATA: {
-    'Cache-Control': 'public, max-age=600, s-maxage=600, stale-while-revalidate=300',
-    'Surrogate-Control': 'max-age=600, stale-while-revalidate=300',
-  },
-  // Dynamic data - shorter cache time
-  SEARCH: {
-    'Cache-Control': 'no-cache, no-store, must-revalidate',
-    'Pragma': 'no-cache',
-    'Expires': '0',
-  },
-  // Single hospital - moderate cache
-  HOSPITAL: {
-    'Cache-Control': 'public, max-age=300, s-maxage=300, stale-while-revalidate=120',
-  },
+// Cache configuration
+const CACHE_HEADERS = {
+  'Cache-Control': 'public, s-maxage=600, stale-while-revalidate=1200',
 }
 
 /**
@@ -36,7 +21,6 @@ const CACHE_CONFIG = {
  */
 export async function GET(req: Request) {
   const requestId = crypto.randomUUID?.() || Date.now().toString()
-  const startTime = Date.now()
 
   try {
     const url = new URL(req.url)
@@ -44,8 +28,7 @@ export async function GET(req: Request) {
     const slug = url.searchParams.get('slug')
     const query = url.searchParams.get('q')
     const page = Math.max(0, Number(url.searchParams.get('page') || 0))
-    const requestedPageSize = Number(url.searchParams.get('pageSize') || 1000)
-    const pageSize = Math.min(2000, Math.max(0, requestedPageSize))
+    const pageSize = Math.min(100, Math.max(1, Number(url.searchParams.get('pageSize') || 50)))
 
     switch (action) {
       case 'hospital': {
@@ -56,12 +39,10 @@ export async function GET(req: Request) {
           )
         }
         const result = await getHospitalBySlug(slug)
-        console.log(`[${requestId}] CMS API: Fetched hospital ${slug} in ${Date.now() - startTime}ms`)
         return NextResponse.json(result, {
           headers: {
-            ...CACHE_CONFIG.HOSPITAL,
+            ...CACHE_HEADERS,
             'X-Request-Id': requestId,
-            'X-Response-Time': String(Date.now() - startTime),
           },
         })
       }
@@ -73,8 +54,6 @@ export async function GET(req: Request) {
         const paginatedItems = hospitals.slice(startIndex, startIndex + pageSize)
         const hasMore = startIndex + pageSize < total
 
-        console.log(`[${requestId}] CMS API: Search '${query}' returned ${total} results in ${Date.now() - startTime}ms`)
-
         return NextResponse.json(
           {
             items: paginatedItems,
@@ -85,11 +64,10 @@ export async function GET(req: Request) {
           },
           {
             headers: {
-              ...CACHE_CONFIG.SEARCH,
+              ...CACHE_HEADERS,
               'X-Request-Id': requestId,
               'X-Total-Count': String(total),
               'X-Has-More': String(hasMore),
-              'X-Response-Time': String(Date.now() - startTime),
             },
           }
         )
@@ -102,12 +80,8 @@ export async function GET(req: Request) {
         // Apply pagination to hospitals
         const totalHospitals = data.hospitals.length
         const startIndex = page * pageSize
-        const paginatedHospitals = pageSize === 0 
-          ? data.hospitals 
-          : data.hospitals.slice(startIndex, startIndex + pageSize)
+        const paginatedHospitals = data.hospitals.slice(startIndex, startIndex + pageSize)
         const hasMore = startIndex + pageSize < totalHospitals
-
-        console.log(`[${requestId}] CMS API: Fetched all data - ${totalHospitals} hospitals, ${data.treatments.length} treatments in ${Date.now() - startTime}ms`)
 
         return NextResponse.json(
           {
@@ -122,12 +96,10 @@ export async function GET(req: Request) {
           },
           {
             headers: {
-              ...CACHE_CONFIG.ALL_DATA,
+              ...CACHE_HEADERS,
               'X-Request-Id': requestId,
               'X-Total-Count': String(totalHospitals),
               'X-Has-More': String(hasMore),
-              'X-Response-Time': String(Date.now() - startTime),
-              'ETag': `"${Buffer.from(JSON.stringify({ totalHospitals, totalTreatments: data.totalTreatments, lastUpdated: data.lastUpdated })).toString('base64')}"`,
             },
           }
         )
@@ -146,7 +118,6 @@ export async function GET(req: Request) {
         status: 500,
         headers: {
           'X-Request-Id': requestId,
-          'X-Response-Time': String(Date.now() - startTime),
         },
       }
     )

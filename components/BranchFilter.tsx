@@ -27,6 +27,16 @@ interface WixTreatment {
 
 interface BranchFilterProps { allHospitals: HospitalData[]; initialSearch?: string }
 
+// Combined treatment type for all treatment sources
+interface AllTreatmentOption {
+  id: string
+  name: string
+  type: 'treatment'
+  label: string
+  hospitalName?: string
+  city?: string
+}
+
 // --- Utilities ---
 const slug = (v: string) => v.toLowerCase().trim().replace(/[^\w\s-]/g, '').replace(/[\s_-]+/g, '-')
 
@@ -219,29 +229,147 @@ const SearchDropdown = ({
 const BranchFilter = ({ allHospitals, initialSearch = "" }: BranchFilterProps) => {
   const router = useRouter()
   const [query, setQuery] = useState(initialSearch)
-  const [isLoading, setIsLoading] = useState(false)
-  const [treatmentsLoaded, setTreatmentsLoaded] = useState(false)
+  const [allTreatments, setAllTreatments] = useState<AllTreatmentOption[]>([])
 
-  // Process treatments from Wix API only (avoid duplicates)
-  // Use useMemo to process hospital data only once
-  const hospitalTreatments = useMemo(() => {
-    const seen = new Set<string>()
-    const treatments: UniversalOption[] = []
-    const add = (id: string, name: string, hospitalName: string, city: string) => {
-      const key = `treatment-${id}`
-      if (!seen.has(key)) {
-        seen.add(key)
-        treatments.push({ id, name, type: 'treatment' as const, label: 'Treatment', hospitalName, city })
+  // Fetch treatments from multiple sources
+  const fetchAllTreatments = useCallback(async () => {
+    try {
+      // 1. Fetch from Wix API (main TreatmentMaster collection) - fetch ALL treatments without pagination
+      const wixRes = await fetch('/api/treatments?pageSize=1000')
+      const wixData = await wixRes.json()
+      const wixTreatmentsData = (wixData.items || []) as WixTreatment[]
+
+      // 2. Collect treatments from all sources
+      const allTreatmentOptions: AllTreatmentOption[] = []
+      const seen = new Set<string>()
+
+      const addTreatment = (opt: AllTreatmentOption) => {
+        const key = `${opt.type}-${opt.id}`
+        if (!seen.has(key)) {
+          allTreatmentOptions.push(opt)
+          seen.add(key)
+        }
       }
-    }
 
+      // Process Wix treatments
+      wixTreatmentsData.forEach((t) => {
+        if (t._id && t.name) {
+          const loc = t.branchesAvailableAt?.[0]
+          const treatmentSlug = slug(t.name)
+          addTreatment({
+            id: treatmentSlug, // Use slug from name instead of Wix ID
+            name: t.name,
+            type: 'treatment',
+            label: 'Treatment',
+            hospitalName: loc?.hospitalName || '',
+            city: loc?.cities?.[0]?.cityName || ''
+          })
+        }
+      })
+
+      // Process treatments from all hospitals and their branches/specialists
+      allHospitals.forEach(h => {
+        const hname = h.hospitalName || ''
+
+        // Hospital-level treatments
+        h.treatments?.forEach((t) => {
+          const name = getName(t)
+          if (name && name !== 'Unknown') {
+            const id = t._id || t.id || slug(name)
+            addTreatment({
+              id,
+              name,
+              type: 'treatment',
+              label: 'Treatment',
+              hospitalName: hname,
+              city: ''
+            })
+          }
+        })
+
+        h.branches?.forEach(b => {
+          const city = getCity(b.city)
+
+          // Branch-level treatments
+          b.treatments?.forEach((t) => {
+            const name = getName(t)
+            if (name && name !== 'Unknown') {
+              const id = t._id || t.id || slug(name)
+              addTreatment({
+                id,
+                name,
+                type: 'treatment',
+                label: 'Treatment',
+                hospitalName: hname,
+                city
+              })
+            }
+          })
+
+          // Specialist-level treatments
+          b.specialists?.forEach((s) => {
+            s.treatments?.forEach((t: any) => {
+              const name = getName(t)
+              if (name && name !== 'Unknown') {
+                const id = t._id || t.id || slug(name)
+                addTreatment({
+                  id,
+                  name,
+                  type: 'treatment',
+                  label: 'Treatment',
+                  hospitalName: hname,
+                  city
+                })
+              }
+            })
+          })
+        })
+      })
+
+      setAllTreatments(allTreatmentOptions)
+    } catch (error) {
+      console.error('Error fetching treatments:', error)
+      setAllTreatments([])
+    }
+  }, [allHospitals])
+
+  useEffect(() => {
+    fetchAllTreatments()
+  }, [fetchAllTreatments])
+
+  const options = useMemo(() => {
+    const opts: UniversalOption[] = []
+    const seen = new Set<string>()
+
+    const add = (opt: UniversalOption) => { if (!seen.has(`${opt.type}-${opt.id}`)) { opts.push(opt); seen.add(`${opt.type}-${opt.id}`); } }
+
+    // Doctors - HIDDEN from dropdown (only accessible via specialties)
+    // allHospitals.forEach(h => {
+    //   const hname = h.hospitalName || ''
+    //   h.doctors?.forEach((d: DoctorData) => { if (d._id && d.doctorName) add({ id: d._id, name: getName(d.doctorName), type: 'doctor', label: 'Doctor', hospitalName: hname }) })
+    // })
+
+    // Treatments from all sources (Wix API + hospitals + branches + specialists)
+    allTreatments.forEach((t) => {
+      add({
+        id: t.id,
+        name: t.name,
+        type: 'treatment',
+        label: 'Treatment',
+        hospitalName: t.hospitalName || '',
+        city: t.city || ''
+      })
+    })
+
+    // Hospital Treatments (fallback - in case any were missed)
+    const treatments = new Map<string, UniversalOption>()
     allHospitals.forEach(h => {
       const hname = h.hospitalName || ''
-      h.treatments?.forEach((t) => {
+      h.treatments?.forEach((t: TreatmentData) => {
         const name = getName(t)
         if (name && name !== 'Unknown') {
           const id = t._id || t.id || slug(name)
-          add(id, name, hname, '')
+          if (!seen.has(`treatment-${id}`)) treatments.set(id, { id, name, type: 'treatment', label: 'Treatment', hospitalName: hname, city: '' })
         }
       })
       h.branches?.forEach(b => {
@@ -250,7 +378,7 @@ const BranchFilter = ({ allHospitals, initialSearch = "" }: BranchFilterProps) =
           const name = getName(t)
           if (name && name !== 'Unknown') {
             const id = t._id || t.id || slug(name)
-            add(id, name, hname, city)
+            if (!seen.has(`treatment-${id}`)) treatments.set(id, { id, name, type: 'treatment', label: 'Treatment', hospitalName: hname, city })
           }
         })
         b.specialists?.forEach((s: any) => {
@@ -258,72 +386,15 @@ const BranchFilter = ({ allHospitals, initialSearch = "" }: BranchFilterProps) =
             const name = getName(t)
             if (name && name !== 'Unknown') {
               const id = t._id || t.id || slug(name)
-              add(id, name, hname, city)
+              if (!seen.has(`treatment-${id}`)) treatments.set(id, { id, name, type: 'treatment', label: 'Treatment', hospitalName: hname, city })
             }
           })
         })
       })
     })
+    treatments.forEach(o => add(o))
 
-    return treatments
-  }, [allHospitals])
-
-  // Fetch treatments from Wix API
-  const [wixTreatments, setWixTreatments] = useState<UniversalOption[]>([])
-
-  useEffect(() => {
-    const fetchWixTreatments = async () => {
-      setIsLoading(true)
-      try {
-        const res = await fetch('/api/treatments?pageSize=100')
-        const data = await res.json()
-        const items = (data.items || []) as WixTreatment[]
-        
-        const seen = new Set<string>()
-        const treatments: UniversalOption[] = []
-        const add = (id: string, name: string, hospitalName: string, city: string) => {
-          const key = `treatment-${id}`
-          if (!seen.has(key)) {
-            seen.add(key)
-            treatments.push({ id, name, type: 'treatment' as const, label: 'Treatment', hospitalName, city })
-          }
-        }
-
-        items.forEach((t) => {
-          if (t._id && t.name) {
-            const id = slug(t.name)
-            const loc = t.branchesAvailableAt?.[0]
-            add(id, t.name, loc?.hospitalName || '', loc?.cities?.[0]?.cityName || '')
-          }
-        })
-
-        setWixTreatments(treatments)
-      } catch {
-        setWixTreatments([])
-      } finally {
-        setTreatmentsLoaded(true)
-        setIsLoading(false)
-      }
-    }
-
-    fetchWixTreatments()
-  }, [])
-
-  // Build all options - only include branches from hospitals
-  const options = useMemo(() => {
-    const opts: UniversalOption[] = []
-    const seen = new Set<string>()
-    const add = (opt: UniversalOption) => { if (!seen.has(`${opt.type}-${opt.id}`)) { opts.push(opt); seen.add(`${opt.type}-${opt.id}`); } }
-
-    // Add Wix treatments (from API)
-    wixTreatments.forEach(t => add(t))
-
-    // Add hospital treatments (only Wix fails or as fallback)
-    if (!treatmentsLoaded || wixTreatments.length === 0) {
-      hospitalTreatments.forEach(t => add(t))
-    }
-
-    // Add branches
+    // Branches
     allHospitals.forEach(h => {
       const hname = h.hospitalName || ''
       h.branches?.forEach(b => {
@@ -332,47 +403,24 @@ const BranchFilter = ({ allHospitals, initialSearch = "" }: BranchFilterProps) =
     })
 
     return opts.sort((a, b) => a.name.localeCompare(b.name))
-  }, [allHospitals, wixTreatments, hospitalTreatments, treatmentsLoaded])
+  }, [allHospitals, allTreatments])
 
   const handleSelect = useCallback((id: string, type: UniversalOption['type']) => {
     const opt = options.find(o => o.id === id && o.type === type)
     if (!opt) return
-    
     const s = slug(opt.name)
     let url = ''
-    
     switch (type) {
-      case 'doctor':
-        url = `/doctors/${s}`
-        break
-      case 'treatment':
-        url = `/treatment/${s}`
-        break
-      case 'city':
-        url = `/search/?view=hospitals&city=${s}`
-        break
-      case 'branch':
-        url = `/search/hospitals/${s}`
-        break
-      default:
-        return
+      case 'doctor': url = `/doctors/${s}`; break
+      case 'treatment': url = `/treatment/${s}`; break
+      case 'city': url = `/search/?view=hospitals&city=${s}`; break
+      case 'branch': url = `/search/hospitals/${s}`; break
     }
-    
-    // Clear query and navigate
-    setQuery('')
     router.push(url)
+    setQuery('')
   }, [options, router])
 
-  return (
-    <SearchDropdown 
-      value={query} 
-      onChange={setQuery} 
-      placeholder={isLoading ? "Loading..." : "Search hospitals, treatments..."} 
-      options={options} 
-      onOptionSelect={handleSelect} 
-      onClear={() => setQuery('')} 
-    />
-  )
+  return <SearchDropdown value={query} onChange={setQuery} placeholder="Search hospitals, treatments..." options={options} onOptionSelect={handleSelect} onClear={() => setQuery('')} />
 }
 
 export default BranchFilter

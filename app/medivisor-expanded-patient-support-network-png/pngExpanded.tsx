@@ -8,7 +8,7 @@ export default function Home() {
             <PNGBanner />
 
             {/* Main Content */}
-            <div className="mx-auto container px-4 md:px-6" id="join-us-form">
+            <div className="mx-auto text-lg container px-4 md:px-6" id="join-us-form">
                 <div className="grid gap-8 py-8 md:py-12 lg:grid-cols-4">
                     {/* Left Column - Content Sections */}
                     <div className="lg:col-span-3 space-y-8">
@@ -19,7 +19,7 @@ export default function Home() {
                                     An Invitation to Serve
                                 </h2>
                             </div>
-                            <div className="space-y-6 text-gray-700 leading-relaxed text-base md:text-lg">
+                            <div className="space-y-6 text-gray-700 leading-relaxed text-lg md:text-lg">
                                 <p>
                                     Over the last one year, Medivisor India Treatment has walked alongside more than a hundred families from Papua New Guinea and helped them access life-changing treatment in India. Behind every number is a human story — a mother, a father, a child — and a family that was once afraid, confused, and searching for hope.
                                 </p>
@@ -53,7 +53,7 @@ export default function Home() {
                                     Who We Are
                                 </h2>
                             </div>
-                            <div className="space-y-6 text-gray-700 leading-relaxed text-base md:text-lg">
+                            <div className="space-y-6 text-gray-700 leading-relaxed text-lg md:text-lg">
                                 <p>
                                     Medivisor India Treatment is a patient guidance and medical support organization based in New Delhi, India. For more than ten years, we have helped over 2500 patients from Papua New Guinea, Fiji, Vanuatu, Solomon Islands, and other countries access safe, ethical, and affordable medical treatment in India.
                                 </p>
@@ -63,7 +63,7 @@ export default function Home() {
                                     </p>
                                 </div>
                                 <p className="font-semibold text-gray-900 mt-8">Our Services Include:</p>
-                                <div className="space-y-4 mt-4">
+                                <div className="space-y-4 text-lg mt-4">
                                     {[
                                         "Hospital and doctor selection",
                                         "Treatment planning with transparent costing",
@@ -76,7 +76,7 @@ export default function Home() {
                                             <div className="h-5 w-5 rounded-full bg-gray-100 flex items-center justify-center mr-3 mt-1 flex-shrink-0">
                                                 <div className="h-2 w-2 rounded-full bg-gray-600"></div>
                                             </div>
-                                            <span className="text-gray-700 flex-1">{service}</span>
+                                            <span className="text-gray-700 flex-1 text-lg">{service}</span>
                                         </div>
                                     ))}
                                 </div>
@@ -90,7 +90,7 @@ export default function Home() {
                                     What Is This Network About?
                                 </h2>
                             </div>
-                            <div className="space-y-6 text-gray-700 leading-relaxed text-base md:text-lg">
+                            <div className="space-y-6 text-gray-700 leading-relaxed text-lg md:text-lg">
                                 <p className="font-medium text-gray-900">
                                     The Medivisor Expanded Patient Support Network (PNG) is a community-based support initiative created to assist patients across Papua New Guinea who struggle to access timely and appropriate medical treatment due to limited local resources or specialised expertise. Through this Network, patients are guided and supported in accessing affordable, world-class medical treatment in India.
                                 </p>
@@ -104,12 +104,12 @@ export default function Home() {
                                     What You Will Do
                                 </h2>
                             </div>
-                            <div className="space-y-6 text-gray-700 leading-relaxed text-base md:text-lg">
+                            <div className="space-y-6 text-gray-700 leading-relaxed text-lg md:text-lg">
                                 <p>
                                     As a Medivisor Community Health Partner and Health Ambassador, you will be not just performing a role — you will be serving a purpose.
                                 </p>
                                 <p className="font-semibold text-gray-900 mt-8">You will:</p>
-                                <div className="space-y-4 mt-4">
+                                <div className="space-y-4 text-lg mt-4">
                                     {[
                                         "Meet and listen to patients and their families living in your community",
                                         "Collect medical reports and share them with us via WhatsApp at +91 8340780250",
@@ -122,7 +122,7 @@ export default function Home() {
                                             <div className="h-5 w-5 rounded-full bg-gray-100 flex items-center justify-center mr-3 mt-1 flex-shrink-0">
                                                 <div className="h-2 w-2 rounded-full bg-gray-600"></div>
                                             </div>
-                                            <span className="text-gray-700 flex-1">{item}</span>
+                                            <span className="text-gray-700 flex-1 text-lg">{item}</span>
                                         </div>
                                     ))}
                                 </div>
@@ -136,9 +136,9 @@ export default function Home() {
                                     How Medivisor Supports You
                                 </h2>
                             </div>
-                            <div className="space-y-6 text-gray-700 leading-relaxed text-base md:text-lg">
+                            <div className="space-y-6 text-gray-700 leading-relaxed text-lg md:text-lg">
                                 <p className="font-semibold text-gray-900">Medivisor India will:</p>
-                                <ul className="space-y-4 mt-4">
+                                <ul className="space-y-4 text-lg mt-4">
                                     {[
                                         "Review and guide all medical cases",
                                         "Provide clear treatment plans and cost breakdowns for each case",
@@ -170,7 +170,7 @@ export default function Home() {
                                     Sustainability
                                 </h2>
                             </div>
-                            <div className="space-y-6 text-gray-700 leading-relaxed text-base md:text-lg">
+                            <div className="space-y-6 text-gray-700 leading-relaxed text-lg md:text-lg">
                                 <p>
                                     To help Community Health Partners serve patients full-time and continue this work sustainably, Medivisor provides a simple and transparent support structure (500 PGK) per patient.
                                 </p>
@@ -197,11 +197,11 @@ export default function Home() {
                                     Who Can Join?
                                 </h2>
                             </div>
-                            <div className="space-y-6 text-gray-700 leading-relaxed text-base md:text-lg">
+                            <div className="space-y-6 text-gray-700 leading-relaxed text-lg md:text-lg">
                                 <p className="font-semibold text-gray-900">
                                     We welcome individuals and organizations who:
                                 </p>
-                                <div className="space-y-4 mt-4">
+                                <div className="space-y-4 text-lg mt-4">
                                     {[
                                         "Are socially motivated and respected in their community",
                                         "Have a service-oriented mindset",
@@ -214,7 +214,7 @@ export default function Home() {
                                             <div className="h-5 w-5 rounded-full bg-gray-100 flex items-center justify-center mr-3 mt-1 flex-shrink-0">
                                                 <div className="h-2 w-2 rounded-full bg-gray-600"></div>
                                             </div>
-                                            <span className="text-gray-700 flex-1">{item}</span>
+                                            <span className="text-gray-700 flex-1 text-lg">{item}</span>
                                         </div>
                                     ))}
                                 </div>
@@ -229,7 +229,7 @@ export default function Home() {
                                 </h2>
                             </div>
                             <div className="space-y-8">
-                                <ul className="space-y-4">
+                                <ul className="space-y-4 text-lg ">
                                     {[
                                         "Respect and recognition in your community",
                                         "Prayers and blessings from the families you help",
@@ -243,7 +243,7 @@ export default function Home() {
                                             <div className="h-5 w-5 rounded-full bg-gray-100 flex items-center justify-center mr-3 mt-1 flex-shrink-0">
                                                 <div className="h-2 w-2 rounded-full bg-gray-600"></div>
                                             </div>
-                                            <span className="text-gray-700 flex-1">{item}</span>
+                                            <span className="text-gray-700 flex-1 text-lg">{item}</span>
                                         </li>
                                     ))}
                                 </ul>
@@ -263,7 +263,7 @@ export default function Home() {
                                     A Shared Mission
                                 </h2>
                             </div>
-                            <div className="space-y-6 text-gray-700 leading-relaxed text-base md:text-lg">
+                            <div className="space-y-6 text-gray-700 leading-relaxed text-lg md:text-lg">
                                 <p>
                                     By joining this network, you will become part of a compassionate mission to reduce suffering and restore hope.
                                 </p>

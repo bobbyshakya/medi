@@ -49,17 +49,13 @@ export const revalidate = 3600; // Revalidate every hour
 
 async function fetchHospitalData(slug: string) {
   try {
+    // Use the improved fetchHospitalBySlug function for better Wix CMS data fetching
     const hospitalData = await fetchHospitalBySlug(slug);
     return hospitalData;
-  } catch {
+  } catch (error) {
+    console.error('Error fetching hospital data:', error);
     return null;
   }
-}
-
-// Cache control for browser
-const BROWSER_CACHE_CONTROL = {
-  'Cache-Control': 'public, max-age=300, s-maxage=300, stale-while-revalidate=180',
-  'Surrogate-Control': 'max-age=300, stale-while-revalidate=180',
 }
 
 export default async function BranchDetail({ params }: { params: Promise<{ slug: string }> }) {
@@ -144,23 +140,60 @@ export default async function BranchDetail({ params }: { params: Promise<{ slug:
   const hospital = hospitalData;
   const branch = foundBranch;
   
+  // DEBUG: Log treatment data sources
+  console.log('=== DEBUG TREATMENT DATA ===');
+  
   // Calculate derived data with validation
+  // For group hospitals (multiple branches), collect treatments from ALL branches
   const isGroupHospital = Array.isArray(hospitalData.branches) && hospitalData.branches.length > 1
   
+  // DEBUG: Log treatment data sources
+  console.log('=== DEBUG TREATMENT DATA ===');
+  console.log('isGroupHospital:', isGroupHospital);
+  console.log('hospitalData._id:', hospitalData._id);
+  console.log('hospitalData.hospitalName:', hospitalData.hospitalName);
+  console.log('hospitalData.branches?.length:', hospitalData.branches?.length);
+  
+  // Log all treatments from each branch
+  hospitalData.branches?.forEach((branch: any, index: number) => {
+    console.log(`Branch ${index}: ${branch.branchName}`);
+    console.log(`  - Direct treatments: ${branch.treatments?.length || 0}`);
+    console.log(`  - Specialists: ${branch.specialists?.length || 0}`);
+    branch.specialists?.forEach((spec: any) => {
+      console.log(`    - Specialist ${spec.name}: ${spec.treatments?.length || 0} treatments`);
+    });
+    console.log(`  - Doctors: ${branch.doctors?.length || 0}`);
+  });
+  
   // For group hospitals, ALWAYS use extractTreatmentsFromAllBranches to get ALL treatments
+  // This ensures no treatments are skipped or limited
   let allTreatments: any[] = [];
   
   if (isGroupHospital) {
+    // Always extract treatments from ALL branches for group hospitals
     allTreatments = extractTreatmentsFromAllBranches(hospitalData);
+    console.log('Group hospital: Using extractTreatmentsFromAllBranches');
+    console.log('Total treatments from all branches:', allTreatments.length);
   } else {
+    // For standalone hospitals, use extractUniqueTreatments on the single branch
     allTreatments = extractUniqueTreatments(branch, hospitalData.treatments);
+    console.log('Standalone hospital: Using extractUniqueTreatments');
+    console.log('Total treatments:', allTreatments.length);
   }
   
   // If still no treatments found, try fetching by hospital specialties
   if (allTreatments.length === 0) {
+    console.log('No treatments found directly, fetching by hospital specialties...');
     const specialtyMatchedTreatments = await fetchTreatmentsByHospitalSpecialties(hospitalData);
+    console.log('Specialty-matched treatments:', specialtyMatchedTreatments.length);
     allTreatments = specialtyMatchedTreatments;
   }
+  
+  console.log('Final allTreatments:', allTreatments.length);
+  allTreatments.forEach((t: any, i: number) => {
+    console.log(`  [${i}] ${t.name} (${t._id}) - Specialist: ${t.specialistName}`);
+  });
+  console.log('=== END DEBUG ===');
   
   // Build unified specialists list from all branches for group hospitals (used in Specialists section)
   const allSpecialists = (() => {

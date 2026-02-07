@@ -56,18 +56,27 @@ interface Hospital {
 // =================================================================
 
 async function fetchMasterHospitalData(): Promise<Hospital[]> {
+  // Use the new unified CMS API
+
   const response = await fetch('/api/cms?action=all&pageSize=50', {
-    next: { revalidate: 300 }
+    cache: 'no-store'
   });
 
   if (!response.ok) {
-    throw new Error(`Failed to fetch hospital data: ${response.statusText}`);
+    // 👇 The error handling is already good, keep it robust
+    const errorBody = await response.text();
+    console.error("API Response Status:", response.status);
+    console.error("API Response Body:", errorBody);
+    throw new Error(`Failed to fetch hospital data: ${response.statusText}. Response body: ${errorBody.substring(0, 100)}`);
   }
 
+  // 2. Add type assertion for the JSON response for better type safety
   const data = await response.json();
   const items = data.hospitals || data.items || [];
 
+  // 3. Ensure we have valid data
   if (!Array.isArray(items)) {
+    console.error("API response structure is invalid:", data);
     throw new Error("Invalid data structure received from CMS API.");
   }
 

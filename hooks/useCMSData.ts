@@ -378,6 +378,27 @@ export const useCMSData = () => {
   const queryClient = useQueryClient()
   const fullDataLoadedRef = useRef(false)
 
+  // Prefetch CMS data on mount for instant page loads
+  useEffect(() => {
+    const prefetchData = async () => {
+      try {
+        await queryClient.prefetchQuery({
+          queryKey: ['cms', 'initial'],
+          queryFn: async () => {
+            const res = await fetch('/api/cms?action=all&pageSize=20')
+            if (!res.ok) throw new Error('Failed to fetch initial CMS data')
+            return res.json() as Promise<CMSApiResponse>
+          },
+          staleTime: 5 * 60 * 1000, // 5 minutes
+          gcTime: 10 * 60 * 1000,
+        })
+      } catch (error) {
+        console.warn('Prefetch failed:', error)
+      }
+    }
+    prefetchData()
+  }, [queryClient])
+
   // Step 1: Fast initial load with first 20 items
   const { data: initialData, isLoading: initialLoading } = useQuery({
     queryKey: ['cms', 'initial'],
@@ -388,13 +409,13 @@ export const useCMSData = () => {
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000,
+    placeholderData: (previousData) => previousData,
   })
 
   // Step 2: Background load ALL data after initial load completes
   const { data: fullData, isLoading: fullLoading } = useQuery({
     queryKey: ['cms', 'full'],
     queryFn: async () => {
-      // Use pageSize=0 to get ALL hospitals (no pagination)
       const res = await fetch('/api/cms?action=all&pageSize=0')
       if (!res.ok) throw new Error('Failed to fetch full CMS data')
       const data = await res.json() as CMSApiResponse
@@ -404,6 +425,7 @@ export const useCMSData = () => {
     enabled: !initialLoading && !!initialData, // Only start after initial load
     staleTime: 10 * 60 * 1000, // 10 minutes
     gcTime: 15 * 60 * 1000,
+    placeholderData: (previousData) => previousData,
   })
 
   // Use full data if available, otherwise use initial data
@@ -482,48 +504,21 @@ export const useCMSData = () => {
   }, [allHospitals, filters.treatment, allTreatments])
 
   const filteredTreatments = useMemo(() => {
-    console.log('\n========== [filteredTreatments] START ==========')
-    console.log('[filteredTreatments] View:', filters.view)
-    console.log('[filteredTreatments] filters.treatment:', JSON.stringify(filters.treatment))
-    console.log('[filteredTreatments] filters.doctor:', JSON.stringify(filters.doctor))
-    console.log('[filteredTreatments] allTreatments.length:', allTreatments.length)
-    console.log('[filteredTreatments] allHospitals.length:', allHospitals.length)
-    
-    // Check which condition is being hit
-    const hasTreatmentId = !!filters.treatment.id
-    const hasTreatmentQuery = !!filters.treatment.query
-    const hasDoctorFilter = !!(filters.doctor.id || filters.doctor.query)
-    const isTreatmentsView = filters.view === 'treatments'
-    
-    console.log('[filteredTreatments] Conditions:')
-    console.log('  - hasTreatmentId:', hasTreatmentId)
-    console.log('  - hasTreatmentQuery:', hasTreatmentQuery)
-    console.log('  - hasDoctorFilter:', hasDoctorFilter)
-    console.log('  - isTreatmentsView:', isTreatmentsView)
-    
     // If a specific treatment ID is selected, show only that treatment
     if (filters.treatment.id) {
-      console.log('[filteredTreatments] Taking TREATMENT ID path')
-      console.log('[filteredTreatments] Filter by treatment ID:', filters.treatment.id)
-      const result = allTreatments.filter((t) => t._id === filters.treatment.id)
-      console.log('[filteredTreatments] Result count:', result.length)
-      return result
+      return allTreatments.filter((t) => t._id === filters.treatment.id)
     }
 
     // If a treatment query (slug) is provided, filter by treatment name
     if (filters.treatment.query) {
-      console.log('[filteredTreatments] Filter by treatment query:', filters.treatment.query)
       const lowerQuery = filters.treatment.query.toLowerCase()
-      const result = allTreatments.filter((t) => 
+      return allTreatments.filter((t) => 
         t.name && t.name.toLowerCase().includes(lowerQuery)
       )
-      console.log('[filteredTreatments] Result count:', result.length)
-      return result
     }
 
     // If a doctor is selected, show only treatments related to that doctor
     if (filters.doctor.id || filters.doctor.query) {
-      console.log('[filteredTreatments] Filter by doctor')
       const lowerDoctorQuery = filters.doctor.query.toLowerCase()
       const doctorTreatmentIds = new Set<string>()
       const doctorTreatmentNames = new Set<string>()
@@ -535,10 +530,8 @@ export const useCMSData = () => {
           const matchesQuery = lowerDoctorQuery && d.doctorName?.toLowerCase().includes(lowerDoctorQuery)
           
           if (matchesId || matchesQuery) {
-            // Get treatments from doctor's specializations
             const specs = Array.isArray(d.specialization) ? d.specialization : d.specialization ? [d.specialization] : []
             specs.forEach((spec: any) => {
-              // Get treatments from specialist
               spec.treatments?.forEach((t: any) => {
                 if (t._id) doctorTreatmentIds.add(t._id)
                 if (t.name) doctorTreatmentNames.add(t.name.toLowerCase())
@@ -547,20 +540,17 @@ export const useCMSData = () => {
           }
         })
 
-        // Also check branch-level doctors
         h.branches?.forEach((b) => {
           b.doctors?.forEach((d: any) => {
             const matchesId = filters.doctor.id && d._id === filters.doctor.id
             const matchesQuery = lowerDoctorQuery && d.doctorName?.toLowerCase().includes(lowerDoctorQuery)
             
             if (matchesId || matchesQuery) {
-              // Get treatments from this branch
               b.treatments?.forEach((t: any) => {
                 if (t._id) doctorTreatmentIds.add(t._id)
                 if (t.name) doctorTreatmentNames.add(t.name.toLowerCase())
               })
 
-              // Get treatments from specialists at this branch
               b.specialists?.forEach((spec: any) => {
                 spec.treatments?.forEach((t: any) => {
                   if (t._id) doctorTreatmentIds.add(t._id)
@@ -568,7 +558,6 @@ export const useCMSData = () => {
                 })
               })
 
-              // Get treatments from doctor's specializations
               const specs = Array.isArray(d.specialization) ? d.specialization : d.specialization ? [d.specialization] : []
               specs.forEach((spec: any) => {
                 spec.treatments?.forEach((t: any) => {
@@ -581,45 +570,26 @@ export const useCMSData = () => {
         })
       })
 
-      // Filter treatments by doctor's related treatments
-      const result = allTreatments.filter((t) => {
+      return allTreatments.filter((t) => {
         return doctorTreatmentIds.has(t._id) || 
                (t.name && doctorTreatmentNames.has(t.name.toLowerCase()))
       })
-      console.log('[filteredTreatments] Doctor filter result:', result.length)
-      console.log('========== [filteredTreatments] END ==========\n')
-      return result
     }
 
     if (filters.view === 'treatments') {
-      console.log('[filteredTreatments] Taking treatments view path')
-      console.log('[filteredTreatments] Returning allTreatments:', allTreatments.length)
-      console.log('========== [filteredTreatments] END ==========\n')
       return allTreatments
     }
 
-    // Default case: hospitals view
-    console.log('[filteredTreatments] Taking DEFAULT (hospitals) path')
-
-    // Extract treatments from hospitals and merge with TreatmentMaster data
-    console.log('[filteredTreatments] Default case - merging from allTreatments and allHospitals')
-    console.log('[filteredTreatments] allTreatments:', allTreatments.length)
-    console.log('[filteredTreatments] allHospitals:', allHospitals.length)
-    
+    // Default case: hospitals view - merge treatments from hospitals
     const treatmentMap = new Map<string, ExtendedTreatmentData>()
     
-    // First, add all treatments from TreatmentMaster
-    console.log('[filteredTreatments] Adding', allTreatments.length, 'treatments from allTreatments')
+    // Add all treatments from TreatmentMaster
     allTreatments.forEach((t) => {
       treatmentMap.set(t._id, { ...t })
     })
     
-    // Then, add treatments from hospitals that might not be in TreatmentMaster
-    let hospitalTreatmentsAdded = 0
-    let totalHospitalTreatments = 0
+    // Add treatments from hospitals that might not be in TreatmentMaster
     allHospitals.forEach((h) => {
-      const hTreatments = h.treatments?.length || 0
-      totalHospitalTreatments += hTreatments
       h.treatments?.forEach((t) => {
         if (!treatmentMap.has(t._id)) {
           treatmentMap.set(t._id, {
@@ -627,17 +597,11 @@ export const useCMSData = () => {
             branchesAvailableAt: [],
             departments: [],
           })
-          hospitalTreatmentsAdded++
         }
       })
     })
-    console.log('[filteredTreatments] Total hospital treatments:', totalHospitalTreatments)
-    console.log('[filteredTreatments] Additional treatments from hospitals:', hospitalTreatmentsAdded)
-    console.log('[filteredTreatments] Total in map:', treatmentMap.size)
     
-    const result = Array.from(treatmentMap.values())
-    console.log('[filteredTreatments] Final result count:', result.length)
-    return result
+    return Array.from(treatmentMap.values())
   }, [allHospitals, filters.view, filters.treatment, filters.doctor, allTreatments])
 
   const currentCount = useMemo(() => {

@@ -121,22 +121,38 @@ export const RenderContent = ({
 }: RenderContentProps) => {
   const [visibleCount, setVisibleCount] = useState(12);
   const loadMoreRef = useRef<HTMLDivElement>(null);
+  const hasMoreRef = useRef(true);
 
   const items = view === "hospitals" ? filteredBranches : view === "doctors" ? filteredDoctors : filteredTreatments;
 
   // Reset visible count when view or items change substantially
   useEffect(() => {
     setVisibleCount(12);
+    hasMoreRef.current = true;
   }, [view, items.length]);
 
-  // Infinite Scroll Logic
+  // Optimized Infinite Scroll with IntersectionObserver
   useEffect(() => {
-    const observer = new IntersectionObserver((entries) => {
-      const first = entries[0];
-      if (first.isIntersecting) {
-        setVisibleCount((prev) => prev + 12);
+    if (!hasMoreRef.current || items.length === 0) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const first = entries[0];
+        if (first.isIntersecting && visibleCount < items.length) {
+          setVisibleCount((prev) => {
+            const next = prev + 12;
+            if (next >= items.length) {
+              hasMoreRef.current = false;
+            }
+            return next;
+          });
+        }
+      },
+      { 
+        rootMargin: '200px',
+        threshold: 0.1,
       }
-    }, { rootMargin: '100px' });
+    );
 
     const currentLoadMore = loadMoreRef.current;
     if (currentLoadMore) {
@@ -146,7 +162,7 @@ export const RenderContent = ({
     return () => {
       if (currentLoadMore) observer.unobserve(currentLoadMore);
     };
-  }, [items]);
+  }, [items, visibleCount]);
 
   if (loading) {
     return (
@@ -210,7 +226,7 @@ export const RenderContent = ({
 
   return (
     <>
-      <div className="mb-4 text-sm text-gray-600 flex items-center gap-2">
+      <div className="mb-4 text-sm text-gray-600 flex items-center gap-2 transition-opacity duration-200">
         Showing {visibleItems.length} of {items.length} {view === 'hospitals' ? 'branches' : view}
         {isLoadingMore && (
           <span className="inline-flex items-center gap-1 text-gray-500">
@@ -220,8 +236,12 @@ export const RenderContent = ({
         )}
       </div>
       <div className="grid grid-cols-1 my-4 mb-10 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {visibleItems.map((item) => (
-          <div key={item.baseId || item._id} className="h-full">
+        {visibleItems.map((item, index) => (
+          <div 
+            key={item.baseId || item._id} 
+            className="h-full transition-all duration-300 ease-out animate-fade-in"
+            style={{ animationDelay: `${index % 12 * 50}ms`, animationFillMode: 'backwards' }}
+          >
             {view === "hospitals" ? (
               <HospitalCard branch={item as any} />
             ) : view === "doctors" ? (
@@ -235,7 +255,7 @@ export const RenderContent = ({
 
       {/* Sentinel element for infinite scroll */}
       {visibleCount < items.length && (
-        <div ref={loadMoreRef} className="flex justify-center p-4">
+        <div ref={loadMoreRef} className="flex justify-center p-4 transition-opacity duration-300">
           <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
         </div>
       )}

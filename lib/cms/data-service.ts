@@ -1,6 +1,5 @@
 // lib/cms/data-service.ts
 // Centralized CMS data fetching service with unified, clean data linking
-// FIXED: Simplified treatment-to-branch mapping with comprehensive debug logs
 
 import { wixClient } from '@/lib/wixClient'
 import { memoryCache, CACHE_CONFIG, createCachedFetcher } from './cache'
@@ -340,15 +339,6 @@ async function fetchAllBranches(): Promise<any[]> {
 
     const branches = res.items.filter((b: any) => shouldShowHospital(b))
     
-    console.log('[DEBUG] fetchAllBranches:')
-    console.log('  - Total items:', res.items.length)
-    console.log('  - Filtered branches:', branches.length)
-    
-    const branchesWithTreatments = branches.filter((b: any) => b.treatment && b.treatment.length > 0)
-    const branchesWithSpecialists = branches.filter((b: any) => b.specialist && b.specialist.length > 0)
-    console.log('  - Branches with treatments:', branchesWithTreatments.length)
-    console.log('  - Branches with specialists:', branchesWithSpecialists.length)
-
     memoryCache.set(cacheKey, branches, CACHE_CONFIG.HOSPITALS * 1000)
     return branches
   })
@@ -367,7 +357,6 @@ async function fetchAllHospitals(): Promise<any[]> {
       .limit(1000)
       .find()
 
-    console.log('[DEBUG] fetchAllHospitals:', res.items.length)
     memoryCache.set(cacheKey, res.items, CACHE_CONFIG.HOSPITALS * 1000)
     return res.items
   })
@@ -384,13 +373,6 @@ async function fetchAllTreatments(): Promise<any[]> {
       .include('branches', 'hospital', 'city', 'department')
       .limit(1000)
       .find()
-
-    console.log('[DEBUG] fetchAllTreatments:', res.items.length)
-    
-    const treatmentsWithBranches = res.items.filter((t: any) => t.branches && t.branches.length > 0)
-    const treatmentsWithHospital = res.items.filter((t: any) => t.hospital)
-    console.log('  - Treatments with branches ref:', treatmentsWithBranches.length)
-    console.log('  - Treatments with hospital ref:', treatmentsWithHospital.length)
 
     memoryCache.set(cacheKey, res.items, CACHE_CONFIG.TREATMENTS * 1000)
     return res.items
@@ -442,14 +424,6 @@ async function fetchAllSpecialists(): Promise<any[]> {
       .limit(1000)
       .find()
 
-    console.log('[DEBUG] fetchAllSpecialists:', res.items.length)
-    const specialistsWithTreatments = res.items.filter((s: any) => s.treatment && s.treatment.length > 0)
-    console.log('  - Specialists with treatments:', specialistsWithTreatments.length)
-
-    // Check for hospital/branch references
-    const specialistsWithHospital = res.items.filter((s: any) => s.hospital || s.HospitalMaster || s.branch || s.BranchesMaster)
-    console.log('  - Specialists with hospital/branch refs:', specialistsWithHospital.length)
-
     memoryCache.set(cacheKey, res.items, CACHE_CONFIG.HOSPITALS * 1000)
     return res.items
   })
@@ -484,26 +458,19 @@ async function fetchByIds<T>(
 // Cache version - increment to clear all caches
 const CACHE_VERSION = 4
 export function clearCMSCache() {
-  console.log('[DEBUG] CMS Cache cleared (version:', CACHE_VERSION + 1, ')')
+  // Cache cleared - increment version to invalidate
 }
 
 // =============================================================================
-// MAIN DATA SERVICE - SIMPLIFIED TREATMENT MAPPING
+// MAIN DATA SERVICE
 // =============================================================================
 
 export async function getAllCMSData(): Promise<CMSDataResponse> {
   const cacheKey = `cms_all_data_v${CACHE_VERSION}`
   const cached = memoryCache.get<CMSDataResponse>(cacheKey)
-  if (cached) {
-    console.log('[DEBUG] Using cached CMS data')
-    return cached
-  }
+  if (cached) return cached
 
   return memoryCache.dedupe(cacheKey, async () => {
-    console.log('[DEBUG] =========================================')
-    console.log('[DEBUG] FETCHING FRESH CMS DATA')
-    console.log('[DEBUG] =========================================')
-    
     // Fetch all base data in parallel
     const [rawHospitals, rawBranches, rawTreatments, rawCities, rawSpecialists] = await Promise.all([
       fetchAllHospitals(),
@@ -513,13 +480,6 @@ export async function getAllCMSData(): Promise<CMSDataResponse> {
       fetchAllSpecialists(),
     ])
 
-    console.log('[DEBUG] Raw data counts:')
-    console.log('  - rawHospitals:', rawHospitals.length)
-    console.log('  - rawBranches:', rawBranches.length)
-    console.log('  - rawTreatments:', rawTreatments.length)
-    console.log('  - rawCities:', rawCities.length)
-    console.log('  - rawSpecialists:', rawSpecialists.length)
-
     const stateMap = await fetchAllStates()
 
     // Build cities map
@@ -528,10 +488,7 @@ export async function getAllCMSData(): Promise<CMSDataResponse> {
       if (city._id) citiesMap.set(city._id, mapCityWithStateRef(city, stateMap))
     })
 
-    // =============================================================================
-    // STEP 1: Build treatment name-to-ID map for fuzzy matching
-    // =============================================================================
-    console.log('[DEBUG] STEP 1: Building treatment name map...')
+    // Build treatment name-to-ID map for fuzzy matching
     const treatmentNameToId = new Map<string, string>()
     const treatmentIdToData = new Map<string, any>()
     
@@ -543,12 +500,8 @@ export async function getAllCMSData(): Promise<CMSDataResponse> {
         treatmentIdToData.set(id, item)
       }
     })
-    console.log('  - Unique treatment names:', treatmentNameToId.size)
 
-    // =============================================================================
-    // STEP 2: Separate branches into standalone and grouped
-    // =============================================================================
-    console.log('[DEBUG] STEP 2: Separating branches...')
+    // Separate branches into standalone and grouped
     const standaloneBranches: any[] = []
     const groupedBranches: any[] = []
     const branchesByHospital = new Map<string, any[]>()
@@ -565,15 +518,8 @@ export async function getAllCMSData(): Promise<CMSDataResponse> {
         })
       }
     })
-    console.log('  - Standalone branches:', standaloneBranches.length)
-    console.log('  - Grouped branches:', groupedBranches.length)
 
-    // =============================================================================
-    // STEP 3: Build treatment-to-branch mapping (comprehensive)
-    // =============================================================================
-    console.log('[DEBUG] STEP 3: Building treatment-to-branch mapping...')
-    
-    // Map: treatmentID -> Set<branchID>
+    // Build treatment-to-branch mapping
     const treatmentToBranches = new Map<string, Set<string>>()
     // Map: branchID -> treatmentIDs (reverse lookup)
     const branchToTreatments = new Map<string, Set<string>>()
@@ -581,7 +527,6 @@ export async function getAllCMSData(): Promise<CMSDataResponse> {
     const specialistToTreatments = new Map<string, Set<string>>()
 
     // PATH A: Direct treatment references on branches
-    console.log('  - Path A: Direct treatment references on branches')
     let pathACount = 0
     rawBranches.forEach((branch: any) => {
       const treatments = branch.treatment || branch.data?.treatment || []
@@ -600,10 +545,8 @@ export async function getAllCMSData(): Promise<CMSDataResponse> {
         }
       })
     })
-    console.log('    Direct branch→treatment links:', pathACount)
 
     // PATH B: Treatments from specialists on branches
-    console.log('  - Path B: Treatments from specialists on branches')
     let pathBCount = 0
     rawBranches.forEach((branch: any) => {
       const specialists = branch.specialist || branch.data?.specialist || []
@@ -632,10 +575,8 @@ export async function getAllCMSData(): Promise<CMSDataResponse> {
         }
       })
     })
-    console.log('    Branch→Specialist→Treatment links:', pathBCount)
 
     // PATH C: Treatments from TreatmentMaster's branches field
-    console.log('  - Path C: TreatmentMaster → branches reference')
     let pathCCount = 0
     rawTreatments.forEach((treatment: any) => {
       const treatmentId = treatment._id || treatment.ID
@@ -654,10 +595,8 @@ export async function getAllCMSData(): Promise<CMSDataResponse> {
         }
       })
     })
-    console.log('    TreatmentMaster→branches links:', pathCCount)
 
     // PATH D: Treatments linked via specialist's treatment field
-    console.log('  - Path D: Specialists → treatments field')
     let pathDCount = 0
     rawSpecialists.forEach((spec: any) => {
       const specId = spec._id || spec.ID
@@ -674,10 +613,8 @@ export async function getAllCMSData(): Promise<CMSDataResponse> {
         }
       })
     })
-    console.log('    Specialist→Treatment links:', pathDCount)
 
     // PATH E: Fallback - match treatment names with specialists
-    console.log('  - Path E: Treatment name matching with specialists')
     let pathECount = 0
     rawSpecialists.forEach((spec: any) => {
       const specId = spec._id || spec.ID

@@ -298,8 +298,7 @@ const BranchFilter = ({ allHospitals, initialSearch = "" }: BranchFilterProps) =
         })
 
         setWixTreatments(treatments)
-      } catch (error) {
-        console.error('Error fetching Wix treatments:', error)
+      } catch {
         setWixTreatments([])
       } finally {
         setTreatmentsLoaded(true)

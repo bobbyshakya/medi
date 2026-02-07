@@ -65,8 +65,6 @@ export async function GET(req: Request) {
       const endIndex = startIndex + pageSize
       const paginatedTreatments = filteredTreatments.slice(startIndex, endIndex)
       const hasMore = endIndex < total
-
-      console.log(`[DEBUG] treatments/route: Cache hit - returning ${paginatedTreatments.length} of ${total} treatments`)
       
       return NextResponse.json({
         items: paginatedTreatments,
@@ -84,14 +82,11 @@ export async function GET(req: Request) {
     }
 
     // Fetch all treatments from centralized service
-    console.log('[DEBUG] treatments/route: Fetching fresh treatments from CMS')
     const { treatments } = await getAllCMSData()
     
     // Cache the results
     treatmentsCache = treatments
     treatmentsCacheTime = now
-
-    console.log(`[DEBUG] treatments/route: Fetched ${treatments.length} treatments from CMS`)
 
     // Apply filters
     let filteredTreatments = treatments
@@ -121,8 +116,6 @@ export async function GET(req: Request) {
     const paginatedTreatments = filteredTreatments.slice(startIndex, endIndex)
     const hasMore = endIndex < total
 
-    console.log(`[DEBUG] treatments/route: Returning ${paginatedTreatments.length} of ${total} filtered treatments`)
-
     return NextResponse.json({
       items: paginatedTreatments,
       total,
@@ -136,9 +129,7 @@ export async function GET(req: Request) {
         'X-Has-More': String(hasMore),
       },
     })
-  } catch (error: any) {
-    console.error("API Error:", error)
-    const errorMessage = error.message || "An unknown error occurred on the server."
-    return NextResponse.json({ error: "Failed to fetch treatments", details: errorMessage }, { status: 500 })
+  } catch {
+    return NextResponse.json({ error: "Failed to fetch treatments" }, { status: 500 })
   }
 }

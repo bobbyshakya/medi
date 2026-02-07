@@ -22,8 +22,8 @@ export default function PNGBanner() {
                 {/* Left content is already baked into image */}
 
                 {/* Right Content */}
-                <div className="absolute right-20 top-10 z-30 max-w-xl text-white">
-                    <h1 className="text-6xl lg:text-5xl font-bold leading-tight uppercase">
+                <div className="absolute right-28 top-12 z-30 max-w-2xl text-white">
+                    <h1 className="text-6xl lg:text-5xl 2xl:text-[55px] font-bold leading-tight uppercase">
                         Medivisor Expanded <br />
                         Patient Support <br />
                         Network (PNG)
@@ -33,10 +33,10 @@ export default function PNGBanner() {
                         onClick={scrollToForm}
                         className="
         
-              hover:bg-[#E22026] cursor-pointer md:block hidden mt-5 bg-[#74BF44] text-white font-medium px-5 py-2 rounded-md shadow-md transition-all
+              hover:bg-[#E22026]  cursor-pointer md:block hidden mt-2 bg-[#74BF44] text-white font-medium px-5 py-2 rounded-md shadow-md transition-all
              
         inline-flex items-center justify-center font-medium tracking-wide transition duration-300 ease-in-out
-        text-base px-12 py-3 rounded-lg"
+        text-lg px-12 py-2 rounded-lg"
                     >
                         JOIN US
                     </button>

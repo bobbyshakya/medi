@@ -263,22 +263,8 @@ export async function submitMedivisorForm(formData: FormData, attachments: Attac
                     <td>${formData.email}</td>
                   </tr>
                   <tr>
-                    <td>Phone:</td>
-                    <td>${formData.phone}</td>
-                  </tr>
-                  ${formData.whatsapp ? `
-                  <tr>
                     <td>WhatsApp:</td>
                     <td>${formData.whatsapp}</td>
-                  </tr>
-                  ` : ''}
-                  <tr>
-                    <td>Location:</td>
-                    <td>${formData.city}${formData.address ? `, ${formData.address}` : ''}</td>
-                  </tr>
-                  <tr>
-                    <td>Service Area:</td>
-                    <td>${formData.serviceArea}</td>
                   </tr>
                   <tr>
                     <td>Background:</td>
@@ -288,10 +274,6 @@ export async function submitMedivisorForm(formData: FormData, attachments: Attac
                     <td>Experience:</td>
                     <td>${experienceDisplay}</td>
                   </tr>
-                  <tr>
-                    <td>Has Office:</td>
-                    <td>${formData.hasOffice === 'yes' ? 'Yes' : 'No'}${formData.officeLocation ? ` (${formData.officeLocation})` : ''}</td>
-                  </tr>
                 </table>
               </div>
               
@@ -300,27 +282,6 @@ export async function submitMedivisorForm(formData: FormData, attachments: Attac
                 <div class="motivation-box">
                   ${formData.motivation.replace(/\n/g, '<br>')}
                 </div>
-              </div>
-              
-              ${formData.experience ? `
-              <div class="section">
-                <h3>Experience with Medical Issues</h3>
-                <div class="experience-box">
-                  ${formData.experience.replace(/\n/g, '<br>')}
-                </div>
-              </div>
-              ` : ''}
-              
-              <div class="section">
-                <h3>Available Documents</h3>
-                <ul>
-                  ${attachments.idProof ? '<li>ID Proof</li>' : ''}
-                  ${attachments.cv ? '<li>Short CV / Profile</li>' : ''}
-                  ${attachments.orgRegistration ? '<li>Organization Registration</li>' : ''}
-                  ${attachments.reference ? '<li>Reference / Recommendation</li>' : ''}
-                  ${!attachments.idProof && !attachments.cv && !attachments.orgRegistration && !attachments.reference ? 
-                    '<li>No documents attached</li>' : ''}
-                </ul>
               </div>
               
               <div class="signature-box">

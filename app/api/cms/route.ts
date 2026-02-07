@@ -6,7 +6,9 @@ import { getAllCMSData, getHospitalBySlug, searchHospitals } from '@/lib/cms'
 
 // Cache configuration
 const CACHE_HEADERS = {
-  'Cache-Control': 'public, s-maxage=600, stale-while-revalidate=1200',
+  'Cache-Control': 'no-cache, no-store, must-revalidate',
+  'Pragma': 'no-cache',
+  'Expires': '0',
 }
 
 /**
@@ -28,7 +30,9 @@ export async function GET(req: Request) {
     const slug = url.searchParams.get('slug')
     const query = url.searchParams.get('q')
     const page = Math.max(0, Number(url.searchParams.get('page') || 0))
-    const pageSize = Math.min(100, Math.max(1, Number(url.searchParams.get('pageSize') || 50)))
+    // Default to 1000 for full data, use pageSize=0 to get all
+    const requestedPageSize = Number(url.searchParams.get('pageSize') || 1000)
+    const pageSize = Math.min(2000, Math.max(0, requestedPageSize))
 
     switch (action) {
       case 'hospital': {
@@ -80,7 +84,10 @@ export async function GET(req: Request) {
         // Apply pagination to hospitals
         const totalHospitals = data.hospitals.length
         const startIndex = page * pageSize
-        const paginatedHospitals = data.hospitals.slice(startIndex, startIndex + pageSize)
+        // If pageSize=0, return all hospitals (no pagination)
+        const paginatedHospitals = pageSize === 0 
+          ? data.hospitals 
+          : data.hospitals.slice(startIndex, startIndex + pageSize)
         const hasMore = startIndex + pageSize < totalHospitals
 
         return NextResponse.json(

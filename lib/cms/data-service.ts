@@ -1,8 +1,9 @@
 // lib/cms/data-service.ts
-// Centralized CMS data fetching service with caching
+// Centralized CMS data fetching service with unified, clean data linking
+// FIXED: Simplified treatment-to-branch mapping with comprehensive debug logs
 
 import { wixClient } from '@/lib/wixClient'
-import { memoryCache, CACHE_CONFIG, CACHE_TAGS, createCachedFetcher } from './cache'
+import { memoryCache, CACHE_CONFIG, createCachedFetcher } from './cache'
 import type {
   HospitalData,
   BranchData,
@@ -10,8 +11,6 @@ import type {
   TreatmentData,
   CityData,
   AccreditationData,
-  SpecializationData,
-  DepartmentData,
   ExtendedTreatmentData,
   TreatmentLocation,
   CMSDataResponse,
@@ -43,12 +42,10 @@ function getValue(item: any, ...keys: string[]): string | null {
   for (const key of keys) {
     const value = item?.[key] ?? item?.data?.[key]
     if (value !== undefined && value !== null && value !== '') {
-      if (typeof value === 'string') {
-        return value
-      }
+      if (typeof value === 'string') return value
       if (typeof value === 'object') {
-        // Handle Wix CMS reference objects - try to get name/title from common fields
-        return value.name || value.title || value.state || value.StateName || value.stateName || value['State Name'] || null
+        return value.name || value.title || value.state || value.State || 
+               value.stateName || value.stateName || value['State Name'] || null
       }
       return String(value)
     }
@@ -73,13 +70,12 @@ function extractRichText(field: any): string {
 }
 
 function shouldShowHospital(item: any): boolean {
-  const showHospital = item?.ShowHospital ?? item?.data?.ShowHospital ?? item?.showHospital ?? item?.data?.showHospital
-  if (showHospital === true || showHospital === 'true' || showHospital === 1 || showHospital === '1' || showHospital === 'yes') {
-    return true
-  }
-  if (showHospital === false || showHospital === 'false' || showHospital === 0 || showHospital === '0' || showHospital === 'no') {
-    return false
-  }
+  const showHospital = item?.ShowHospital ?? item?.data?.ShowHospital ?? 
+                       item?.showHospital ?? item?.data?.showHospital
+  if (showHospital === true || showHospital === 'true' || showHospital === 1 || 
+      showHospital === '1' || showHospital === 'yes') return true
+  if (showHospital === false || showHospital === 'false' || showHospital === 0 || 
+      showHospital === '0' || showHospital === 'no') return false
   return false
 }
 
@@ -92,7 +88,6 @@ function isStandaloneBranch(branch: any): boolean {
     branch['Hospital Group Master'],
     branch.data?.['Hospital Group Master'],
   ]
-
   const hasHospitalGroupRef = hospitalGroupRefs.some((ref) => {
     if (!ref) return false
     if (typeof ref === 'string' && ref.trim() !== '') return true
@@ -100,20 +95,17 @@ function isStandaloneBranch(branch: any): boolean {
     if (typeof ref === 'object' && Object.keys(ref).length > 0) return true
     return false
   })
-
   const directHospitalRef = branch.hospital || branch.data?.hospital
   const hasDirectHospitalRef =
     (typeof directHospitalRef === 'string' && directHospitalRef.trim() !== '') ||
     (Array.isArray(directHospitalRef) && directHospitalRef.length > 0) ||
     (typeof directHospitalRef === 'object' && directHospitalRef !== null)
-
   return !hasHospitalGroupRef && !hasDirectHospitalRef
 }
 
 function extractMultiReference(field: any, ...nameKeys: string[]): any[] {
   if (!field) return []
   const items = Array.isArray(field) ? field : [field]
-
   return items
     .filter(Boolean)
     .map((ref: any) => {
@@ -121,10 +113,7 @@ function extractMultiReference(field: any, ...nameKeys: string[]): any[] {
       if (typeof ref === 'object') {
         let name = 'Unknown'
         for (const key of nameKeys) {
-          if (ref[key]) {
-            name = ref[key]
-            break
-          }
+          if (ref[key]) { name = ref[key]; break }
         }
         const id = ref._id || ref.ID || ref.data?._id
         return id ? { _id: id, name, ...ref } : null
@@ -141,7 +130,6 @@ function extractIds(refs: any[]): string[] {
 function extractHospitalIds(branch: any): string[] {
   const set = new Set<string>()
   const keys = ['hospital', 'HospitalMaster_branches', 'hospitalGroup', 'Hospital Group Master']
-
   keys.forEach((k) => {
     const val = branch[k] || branch.data?.[k]
     if (!val) return
@@ -155,7 +143,6 @@ function extractHospitalIds(branch: any): string[] {
       set.add(val._id || val.ID)
     }
   })
-
   return Array.from(set)
 }
 
@@ -169,110 +156,58 @@ export function generateSlug(name: string | null | undefined): string {
 }
 
 // =============================================================================
-// DATA MAPPERS
+// CITY-STATE FALLBACK MAPPING
 // =============================================================================
 
-// =============================================================================
-// STATE & CITY MAPPING
-// =============================================================================
-
-// Fallback city-to-state mapping for special cases (only used when CMS data is missing)
 const CITY_TO_STATE_FALLBACK: Record<string, string> = {
-  // Delhi NCR
-  'delhi': 'Delhi NCR',
-  'delhi ncr': 'Delhi NCR',
-  'new delhi': 'Delhi NCR',
-  'noida': 'Delhi NCR',
-  'gurgaon': 'Delhi NCR',
-  'gurugram': 'Delhi NCR',
-  'faridabad': 'Delhi NCR',
-  'ghaziabad': 'Delhi NCR',
-  // Maharashtra
-  'mumbai': 'Maharashtra',
-  'pune': 'Maharashtra',
-  'nagpur': 'Maharashtra',
-  // Karnataka
-  'bangalore': 'Karnataka',
-  'bengaluru': 'Karnataka',
-  'mysore': 'Karnataka',
-  // Tamil Nadu
-  'chennai': 'Tamil Nadu',
-  'coimbatore': 'Tamil Nadu',
-  // Telangana
-  'hyderabad': 'Telangana',
-  // Gujarat
-  'ahmedabad': 'Gujarat',
-  'surat': 'Gujarat',
-  'vadodara': 'Gujarat',
-  'rajkot': 'Gujarat',
-  // West Bengal
-  'kolkata': 'West Bengal',
-  // Uttar Pradesh
-  'lucknow': 'Uttar Pradesh',
-  'kanpur': 'Uttar Pradesh',
-  // Rajasthan
-  'jaipur': 'Rajasthan',
-  // Madhya Pradesh
-  'bhopal': 'Madhya Pradesh',
-  'indore': 'Madhya Pradesh',
+  'delhi': 'Delhi NCR', 'delhi ncr': 'Delhi NCR', 'new delhi': 'Delhi NCR',
+  'noida': 'Delhi NCR', 'gurgaon': 'Delhi NCR', 'gurugram': 'Delhi NCR',
+  'faridabad': 'Delhi NCR', 'ghaziabad': 'Delhi NCR',
+  'mumbai': 'Maharashtra', 'pune': 'Maharashtra', 'nagpur': 'Maharashtra',
+  'bangalore': 'Karnataka', 'bengaluru': 'Karnataka', 'mysore': 'Karnataka',
+  'chennai': 'Tamil Nadu', 'coimbatore': 'Tamil Nadu',
+  'hyderabad': 'Telangana', 'ahmedabad': 'Gujarat', 'surat': 'Gujarat',
+  'kolkata': 'West Bengal', 'lucknow': 'Uttar Pradesh', 'kanpur': 'Uttar Pradesh',
+  'jaipur': 'Rajasthan', 'bhopal': 'Madhya Pradesh', 'indore': 'Madhya Pradesh',
 }
 
-// Enhanced mapCity function that resolves state from Wix CMS StateMaster
-// Falls back to static mapping only when CMS data is unavailable
 function mapCityWithStateRef(item: any, stateMap: Record<string, { _id: string; name: string }>): CityData {
   const cityName = getValue(item, 'cityName', 'city name', 'name', 'City Name') || 'Unknown City'
-  
-  // Try to get state from Wix CMS StateMaster reference
   let state = 'Unknown State'
   let stateId: string | undefined = undefined
   
-  // Check for state reference in various Wix CMS field formats
-  const stateRef = item.state || item.State || item.stateRef || item.state_master || item.stateMaster || item.StateMaster || item.StateMaster_state
+  const stateRef = item.state || item.State || item.stateRef || 
+                   item.state_master || item.stateMaster || item.StateMaster || item.StateMaster_state
   
   if (stateRef) {
-    if (Array.isArray(stateRef)) {
-      // Multi-reference array from Wix CMS
+    if (Array.isArray(stateRef) && stateRef.length > 0) {
       const firstRef = stateRef[0]
-      if (firstRef) {
-        if (typeof firstRef === 'object') {
-          // Array of state objects - get name from first item
-          state = getValue(firstRef, 'state', 'State Name', 'name', 'title', 'State', 'stateName', 'StateName') || 'Unknown State'
-          stateId = firstRef._id || firstRef.ID
-        } else if (typeof firstRef === 'string') {
-          // Array of IDs - lookup in stateMap
-          stateId = firstRef
-          const resolvedState = stateMap[firstRef]
-          if (resolvedState) {
-            state = resolvedState.name
-          }
-        }
+      if (typeof firstRef === 'object') {
+        state = getValue(firstRef, 'state', 'State Name', 'name', 'title', 'State', 'stateName', 'StateName') || 'Unknown State'
+        stateId = firstRef._id || firstRef.ID
+      } else if (typeof firstRef === 'string') {
+        stateId = firstRef
+        const resolvedState = stateMap[firstRef]
+        if (resolvedState) state = resolvedState.name
       }
     } else if (typeof stateRef === 'object') {
-      // Direct state object from Wix CMS - get name from state fields
       state = getValue(stateRef, 'state', 'State Name', 'name', 'title', 'State', 'stateName', 'StateName') || 'Unknown State'
       stateId = stateRef._id || stateRef.ID
     } else if (typeof stateRef === 'string') {
-      // It's an ID reference - lookup in stateMap (fetched from StateMaster)
       stateId = stateRef
       const resolvedState = stateMap[stateRef]
-      if (resolvedState) {
-        state = resolvedState.name
-      }
+      if (resolvedState) state = resolvedState.name
     }
   }
   
-  // If still no state, try direct state field on city item
   if (state === 'Unknown State') {
     state = getValue(item, 'state', 'State Name', 'stateName') || 'Unknown State'
   }
   
-  // Final fallback: use static city-to-state mapping for known cities
   if (state === 'Unknown State') {
     const normalizedCity = cityName.toLowerCase().trim()
     const fallbackState = CITY_TO_STATE_FALLBACK[normalizedCity]
-    if (fallbackState) {
-      state = fallbackState
-    }
+    if (fallbackState) state = fallbackState
   }
   
   return {
@@ -284,46 +219,9 @@ function mapCityWithStateRef(item: any, stateMap: Record<string, { _id: string; 
   }
 }
 
-function mapCity(item: any): CityData {
-  return {
-    _id: item._id || item.ID,
-    cityName: getValue(item, 'cityName', 'city name', 'name', 'City Name') || 'Unknown City',
-    state: getValue(item, 'state', 'State Name', 'stateName') || 'Unknown State',
-    country: getValue(item, 'country', 'Country Name') || 'India',
-  }
-}
-
-function mapAccreditation(item: any): AccreditationData {
-  return {
-    _id: item._id || item.ID,
-    title: getValue(item, 'title', 'Title') || 'Unknown Accreditation',
-    image: item.image || item.data?.image || null,
-  }
-}
-
-function mapDepartment(item: any): DepartmentData {
-  return {
-    _id: item._id || item.ID,
-    name: getValue(item, 'department', 'Name', 'name') || 'Unknown Department',
-  }
-}
-
-function mapSpecialistWithTreatments(item: any): any {
-  const treatments = item.treatment || item.data?.treatment || []
-  const treatmentArray = Array.isArray(treatments) ? treatments : [treatments].filter(Boolean)
-  
-  return {
-    _id: item._id || item.ID,
-    name: getValue(item, 'specialty', 'Specialty Name', 'title', 'name') || 'Unknown Specialist',
-    treatments: treatmentArray.map((t: any) => ({
-      _id: t._id || t.ID || t,
-      name: getValue(t, 'treatmentName', 'Treatment Name', 'title', 'name') || 'Unknown Treatment',
-      description: extractRichText(t.Description || t.description),
-      cost: getValue(t, 'cost', 'Cost', 'averageCost'),
-      treatmentImage: t.treatmentImage || t['treatment image'] || null,
-    })),
-  }
-}
+// =============================================================================
+// DATA MAPPERS
+// =============================================================================
 
 function mapTreatment(item: any): TreatmentData {
   return {
@@ -371,7 +269,7 @@ function mapBranch(item: any): BranchData {
     specialists: extractMultiReference(item.specialist, 'specialty', 'Specialty Name', 'title', 'name'),
     treatments: extractMultiReference(item.treatment, 'treatmentName', 'Treatment Name', 'title', 'name'),
     specialization: [
-      ...extractMultiReference(item.specialty, 'specialty', 'Specialty Name', 'title', 'name'),
+      ...extractMultiReference(item.specialty, 'specialization', 'Specialty Name', 'title', 'name'),
       ...extractMultiReference(item.treatment, 'treatmentName', 'Treatment Name', 'title', 'name').map((t) => ({
         ...t,
         isTreatment: true,
@@ -389,7 +287,7 @@ function mapHospital(item: any, isFromBranch: boolean = false): HospitalData {
       _id: `standalone-${item._id || item.ID}`,
       hospitalName: getValue(item, 'branchName', 'hospitalName', 'Hospital Name') || 'Unknown Hospital',
       description: extractRichText(item.description || item.data?.description),
-      specialty: extractMultiReference(item.specialty, 'specialty', 'Specialty Name', 'title', 'name'),
+      specialty: extractMultiReference(item.specialty, 'specialization', 'Specialty Name', 'title', 'name'),
       yearEstablished: getValue(item, 'yearEstablished', 'Year Established'),
       hospitalImage: item.branchImage || item.hospitalImage || null,
       logo: item.logo || item.Logo || null,
@@ -403,12 +301,11 @@ function mapHospital(item: any, isFromBranch: boolean = false): HospitalData {
       showHospital: shouldShowHospital(item),
     }
   }
-
   return {
     _id: item._id || item.ID,
     hospitalName: getValue(item, 'hospitalName', 'Hospital Name') || 'Unknown Hospital',
     description: extractRichText(item.description || item.data?.description),
-    specialty: extractMultiReference(item.specialty, 'specialty', 'Specialty Name', 'title', 'name'),
+    specialty: extractMultiReference(item.specialty, 'specialization', 'Specialty Name', 'title', 'name'),
     yearEstablished: getValue(item, 'yearEstablished', 'Year Established'),
     hospitalImage: item.hospitalImage || null,
     logo: item.logo || item.Logo || null,
@@ -427,7 +324,7 @@ function mapHospital(item: any, isFromBranch: boolean = false): HospitalData {
 // =============================================================================
 
 async function fetchAllBranches(): Promise<any[]> {
-  const cacheKey = 'all_branches'
+  const cacheKey = `all_branches_v${CACHE_VERSION}`
   const cached = memoryCache.get<any[]>(cacheKey)
   if (cached) return cached
 
@@ -435,27 +332,30 @@ async function fetchAllBranches(): Promise<any[]> {
     const res = await wixClient.items
       .query(COLLECTIONS.BRANCHES)
       .include(
-        'hospital',
-        'HospitalMaster_branches',
-        'city',
-        'doctor',
-        'specialty',
-        'accreditation',
-        'treatment',
-        'specialist',
-        'ShowHospital'
+        'hospital', 'HospitalMaster_branches', 'city', 'doctor', 'specialty',
+        'accreditation', 'treatment', 'specialist', 'ShowHospital', 'department'
       )
       .limit(1000)
       .find()
 
     const branches = res.items.filter((b: any) => shouldShowHospital(b))
+    
+    console.log('[DEBUG] fetchAllBranches:')
+    console.log('  - Total items:', res.items.length)
+    console.log('  - Filtered branches:', branches.length)
+    
+    const branchesWithTreatments = branches.filter((b: any) => b.treatment && b.treatment.length > 0)
+    const branchesWithSpecialists = branches.filter((b: any) => b.specialist && b.specialist.length > 0)
+    console.log('  - Branches with treatments:', branchesWithTreatments.length)
+    console.log('  - Branches with specialists:', branchesWithSpecialists.length)
+
     memoryCache.set(cacheKey, branches, CACHE_CONFIG.HOSPITALS * 1000)
     return branches
   })
 }
 
 async function fetchAllHospitals(): Promise<any[]> {
-  const cacheKey = 'all_hospitals'
+  const cacheKey = `all_hospitals_v${CACHE_VERSION}`
   const cached = memoryCache.get<any[]>(cacheKey)
   if (cached) return cached
 
@@ -463,17 +363,18 @@ async function fetchAllHospitals(): Promise<any[]> {
     const res = await wixClient.items
       .query(COLLECTIONS.HOSPITALS)
       .include('specialty', 'ShowHospital')
-      .ascending('_createdDate') // CMS order: first created appears first
+      .ascending('_createdDate')
       .limit(1000)
       .find()
 
+    console.log('[DEBUG] fetchAllHospitals:', res.items.length)
     memoryCache.set(cacheKey, res.items, CACHE_CONFIG.HOSPITALS * 1000)
     return res.items
   })
 }
 
 async function fetchAllTreatments(): Promise<any[]> {
-  const cacheKey = 'all_treatments'
+  const cacheKey = `all_treatments_v${CACHE_VERSION}`
   const cached = memoryCache.get<any[]>(cacheKey)
   if (cached) return cached
 
@@ -483,6 +384,13 @@ async function fetchAllTreatments(): Promise<any[]> {
       .include('branches', 'hospital', 'city', 'department')
       .limit(1000)
       .find()
+
+    console.log('[DEBUG] fetchAllTreatments:', res.items.length)
+    
+    const treatmentsWithBranches = res.items.filter((t: any) => t.branches && t.branches.length > 0)
+    const treatmentsWithHospital = res.items.filter((t: any) => t.hospital)
+    console.log('  - Treatments with branches ref:', treatmentsWithBranches.length)
+    console.log('  - Treatments with hospital ref:', treatmentsWithHospital.length)
 
     memoryCache.set(cacheKey, res.items, CACHE_CONFIG.TREATMENTS * 1000)
     return res.items
@@ -495,20 +403,13 @@ async function fetchAllStates(): Promise<Record<string, { _id: string; name: str
   if (cached) return cached
 
   return memoryCache.dedupe(cacheKey, async () => {
-    // Fetch all states (no limit)
-    const res = await wixClient.items
-      .query(COLLECTIONS.STATES)
-      .find()
-
+    const res = await wixClient.items.query(COLLECTIONS.STATES).find()
     const stateMap: Record<string, { _id: string; name: string }> = {}
     res.items.forEach((item: any) => {
       const id = item._id || item.ID
       const name = getValue(item, 'state', 'State Name', 'name', 'title', 'stateName', 'StateName') || 'Unknown State'
-      if (id) {
-        stateMap[id] = { _id: id, name }
-      }
+      if (id) stateMap[id] = { _id: id, name }
     })
-
     memoryCache.set(cacheKey, stateMap, CACHE_CONFIG.HOSPITALS * 1000)
     return stateMap
   })
@@ -520,12 +421,10 @@ async function fetchAllCities(): Promise<any[]> {
   if (cached) return cached
 
   return memoryCache.dedupe(cacheKey, async () => {
-    // Fetch cities with state reference included (all cities, no limit)
     const res = await wixClient.items
       .query(COLLECTIONS.CITIES)
       .include('state', 'State', 'stateRef', 'stateMaster', 'state_master')
       .find()
-
     memoryCache.set(cacheKey, res.items, CACHE_CONFIG.CITIES * 1000)
     return res.items
   })
@@ -539,9 +438,17 @@ async function fetchAllSpecialists(): Promise<any[]> {
   return memoryCache.dedupe(cacheKey, async () => {
     const res = await wixClient.items
       .query(COLLECTIONS.SPECIALTIES)
-      .include('treatment', 'department')
+      .include('treatment', 'department', 'hospital', 'HospitalMaster', 'branch', 'BranchesMaster')
       .limit(1000)
       .find()
+
+    console.log('[DEBUG] fetchAllSpecialists:', res.items.length)
+    const specialistsWithTreatments = res.items.filter((s: any) => s.treatment && s.treatment.length > 0)
+    console.log('  - Specialists with treatments:', specialistsWithTreatments.length)
+
+    // Check for hospital/branch references
+    const specialistsWithHospital = res.items.filter((s: any) => s.hospital || s.HospitalMaster || s.branch || s.BranchesMaster)
+    console.log('  - Specialists with hospital/branch refs:', specialistsWithHospital.length)
 
     memoryCache.set(cacheKey, res.items, CACHE_CONFIG.HOSPITALS * 1000)
     return res.items
@@ -554,7 +461,6 @@ async function fetchByIds<T>(
   mapper: (item: any) => T
 ): Promise<Record<string, T>> {
   if (!ids.length) return {}
-
   const sortedIds = [...ids].sort()
   const cacheKey = `${collection}_${sortedIds.slice(0, 10).join('_')}_${sortedIds.length}`
   const cached = memoryCache.get<Record<string, T>>(cacheKey)
@@ -575,75 +481,29 @@ async function fetchByIds<T>(
   return result
 }
 
-// =============================================================================
-// ENRICHMENT FUNCTIONS
-// =============================================================================
-
-async function enrichBranchesWithRelatedData(
-  branches: any[],
-  options: { loadDoctors?: boolean; loadCities?: boolean; loadAccreditations?: boolean } = {}
-): Promise<BranchData[]> {
-  const { loadDoctors = true, loadCities = true, loadAccreditations = true } = options
-
-  const doctorIds = new Set<string>()
-  const cityIds = new Set<string>()
-  const accreditationIds = new Set<string>()
-
-  const mappedBranches = branches.map((b) => {
-    const mapped = mapBranch(b)
-    if (loadDoctors) extractIds(mapped.doctors).forEach((id) => doctorIds.add(id))
-    if (loadCities) extractIds(mapped.city).forEach((id) => cityIds.add(id))
-    if (loadAccreditations) extractIds(mapped.accreditation).forEach((id) => accreditationIds.add(id))
-    return mapped
-  })
-
-  // Fetch states for proper city-state mapping
-  const stateMap = loadCities ? await fetchAllStates() : {}
-
-  const [doctors, cities, accreditations] = await Promise.all([
-    loadDoctors ? fetchByIds(COLLECTIONS.DOCTORS, Array.from(doctorIds), mapDoctor) : {} as Record<string, DoctorData>,
-    loadCities ? fetchByIds(COLLECTIONS.CITIES, Array.from(cityIds), (item) => mapCityWithStateRef(item, stateMap)) : {} as Record<string, CityData>,
-    loadAccreditations ? fetchByIds(COLLECTIONS.ACCREDITATIONS, Array.from(accreditationIds), mapAccreditation) : {} as Record<string, AccreditationData>,
-  ])
-
-  return mappedBranches.map((branch) => ({
-    ...branch,
-    doctors: branch.doctors.map((d: any) => (doctors as Record<string, DoctorData>)[d._id] || d),
-    city: branch.city.map((c: any) => {
-      // Try to get enriched city from cache first
-      const enrichedCity = (cities as Record<string, CityData>)[c._id]
-      if (enrichedCity && enrichedCity.state && enrichedCity.state !== 'Unknown State') {
-        return enrichedCity
-      }
-      // Apply fallback: use city data with CITY_TO_STATE_FALLBACK mapping
-      const cityName = c.name || c.cityName || 'Unknown City'
-      const normalizedCity = cityName.toLowerCase().trim()
-      const fallbackState = CITY_TO_STATE_FALLBACK[normalizedCity] || 'Unknown State'
-      return {
-        _id: c._id,
-        cityName,
-        state: fallbackState,
-        country: 'India',
-      }
-    }),
-    accreditation: branch.accreditation.map((a: any) => (accreditations as Record<string, AccreditationData>)[a._id] || a),
-  }))
+// Cache version - increment to clear all caches
+const CACHE_VERSION = 4
+export function clearCMSCache() {
+  console.log('[DEBUG] CMS Cache cleared (version:', CACHE_VERSION + 1, ')')
 }
 
 // =============================================================================
-// MAIN DATA SERVICE
+// MAIN DATA SERVICE - SIMPLIFIED TREATMENT MAPPING
 // =============================================================================
 
-/**
- * Fetches all CMS data in a single optimized call
- * This is the primary entry point for data fetching
- */
 export async function getAllCMSData(): Promise<CMSDataResponse> {
-  const cacheKey = 'cms_all_data'
+  const cacheKey = `cms_all_data_v${CACHE_VERSION}`
   const cached = memoryCache.get<CMSDataResponse>(cacheKey)
-  if (cached) return cached
+  if (cached) {
+    console.log('[DEBUG] Using cached CMS data')
+    return cached
+  }
 
   return memoryCache.dedupe(cacheKey, async () => {
+    console.log('[DEBUG] =========================================')
+    console.log('[DEBUG] FETCHING FRESH CMS DATA')
+    console.log('[DEBUG] =========================================')
+    
     // Fetch all base data in parallel
     const [rawHospitals, rawBranches, rawTreatments, rawCities, rawSpecialists] = await Promise.all([
       fetchAllHospitals(),
@@ -653,96 +513,42 @@ export async function getAllCMSData(): Promise<CMSDataResponse> {
       fetchAllSpecialists(),
     ])
 
-    // Fetch all states for proper city-state mapping
+    console.log('[DEBUG] Raw data counts:')
+    console.log('  - rawHospitals:', rawHospitals.length)
+    console.log('  - rawBranches:', rawBranches.length)
+    console.log('  - rawTreatments:', rawTreatments.length)
+    console.log('  - rawCities:', rawCities.length)
+    console.log('  - rawSpecialists:', rawSpecialists.length)
+
     const stateMap = await fetchAllStates()
 
-    // Build cities map with proper state resolution
+    // Build cities map
     const citiesMap = new Map<string, CityData>()
     rawCities.forEach((city: any) => {
-      if (city._id) {
-        citiesMap.set(city._id, mapCityWithStateRef(city, stateMap))
-      }
+      if (city._id) citiesMap.set(city._id, mapCityWithStateRef(city, stateMap))
     })
 
-    // Build specialist → treatment mapping
-    // This is the key chain: Specialist → Department → Treatment
-    const specialistTreatmentMap = new Map<string, Set<string>>()
-    const specialistDepartmentMap = new Map<string, Set<string>>()
+    // =============================================================================
+    // STEP 1: Build treatment name-to-ID map for fuzzy matching
+    // =============================================================================
+    console.log('[DEBUG] STEP 1: Building treatment name map...')
     const treatmentNameToId = new Map<string, string>()
-
-    // Fallback specialty-to-treatment name mapping (common variations)
-    const SPECIALTY_TREATMENT_ALIASES: Record<string, string[]> = {
-      'ophthalmology': ['cataract', 'lasik', 'retina', 'cornea', 'glaucoma', 'eye surgery', 'eye treatment'],
-      'cardiology': ['heart', 'cardiac', 'bypass', 'angioplasty', 'heart surgery'],
-      'orthopedics': ['bone', 'joint', 'knee', 'hip', 'spine', 'orthopedic', 'fracture'],
-      'neurology': ['brain', 'neural', 'spine surgery', 'neuro'],
-      'oncology': ['cancer', 'tumor', 'chemotherapy', 'radiation therapy'],
-      'gastroenterology': ['stomach', 'digestive', 'liver', 'gastro', 'intestine'],
-      'dermatology': ['skin', 'hair', 'cosmetic dermatology'],
-      'urology': ['urinary', 'kidney', 'bladder'],
-      'ent': ['ear', 'nose', 'throat', 'sinus'],
-      'pediatrics': ['child', 'children', 'pediatric'],
-      'gynecology': ['pregnancy', 'maternity', 'women health', 'obstetrics'],
-      'psychiatry': ['mental', 'psychological', 'depression', 'anxiety'],
-      'dentistry': ['dental', 'tooth', 'teeth', 'cavity'],
-      'plastic surgery': ['cosmetic', 'reconstructive', 'aesthetic'],
-    }
-
-    // First, build treatment name-to-ID map from TreatmentMaster
+    const treatmentIdToData = new Map<string, any>()
+    
     rawTreatments.forEach((item: any) => {
       const id = item._id || item.ID
       const name = getValue(item, 'treatmentName', 'Treatment Name', 'title', 'name')
       if (id && name) {
         treatmentNameToId.set(name.toLowerCase(), id)
+        treatmentIdToData.set(id, item)
       }
     })
+    console.log('  - Unique treatment names:', treatmentNameToId.size)
 
-    // Build specialist mappings
-    rawSpecialists.forEach((spec: any) => {
-      const specId = spec._id || spec.ID
-      if (!specId) return
-
-      // Get specialist name for alias matching
-      const specName = (spec.name || spec.specialty || spec.title || '').toLowerCase()
-
-      // Get treatments from specialist
-      const treatments = spec.treatment || spec.data?.treatment || []
-      const treatmentArray = Array.isArray(treatments) ? treatments : [treatments].filter(Boolean)
-      const treatmentIds = new Set<string>()
-      treatmentArray.forEach((t: any) => {
-        const tid = t?._id || t?.ID || t
-        if (tid) treatmentIds.add(tid)
-        // Also add by name match
-        const tname = t?.treatmentName || t?.name || t?.title
-        if (tname) {
-          const masterId = treatmentNameToId.get(tname.toLowerCase())
-          if (masterId) treatmentIds.add(masterId)
-        }
-      })
-
-      // Use alias mapping to find additional treatments for this specialty
-      const aliases = SPECIALTY_TREATMENT_ALIASES[specName] || []
-      aliases.forEach((alias: string) => {
-        const treatmentId = treatmentNameToId.get(alias.toLowerCase())
-        if (treatmentId) {
-          treatmentIds.add(treatmentId)
-        }
-      })
-
-      specialistTreatmentMap.set(specId, treatmentIds)
-
-      // Get departments from specialist
-      const departments = spec.department || spec.data?.department || []
-      const deptArray = Array.isArray(departments) ? departments : [departments].filter(Boolean)
-      const deptIds = new Set<string>()
-      deptArray.forEach((d: any) => {
-        const did = d?._id || d?.ID || d
-        if (did) deptIds.add(did)
-      })
-      specialistDepartmentMap.set(specId, deptIds)
-    })
-
-    // Separate standalone and grouped branches
+    // =============================================================================
+    // STEP 2: Separate branches into standalone and grouped
+    // =============================================================================
+    console.log('[DEBUG] STEP 2: Separating branches...')
     const standaloneBranches: any[] = []
     const groupedBranches: any[] = []
     const branchesByHospital = new Map<string, any[]>()
@@ -754,38 +560,314 @@ export async function getAllCMSData(): Promise<CMSDataResponse> {
         groupedBranches.push(branch)
         const hospitalIds = extractHospitalIds(branch)
         hospitalIds.forEach((hid) => {
-          if (!branchesByHospital.has(hid)) {
-            branchesByHospital.set(hid, [])
-          }
+          if (!branchesByHospital.has(hid)) branchesByHospital.set(hid, [])
           branchesByHospital.get(hid)!.push(branch)
         })
       }
     })
+    console.log('  - Standalone branches:', standaloneBranches.length)
+    console.log('  - Grouped branches:', groupedBranches.length)
 
-    // Collect all IDs for batch fetching
+    // =============================================================================
+    // STEP 3: Build treatment-to-branch mapping (comprehensive)
+    // =============================================================================
+    console.log('[DEBUG] STEP 3: Building treatment-to-branch mapping...')
+    
+    // Map: treatmentID -> Set<branchID>
+    const treatmentToBranches = new Map<string, Set<string>>()
+    // Map: branchID -> treatmentIDs (reverse lookup)
+    const branchToTreatments = new Map<string, Set<string>>()
+    // Map: specialistID -> treatmentIDs
+    const specialistToTreatments = new Map<string, Set<string>>()
+
+    // PATH A: Direct treatment references on branches
+    console.log('  - Path A: Direct treatment references on branches')
+    let pathACount = 0
+    rawBranches.forEach((branch: any) => {
+      const treatments = branch.treatment || branch.data?.treatment || []
+      const treatmentArray = Array.isArray(treatments) ? treatments : [treatments].filter(Boolean)
+      const branchId = branch._id || branch.ID
+      
+      if (!branchToTreatments.has(branchId)) branchToTreatments.set(branchId, new Set())
+      
+      treatmentArray.forEach((t: any) => {
+        const treatmentId = t?._id || t?.ID || t
+        if (treatmentId) {
+          pathACount++
+          if (!treatmentToBranches.has(treatmentId)) treatmentToBranches.set(treatmentId, new Set())
+          treatmentToBranches.get(treatmentId)!.add(branchId)
+          branchToTreatments.get(branchId)!.add(treatmentId)
+        }
+      })
+    })
+    console.log('    Direct branch→treatment links:', pathACount)
+
+    // PATH B: Treatments from specialists on branches
+    console.log('  - Path B: Treatments from specialists on branches')
+    let pathBCount = 0
+    rawBranches.forEach((branch: any) => {
+      const specialists = branch.specialist || branch.data?.specialist || []
+      const specialistArray = Array.isArray(specialists) ? specialists : [specialists].filter(Boolean)
+      const branchId = branch._id || branch.ID
+
+      specialistArray.forEach((spec: any) => {
+        const specId = spec?._id || spec?.ID
+        if (specId) {
+          const specTreatments = spec.treatment || spec.data?.treatment || []
+          const specTreatArray = Array.isArray(specTreatments) ? specTreatments : [specTreatments].filter(Boolean)
+          
+          if (!specialistToTreatments.has(specId)) specialistToTreatments.set(specId, new Set())
+          
+          specTreatArray.forEach((t: any) => {
+            const treatmentId = t?._id || t?.ID || t
+            if (treatmentId) {
+              pathBCount++
+              specialistToTreatments.get(specId)!.add(treatmentId)
+              if (!treatmentToBranches.has(treatmentId)) treatmentToBranches.set(treatmentId, new Set())
+              treatmentToBranches.get(treatmentId)!.add(branchId)
+              if (!branchToTreatments.has(branchId)) branchToTreatments.set(branchId, new Set())
+              branchToTreatments.get(branchId)!.add(treatmentId)
+            }
+          })
+        }
+      })
+    })
+    console.log('    Branch→Specialist→Treatment links:', pathBCount)
+
+    // PATH C: Treatments from TreatmentMaster's branches field
+    console.log('  - Path C: TreatmentMaster → branches reference')
+    let pathCCount = 0
+    rawTreatments.forEach((treatment: any) => {
+      const treatmentId = treatment._id || treatment.ID
+      const treatmentBranches = treatment.branches || []
+      const treatmentBranchesArray = Array.isArray(treatmentBranches) ? treatmentBranches : [treatmentBranches].filter(Boolean)
+      
+      if (!treatmentToBranches.has(treatmentId)) treatmentToBranches.set(treatmentId, new Set())
+      
+      treatmentBranchesArray.forEach((b: any) => {
+        const branchId = b?._id || b?.ID || b
+        if (branchId) {
+          pathCCount++
+          treatmentToBranches.get(treatmentId)!.add(branchId)
+          if (!branchToTreatments.has(branchId)) branchToTreatments.set(branchId, new Set())
+          branchToTreatments.get(branchId)!.add(treatmentId)
+        }
+      })
+    })
+    console.log('    TreatmentMaster→branches links:', pathCCount)
+
+    // PATH D: Treatments linked via specialist's treatment field
+    console.log('  - Path D: Specialists → treatments field')
+    let pathDCount = 0
+    rawSpecialists.forEach((spec: any) => {
+      const specId = spec._id || spec.ID
+      const specTreatments = spec.treatment || []
+      const specTreatArray = Array.isArray(specTreatments) ? specTreatments : [specTreatments].filter(Boolean)
+      
+      if (!specialistToTreatments.has(specId)) specialistToTreatments.set(specId, new Set())
+      
+      specTreatArray.forEach((t: any) => {
+        const treatmentId = t?._id || t?.ID || t
+        if (treatmentId) {
+          pathDCount++
+          specialistToTreatments.get(specId)!.add(treatmentId)
+        }
+      })
+    })
+    console.log('    Specialist→Treatment links:', pathDCount)
+
+    // PATH E: Fallback - match treatment names with specialists
+    console.log('  - Path E: Treatment name matching with specialists')
+    let pathECount = 0
+    rawSpecialists.forEach((spec: any) => {
+      const specId = spec._id || spec.ID
+      const specName = (getValue(spec, 'specialty', 'Specialty Name', 'title', 'name') || '').toLowerCase()
+      
+      // Match treatment names that contain specialist name
+      const treatmentNames = Array.from(treatmentNameToId.keys())
+      treatmentNames.forEach((treatmentName) => {
+        if (treatmentName.includes(specName) || specName.includes(treatmentName)) {
+          if (!specialistToTreatments.has(specId)) specialistToTreatments.set(specId, new Set())
+          if (!specialistToTreatments.get(specId)!.has(treatmentNameToId.get(treatmentName)!)) {
+            pathECount++
+            specialistToTreatments.get(specId)!.add(treatmentNameToId.get(treatmentName)!)
+          }
+        }
+      })
+    })
+    console.log('    Name-based matches:', pathECount)
+
+    console.log('[DEBUG] Total treatment→branch mappings:', treatmentToBranches.size)
+    console.log('[DEBUG] Total branch→treatment mappings:', branchToTreatments.size)
+
+    // =============================================================================
+    // STEP 4: Batch fetch related data
+    // =============================================================================
+    console.log('[DEBUG] STEP 4: Batch fetching related data...')
+    
+    // Collect all IDs
     const allDoctorIds = new Set<string>()
     const allAccreditationIds = new Set<string>()
-    const allTreatmentIds = new Set<string>()
     const allSpecialistIds = new Set<string>()
+    const allTreatmentIds = new Set<string>()
+    const allBranchIds = new Set<string>()
 
+    // Collect ALL specialist IDs from SpecialistsMaster
+    rawSpecialists.forEach((s: any) => {
+      const id = s._id || s.ID
+      if (id) allSpecialistIds.add(id)
+      
+      // Also collect branch IDs that specialists reference
+      const branchRef = s.branch || s.BranchesMaster
+      if (branchRef) {
+        if (Array.isArray(branchRef)) {
+          branchRef.forEach((b: any) => {
+            const bid = b?._id || b?.ID || b
+            if (bid) allBranchIds.add(bid)
+          })
+        } else if (typeof branchRef === 'object') {
+          const bid = branchRef._id || branchRef.ID
+          if (bid) allBranchIds.add(bid)
+        } else if (typeof branchRef === 'string') {
+          allBranchIds.add(branchRef)
+        }
+      }
+    })
+    console.log('  - Total specialists from SpecialistsMaster:', allSpecialistIds.size)
+    console.log('  - Branch IDs referenced by specialists:', allBranchIds.size)
+    
+    // Collect IDs from branches
     rawBranches.forEach((branch: any) => {
       const mapped = mapBranch(branch)
       extractIds(mapped.doctors).forEach((id) => allDoctorIds.add(id))
       extractIds(mapped.accreditation).forEach((id) => allAccreditationIds.add(id))
       extractIds(mapped.treatments).forEach((id) => allTreatmentIds.add(id))
       extractIds(mapped.specialists).forEach((id) => allSpecialistIds.add(id))
+      allBranchIds.add(branch._id || branch.ID)
     })
 
-    // Batch fetch related data
-    const [doctorsMap, accreditationsMap, treatmentsMap, specialistsMap] = await Promise.all([
+    // Add treatment IDs from mappings
+    treatmentToBranches.forEach((_, treatmentId) => allTreatmentIds.add(treatmentId))
+    // Add specialist IDs from mappings
+    specialistToTreatments.forEach((_, specialistId) => allSpecialistIds.add(specialistId))
+
+    console.log('  - Doctor IDs:', allDoctorIds.size)
+    console.log('  - Accreditation IDs:', allAccreditationIds.size)
+    console.log('  - Treatment IDs:', allTreatmentIds.size)
+    console.log('  - Specialist IDs:', allSpecialistIds.size)
+
+    // Batch fetch
+    const [doctorsMap, accreditationsMap, specialistsMap] = await Promise.all([
       fetchByIds(COLLECTIONS.DOCTORS, Array.from(allDoctorIds), mapDoctor),
-      fetchByIds(COLLECTIONS.ACCREDITATIONS, Array.from(allAccreditationIds), mapAccreditation),
-      fetchByIds(COLLECTIONS.TREATMENTS, Array.from(allTreatmentIds), mapTreatment),
-      fetchByIds(COLLECTIONS.SPECIALTIES, Array.from(allSpecialistIds), mapSpecialistWithTreatments),
+      fetchByIds(COLLECTIONS.ACCREDITATIONS, Array.from(allAccreditationIds), (item: any) => ({
+        _id: item._id || item.ID,
+        title: getValue(item, 'title', 'Title') || 'Unknown Accreditation',
+        image: item.image || item.data?.image || null,
+      })),
+      fetchByIds(COLLECTIONS.SPECIALTIES, Array.from(allSpecialistIds), (item: any) => ({
+        _id: item._id || item.ID,
+        name: getValue(item, 'specialty', 'Specialty Name', 'title', 'name') || 'Unknown Specialist',
+        treatments: extractMultiReference(item.treatment, 'treatmentName', 'Treatment Name', 'title', 'name'),
+        branch: extractMultiReference(item.branch, 'branchName', 'Branch Name'),
+      })),
     ])
 
-    // Build hospitals with enriched branches
+    // Fetch additional branches referenced by specialists
+    const existingBranchIds = new Set(rawBranches.map((b: any) => b._id || b.ID))
+    const missingBranchIds = Array.from(allBranchIds).filter((id) => !existingBranchIds.has(id))
+    
+    if (missingBranchIds.length > 0) {
+      console.log('  - Fetching', missingBranchIds.length, 'branches referenced by specialists...')
+      const missingBranches = await fetchByIds(
+        COLLECTIONS.BRANCHES,
+        missingBranchIds,
+        mapBranch
+      )
+      console.log('  - Found', Object.keys(missingBranches).length, 'additional branches')
+      Object.values(missingBranches).forEach((b: any) => {
+        rawBranches.push(b)
+      })
+    }
+
+    // =============================================================================
+    // STEP 5: Build hospitals with enriched branches
+    // =============================================================================
+    console.log('[DEBUG] STEP 5: Building hospitals with enriched branches...')
+    
     const hospitals: HospitalData[] = []
+
+    // First, process regular hospitals from HospitalMaster
+    const processedHospitalIds = new Set<string>()
+    rawHospitals.forEach((rawHospital: any) => {
+      const hospitalId = rawHospital._id || rawHospital.ID
+      if (hospitalId) processedHospitalIds.add(hospitalId)
+    })
+    
+    // Check if specialists reference hospitals not in HospitalMaster
+    const specialistsHospitalIds = new Set<string>()
+    rawSpecialists.forEach((spec: any) => {
+      const hospitalRef = spec.hospital || spec.HospitalMaster
+      if (hospitalRef) {
+        if (Array.isArray(hospitalRef)) {
+          hospitalRef.forEach((h: any) => {
+            const id = h?._id || h?.ID || h
+            if (id && typeof id === 'string') specialistsHospitalIds.add(id)
+          })
+        } else if (typeof hospitalRef === 'object') {
+          const id = hospitalRef._id || hospitalRef.ID
+          if (id && typeof id === 'string') specialistsHospitalIds.add(id)
+        } else if (typeof hospitalRef === 'string') {
+          specialistsHospitalIds.add(hospitalRef)
+        }
+      }
+    })
+    
+    // Find hospital IDs that are referenced but not in HospitalMaster
+    const missingHospitalIds = Array.from(specialistsHospitalIds).filter(
+      (id) => !processedHospitalIds.has(id)
+    )
+    
+    if (missingHospitalIds.length > 0) {
+      console.log('  - Found', missingHospitalIds.length, 'hospitals referenced by specialists but missing from HospitalMaster')
+      // Fetch and add these hospitals
+      const missingHospitals = await fetchByIds(
+        COLLECTIONS.HOSPITALS,
+        missingHospitalIds,
+        mapHospital
+      )
+      console.log('  - Fetched missing hospitals:', Object.keys(missingHospitals).length)
+      Object.values(missingHospitals).forEach((h) => {
+        rawHospitals.push(h as any)
+        processedHospitalIds.add(h._id)
+      })
+    }
+    
+    // Also check if branches reference hospitals not in HospitalMaster
+    const branchesHospitalIds = new Set<string>()
+    rawBranches.forEach((branch: any) => {
+      const hospitalIds = extractHospitalIds(branch)
+      hospitalIds.forEach((hid) => branchesHospitalIds.add(hid))
+    })
+    
+    const missingFromBranches = Array.from(branchesHospitalIds).filter(
+      (id) => !processedHospitalIds.has(id)
+    )
+    
+    if (missingFromBranches.length > 0) {
+      console.log('  - Found', missingFromBranches.length, 'hospitals referenced by branches but missing from HospitalMaster')
+      const missingBranchHospitals = await fetchByIds(
+        COLLECTIONS.HOSPITALS,
+        missingFromBranches,
+        mapHospital
+      )
+      console.log('  - Fetched branch-referenced hospitals:', Object.keys(missingBranchHospitals).length)
+      Object.values(missingBranchHospitals).forEach((h) => {
+        if (!processedHospitalIds.has(h._id)) {
+          rawHospitals.push(h as any)
+          processedHospitalIds.add(h._id)
+        }
+      })
+    }
 
     // Process regular hospitals
     rawHospitals.forEach((rawHospital: any) => {
@@ -794,40 +876,108 @@ export async function getAllCMSData(): Promise<CMSDataResponse> {
 
       const enrichedBranches = hospitalBranches.map((b: any) => {
         const mapped = mapBranch(b)
+        const branchId = mapped._id
+        
+        // Collect ALL treatments for this branch from multiple sources
+        const allBranchTreatmentIds = new Set<string>()
+        
+        // Source 1: Direct branch treatments (Path A)
+        const directTreatments = b.treatment || b.data?.treatment || []
+        const directTreatArray = Array.isArray(directTreatments) ? directTreatments : [directTreatments].filter(Boolean)
+        let directCount = 0
+        directTreatArray.forEach((t: any) => {
+          const tid = t?._id || t?.ID || t
+          if (tid) {
+            allBranchTreatmentIds.add(tid)
+            directCount++
+          }
+        })
+        
+        // Source 2: Treatments from specialists on this branch (Path B)
+        const specialists = b.specialist || b.data?.specialist || []
+        const specArray = Array.isArray(specialists) ? specialists : [specialists].filter(Boolean)
+        let specTreatCount = 0
+        specArray.forEach((spec: any) => {
+          const specId = spec?._id || spec?.ID
+          if (specId) {
+            const specTreatments = specialistToTreatments.get(specId) || new Set()
+            specTreatments.forEach((tid) => {
+              if (allBranchTreatmentIds.add(tid)) specTreatCount++
+            })
+          }
+        })
+        
+        // Source 3: From branchToTreatments mapping (fallback)
+        const mappedTreatments = branchToTreatments.get(branchId) || new Set()
+        let mappedCount = 0
+        mappedTreatments.forEach((tid) => {
+          if (allBranchTreatmentIds.add(tid)) mappedCount++
+        })
+        
+        if (directCount > 0 || specTreatCount > 0 || mappedCount > 0) {
+          console.log(`[DEBUG] Branch ${mapped.branchName}: direct=${directCount}, fromSpecialists=${specTreatCount}, fromMapping=${mappedCount}, total=${allBranchTreatmentIds.size}`)
+        }
+        
+        const branchTreatments = Array.from(allBranchTreatmentIds)
+          .map((tid) => {
+            const treatment = mapTreatment(treatmentIdToData.get(tid) || { _id: tid })
+            treatment.branchesAvailableAt = null
+            return treatment
+          })
+
         return {
           ...mapped,
           doctors: mapped.doctors.map((d: any) => doctorsMap[d._id] || d),
-          specialists: mapped.specialists.map((s: any) => specialistsMap[s._id] || s),
+          specialists: mapped.specialists.map((s: any) => {
+            const specData = specialistsMap[s._id] || s
+            // Enrich specialist with treatments from mapping
+            const specId = s._id
+            const specTreatments = specialistToTreatments.get(specId) || new Set()
+            return {
+              ...specData,
+              treatments: Array.from(specTreatments).map((tid) => 
+                mapTreatment(treatmentIdToData.get(tid) || {})
+              ),
+            }
+          })
+          // ALSO: Add specialists that reference this branch from their data
+          .concat(
+            Object.values(specialistsMap).filter((spec: any) => {
+              if (!spec.branch) return false
+              return spec.branch.some((b: any) => {
+                const bid = b._id || b.ID || b
+                return bid === branchId || bid === mapped._id
+              })
+            })
+          ),
           city: mapped.city.map((c: any) => {
             const enrichedCity = citiesMap.get(c._id)
             if (enrichedCity && enrichedCity.state && enrichedCity.state !== 'Unknown State') {
               return enrichedCity
             }
-            // Apply fallback: use city data with CITY_TO_STATE_FALLBACK mapping
             const cityName = c.name || c.cityName || 'Unknown City'
             const normalizedCity = cityName.toLowerCase().trim()
-            const fallbackState = CITY_TO_STATE_FALLBACK[normalizedCity] || 'Unknown State'
             return {
               _id: c._id,
               cityName,
-              state: fallbackState,
+              state: CITY_TO_STATE_FALLBACK[normalizedCity] || 'Unknown State',
               country: 'India',
             }
           }),
           accreditation: mapped.accreditation.map((a: any) => accreditationsMap[a._id] || a),
-          treatments: mapped.treatments.map((t: any) => treatmentsMap[t._id] || t),
+          treatments: branchTreatments,
         }
       })
 
       // Collect unique items from branches
       const uniqueDoctors = new Map<string, DoctorData>()
       const uniqueTreatments = new Map<string, TreatmentData>()
-      const uniqueAccreditations = new Map<string, AccreditationData>()
+      const uniqueAccreditations = new Map<string, any>()
 
       enrichedBranches.forEach((branch) => {
         branch.doctors.forEach((d: DoctorData) => d._id && uniqueDoctors.set(d._id, d))
         branch.treatments.forEach((t: TreatmentData) => t._id && uniqueTreatments.set(t._id, t))
-        branch.accreditation.forEach((a: AccreditationData) => a._id && uniqueAccreditations.set(a._id, a))
+        branch.accreditation.forEach((a: any) => a._id && uniqueAccreditations.set(a._id, a))
       })
 
       hospitals.push({
@@ -842,28 +992,81 @@ export async function getAllCMSData(): Promise<CMSDataResponse> {
     // Process standalone branches as hospitals
     standaloneBranches.forEach((branch: any) => {
       const mapped = mapBranch(branch)
+      const branchId = mapped._id
+      
+      // Collect ALL treatments for this branch from multiple sources
+      const allBranchTreatmentIds = new Set<string>()
+      
+      // Source 1: Direct branch treatments
+      const directTreatments = branch.treatment || branch.data?.treatment || []
+      const directTreatArray = Array.isArray(directTreatments) ? directTreatments : [directTreatments].filter(Boolean)
+      directTreatArray.forEach((t: any) => {
+        const tid = t?._id || t?.ID || t
+        if (tid) allBranchTreatmentIds.add(tid)
+      })
+      
+      // Source 2: Treatments from specialists on this branch
+      const specialists = branch.specialist || branch.data?.specialist || []
+      const specArray = Array.isArray(specialists) ? specialists : [specialists].filter(Boolean)
+      specArray.forEach((spec: any) => {
+        const specId = spec?._id || spec?.ID
+        if (specId) {
+          const specTreatments = specialistToTreatments.get(specId) || new Set()
+          specTreatments.forEach((tid) => allBranchTreatmentIds.add(tid))
+        }
+      })
+      
+      // Source 3: From branchToTreatments mapping (fallback)
+      const mappedTreatments = branchToTreatments.get(branchId) || new Set()
+      mappedTreatments.forEach((tid) => allBranchTreatmentIds.add(tid))
+      
+      const branchTreatments = Array.from(allBranchTreatmentIds)
+        .map((tid) => {
+          const treatment = mapTreatment(treatmentIdToData.get(tid) || { _id: tid })
+          treatment.branchesAvailableAt = null
+          return treatment
+        })
+
       const enrichedBranch = {
         ...mapped,
         doctors: mapped.doctors.map((d: any) => doctorsMap[d._id] || d),
-        specialists: mapped.specialists.map((s: any) => specialistsMap[s._id] || s),
+        specialists: mapped.specialists.map((s: any) => {
+          const specData = specialistsMap[s._id] || s
+          const specId = s._id
+          const specTreatments = specialistToTreatments.get(specId) || new Set()
+          return {
+            ...specData,
+            treatments: Array.from(specTreatments).map((tid) => 
+              mapTreatment(treatmentIdToData.get(tid) || {})
+            ),
+          }
+        })
+        // ALSO: Add specialists that reference this branch from their data
+        .concat(
+          Object.values(specialistsMap).filter((spec: any) => {
+            if (!spec.branch) return false
+            return spec.branch.some((b: any) => {
+              const bid = b._id || b.ID || b
+              return bid === branchId || bid === mapped._id
+            })
+          })
+        ),
         city: mapped.city.map((c: any) => {
           const enrichedCity = citiesMap.get(c._id)
           if (enrichedCity && enrichedCity.state && enrichedCity.state !== 'Unknown State') {
             return enrichedCity
           }
-          // Apply fallback: use city data with CITY_TO_STATE_FALLBACK mapping
           const cityName = c.name || c.cityName || 'Unknown City'
           const normalizedCity = cityName.toLowerCase().trim()
-          const fallbackState = CITY_TO_STATE_FALLBACK[normalizedCity] || 'Unknown State'
           return {
             _id: c._id,
             cityName,
-            state: fallbackState,
+            state: CITY_TO_STATE_FALLBACK[normalizedCity] || 'Unknown State',
             country: 'India',
           }
         }),
         accreditation: mapped.accreditation.map((a: any) => accreditationsMap[a._id] || a),
-        treatments: mapped.treatments.map((t: any) => treatmentsMap[t._id] || t),
+        treatments: branchTreatments,
       }
 
       const hospital = mapHospital(branch, true)
@@ -876,471 +1079,147 @@ export async function getAllCMSData(): Promise<CMSDataResponse> {
       })
     })
 
-    // Build extended treatments with branch availability
-    // Create a comprehensive mapping using both treatment IDs and names
-    const treatmentBranchMap = new Map<string, Map<string, TreatmentLocation>>()
+    console.log('[DEBUG] Built', hospitals.length, 'hospitals (from HospitalMaster:', rawHospitals.length, '+ standalone:', standaloneBranches.length, ')')
 
-    // Then map branches to treatments (using treatmentNameToId from above)
-    hospitals.forEach((hospital) => {
-      hospital.branches.forEach((branch) => {
-        // Map treatments by ID
-        branch.treatments.forEach((treatment: TreatmentData) => {
-          if (!treatmentBranchMap.has(treatment._id)) {
-            treatmentBranchMap.set(treatment._id, new Map())
-          }
-          const branchMap = treatmentBranchMap.get(treatment._id)!
-          if (!branchMap.has(branch._id)) {
-            branchMap.set(branch._id, {
+    // =============================================================================
+    // STEP 6: Build comprehensive treatments array with branchesAvailableAt
+    // =============================================================================
+    console.log('[DEBUG] STEP 6: Building treatments with branchesAvailableAt...')
+    
+    // Build hospital lookup by ID
+    const hospitalById = new Map<string, any>()
+    hospitals.forEach((h: any) => {
+      if (h._id) hospitalById.set(h._id, h)
+    })
+
+    // Build all treatments with branch availability
+    const allTreatmentsSet = new Set<string>()
+    
+    // Add from treatmentNameToId map (TreatmentMaster)
+    treatmentNameToId.forEach((_, name) => {
+      const id = treatmentNameToId.get(name)
+      if (id) allTreatmentsSet.add(id)
+    })
+    
+    // Add from treatmentToBranches map (any treatment linked to branches)
+    treatmentToBranches.forEach((_, treatmentId) => {
+      allTreatmentsSet.add(treatmentId)
+    })
+
+    console.log('  - Total unique treatments to process:', allTreatmentsSet.size)
+
+    const finalTreatments: ExtendedTreatmentData[] = Array.from(allTreatmentsSet).map((treatmentId) => {
+      const treatmentData = treatmentIdToData.get(treatmentId) || {}
+      const treatment = mapTreatment(treatmentData)
+      
+      // Find all branches offering this treatment
+      const branchIds = treatmentToBranches.get(treatmentId) || new Set<string>()
+      const branchesAvailableAt: TreatmentLocation[] = []
+
+      branchIds.forEach((branchId) => {
+        // Find this branch in any hospital
+        hospitals.forEach((hospital) => {
+          const branch = hospital.branches?.find((b: any) => b._id === branchId)
+          if (branch) {
+            branchesAvailableAt.push({
               branchId: branch._id,
               branchName: branch.branchName,
               hospitalName: hospital.hospitalName,
               hospitalId: hospital._id,
-              cities: branch.city,
+              cities: branch.city || [],
               departments: [],
-              cost: treatment.cost,
-            })
-          }
-
-          // Also map by treatment name to TreatmentMaster ID
-          if (treatment.name) {
-            const masterId = treatmentNameToId.get(treatment.name.toLowerCase())
-            if (masterId && masterId !== treatment._id) {
-              if (!treatmentBranchMap.has(masterId)) {
-                treatmentBranchMap.set(masterId, new Map())
-              }
-              const masterBranchMap = treatmentBranchMap.get(masterId)!
-              if (!masterBranchMap.has(branch._id)) {
-                masterBranchMap.set(branch._id, {
-                  branchId: branch._id,
-                  branchName: branch.branchName,
-                  hospitalName: hospital.hospitalName,
-                  hospitalId: hospital._id,
-                  cities: branch.city,
-                  departments: [],
-                  cost: treatment.cost,
-                })
-              }
-            }
-          }
-        })
-
-        // Also check specialization treatments
-        branch.specialization?.forEach((spec: any) => {
-          if (spec.isTreatment && spec.name) {
-            const masterId = treatmentNameToId.get(spec.name.toLowerCase())
-            if (masterId) {
-              if (!treatmentBranchMap.has(masterId)) {
-                treatmentBranchMap.set(masterId, new Map())
-              }
-              const branchMap = treatmentBranchMap.get(masterId)!
-              if (!branchMap.has(branch._id)) {
-                branchMap.set(branch._id, {
-                  branchId: branch._id,
-                  branchName: branch.branchName,
-                  hospitalName: hospital.hospitalName,
-                  hospitalId: hospital._id,
-                  cities: branch.city,
-                  departments: [],
-                  cost: null,
-                })
-              }
-            }
-          }
-        })
-      })
-    })
-
-    // Also map treatments from specialists at each branch
-    // This handles the chain: Branch → Specialist → Treatment
-    const allSpecialistTreatments = new Map<string, { treatment: any; branches: Map<string, any> }>()
-    
-    hospitals.forEach((hospital) => {
-      hospital.branches.forEach((branch) => {
-        // Get specialist IDs from branch
-        const branchSpecialistIds = extractIds(branch.specialists || [])
-        
-        branchSpecialistIds.forEach((specId) => {
-          // Get treatments linked to this specialist
-          const specTreatmentIds = specialistTreatmentMap.get(specId)
-          if (specTreatmentIds) {
-            specTreatmentIds.forEach((treatmentId) => {
-              if (!allSpecialistTreatments.has(treatmentId)) {
-                allSpecialistTreatments.set(treatmentId, { treatment: null, branches: new Map() })
-              }
-              const entry = allSpecialistTreatments.get(treatmentId)!
-              if (!entry.branches.has(branch._id)) {
-                // Find treatment data from treatmentsMap
-                const treatmentData = treatmentsMap[treatmentId]
-                entry.branches.set(branch._id, {
-                  branchId: branch._id,
-                  branchName: branch.branchName,
-                  hospitalName: hospital.hospitalName,
-                  hospitalId: hospital._id,
-                  cities: branch.city,
-                  departments: [],
-                  cost: treatmentData?.cost || null,
-                })
-              }
-              // Also add to treatmentBranchMap for direct lookup
-              if (!treatmentBranchMap.has(treatmentId)) {
-                treatmentBranchMap.set(treatmentId, new Map())
-              }
-              if (!treatmentBranchMap.get(treatmentId)!.has(branch._id)) {
-                const treatmentData = treatmentsMap[treatmentId]
-                treatmentBranchMap.get(treatmentId)!.set(branch._id, {
-                  branchId: branch._id,
-                  branchName: branch.branchName,
-                  hospitalName: hospital.hospitalName,
-                  hospitalId: hospital._id,
-                  cities: branch.city,
-                  departments: [],
-                  cost: treatmentData?.cost || null,
-                })
-              }
-            })
-          }
-        })
-        
-        // Also map treatments directly from enriched specialists (with treatments array)
-        branch.specialists?.forEach((specialist: any) => {
-          if (specialist.treatments && Array.isArray(specialist.treatments)) {
-            specialist.treatments.forEach((treatment: any) => {
-              if (!treatment || !(treatment._id || treatment.name)) return
-              
-              const treatmentId = treatment._id || treatment.name
-              if (!allSpecialistTreatments.has(treatmentId)) {
-                allSpecialistTreatments.set(treatmentId, { treatment, branches: new Map() })
-              }
-              const entry = allSpecialistTreatments.get(treatmentId)!
-              // Update treatment data if not already set
-              if (!entry.treatment) {
-                entry.treatment = treatment
-              }
-              if (!entry.branches.has(branch._id)) {
-                entry.branches.set(branch._id, {
-                  branchId: branch._id,
-                  branchName: branch.branchName,
-                  hospitalName: hospital.hospitalName,
-                  hospitalId: hospital._id,
-                  cities: branch.city,
-                  departments: [],
-                  cost: treatment.cost || treatment.averageCost || null,
-                })
-              }
-              // Also add to treatmentBranchMap for direct lookup
-              if (!treatmentBranchMap.has(treatmentId)) {
-                treatmentBranchMap.set(treatmentId, new Map())
-              }
-              if (!treatmentBranchMap.get(treatmentId)!.has(branch._id)) {
-                treatmentBranchMap.get(treatmentId)!.set(branch._id, {
-                  branchId: branch._id,
-                  branchName: branch.branchName,
-                  hospitalName: hospital.hospitalName,
-                  hospitalId: hospital._id,
-                  cities: branch.city,
-                  departments: [],
-                  cost: treatment.cost || treatment.averageCost || null,
-                })
-              }
+              cost: treatment.cost || null,
             })
           }
         })
       })
-    })
 
-    // Build extended treatments from rawTreatments
-    const treatments: ExtendedTreatmentData[] = rawTreatments.map((item: any) => {
-      const treatment = mapTreatment(item)
-      
-      // Try to find branches by ID first
-      let branchesMap = treatmentBranchMap.get(treatment._id)
-      
-      // If not found by ID, try by treatment name
-      if (!branchesMap && treatment.name) {
-        const treatmentNameSlug = generateSlug(treatment.name)
-        
-        // Search through all treatmentBranchMap entries to find matching name
-        for (const [key, value] of treatmentBranchMap.entries()) {
-          // Check if the key matches the treatment name
-          if (key === treatmentNameSlug || key === treatment.name?.toLowerCase()) {
-            branchesMap = value
-            break
-          }
-        }
-      }
-      
       return {
         ...treatment,
-        branchesAvailableAt: branchesMap ? Array.from(branchesMap.values()) : [],
+        branchesAvailableAt,
         departments: [],
       }
     })
 
-    // Add treatments from specialists that are not in rawTreatments
-    const existingTreatmentIds = new Set(treatments.map(t => t._id))
-    allSpecialistTreatments.forEach((entry, treatmentId) => {
-      if (!existingTreatmentIds.has(treatmentId) && entry.treatment) {
-        const specTreatment = entry.treatment
-        const extendedTreatment: ExtendedTreatmentData = {
-          _id: specTreatment._id || treatmentId,
-          name: getValue(specTreatment, 'treatmentName', 'Treatment Name', 'title', 'name') || 'Unknown Treatment',
-          description: extractRichText(specTreatment.Description || specTreatment.description),
-          category: getValue(specTreatment, 'category', 'Category'),
-          duration: getValue(specTreatment, 'duration', 'Duration'),
-          cost: getValue(specTreatment, 'cost', 'Cost', 'averageCost'),
-          treatmentImage: specTreatment.treatmentImage || specTreatment.image || null,
-          popular: getValue(specTreatment, 'popular') === 'true',
-          branchesAvailableAt: Array.from(entry.branches.values()),
-          departments: [],
-        }
-        treatments.push(extendedTreatment)
-      }
-    })
+    console.log('[DEBUG] Final treatments count:', finalTreatments.length)
 
     const response: CMSDataResponse = {
       hospitals,
-      treatments,
+      treatments: finalTreatments,
       totalHospitals: hospitals.length,
-      totalTreatments: treatments.length,
+      totalTreatments: finalTreatments.length,
       lastUpdated: new Date().toISOString(),
     }
-    
+
+    console.log('[DEBUG] =========================================')
+    console.log('[DEBUG] CMS DATA LOAD COMPLETE')
+    console.log('[DEBUG] Hospitals:', hospitals.length)
+    console.log('[DEBUG] Treatments:', finalTreatments.length)
+    console.log('[DEBUG] =                                       =============')
+
     memoryCache.set(cacheKey, response, CACHE_CONFIG.HOSPITALS * 1000)
     return response
   })
 }
 
-/**
- * Get hospital by slug with similar hospitals
- * Supports matching by hospital name slug OR branch name slug
- */
 export async function getHospitalBySlug(slug: string): Promise<HospitalDetailResponse> {
-  const { hospitals } = await getAllCMSData()
+  const cacheKey = `hospital_slug_${slug}`
+  const cached = memoryCache.get<HospitalDetailResponse>(cacheKey)
+  if (cached) return cached
 
-  // Normalize slug: lowercase, trim, remove trailing dashes, normalize multiple dashes
-  const normalizedSlug = slug.toLowerCase().trim().replace(/[-_]+/g, '-')
-  
-  // First try to find by hospital slug
-  let hospital = hospitals.find((h) => {
-    const hospitalSlug = generateSlug(h.hospitalName)
-    return hospitalSlug === normalizedSlug || 
-           hospitalSlug === slug || // Also try original case
-           h._id === slug ||
-           h._id === normalizedSlug ||
-           hospitalSlug + '-' === normalizedSlug || // Handle trailing dash
-           normalizedSlug.startsWith(hospitalSlug + '-') || // Handle hospital-city slug
-           hospitalSlug + '-' === slug ||
-           slug.startsWith(hospitalSlug + '-') // Handle hospital-city slug with original case
-  })
+  return memoryCache.dedupe<HospitalDetailResponse>(cacheKey, async () => {
+    console.log('[DEBUG] Fetching hospital by slug:', slug)
 
-  // If not found, try to find by branch slug
-  if (!hospital) {
-    for (const h of hospitals) {
-      const matchingBranch = h.branches.find((b) => {
+    // Fetch all CMS data first
+    const { hospitals, treatments } = await getAllCMSData()
+
+    // Find hospital by slug
+    const hospital = hospitals.find((h) => {
+      // Check hospital name slug
+      const hospitalSlug = generateSlug(h.hospitalName)
+      if (hospitalSlug === slug) return true
+
+      // Check if any branch matches
+      return h.branches.some((b) => {
         const branchSlug = generateSlug(b.branchName)
-        return branchSlug === normalizedSlug ||
-               branchSlug === slug || // Also try original case
-               branchSlug + '-' === normalizedSlug ||
-               slug.startsWith(branchSlug + '-') ||
-               slug.startsWith(branchSlug + '-') ||
-               (h.hospitalName && (generateSlug(h.hospitalName) + '-' + branchSlug === normalizedSlug)) ||
-               (h.hospitalName && (generateSlug(h.hospitalName) + '-' + branchSlug === slug))
+        return branchSlug === slug
       })
-      
-      if (matchingBranch) {
-        // Return the hospital but with only the matching branch
-        hospital = {
-          ...h,
-          branches: [matchingBranch]
-        }
-        break
+    })
+
+    if (!hospital) {
+      return {
+        hospital: null,
+        similarHospitals: [],
+        error: 'Hospital not found',
       }
     }
-  }
 
-  if (!hospital) {
-    return { hospital: null, similarHospitals: [], error: 'Hospital not found' }
-  }
-
-  // Find similar hospitals (same city, same state, or matching accreditations)
-  const hospitalCities = new Set<string>()
-  const hospitalStates = new Set<string>()
-  hospital.branches.forEach((branch) => {
-    branch.city?.forEach((c) => {
-      if (c.cityName) hospitalCities.add(c.cityName.toLowerCase())
-      if (c.state) hospitalStates.add(c.state.toLowerCase())
-    })
-  })
-  const hospitalAccreditations = new Set(hospital.accreditations.map((a) => a.title?.toLowerCase()).filter(Boolean))
-
-  const similarHospitals = hospitals
-    .filter((h) => {
-      if (h._id === hospital._id) return false
-      
-      // Collect cities and states for this hospital
-      const hCities = new Set<string>()
-      const hStates = new Set<string>()
-      h.branches.forEach((branch) => {
-        branch.city?.forEach((c) => {
-          if (c.cityName) hCities.add(c.cityName.toLowerCase())
-          if (c.state) hStates.add(c.state.toLowerCase())
-        })
-      })
-      
-      // Match if: same city OR same state OR matching accreditation
-      const hasMatchingCity = [...hospitalCities].some((city) => hCities.has(city))
-      const hasMatchingState = [...hospitalStates].some((state) => hStates.has(state))
-      const hasMatchingAccreditation = h.accreditations.some((a) => 
-        a.title && hospitalAccreditations.has(a.title.toLowerCase())
+    // Find similar hospitals (same specialty, different hospital)
+    const similarHospitals = hospitals
+      .filter((h) => h._id !== hospital._id)
+      .filter((h) =>
+        h.specialty.some((s) =>
+          hospital.specialty.some((hs) => s._id === hs._id)
+        )
       )
-      
-      return hasMatchingCity || hasMatchingState || hasMatchingAccreditation
-    })
+      .slice(0, 3)
 
-  return { hospital, similarHospitals }
+    return {
+      hospital,
+      similarHospitals,
+    }
+  })
 }
 
-/**
- * Get treatment by slug with branch availability
- * Supports matching by treatment name slug
- */
 export async function getTreatmentBySlug(slug: string): Promise<ExtendedTreatmentData | null> {
-  const { treatments, hospitals } = await getAllCMSData()
-
-  // Normalize slug: lowercase, trim, remove trailing dashes, normalize multiple dashes
-  const normalizedSlug = slug.toLowerCase().trim().replace(/[-_]+/g, '-')
-
-  // Find treatment by slug
-  let treatment = treatments.find((t) => {
+  console.log('[DEBUG] Fetching treatment by slug:', slug)
+  
+  const { treatments } = await getAllCMSData()
+  
+  const treatment = treatments.find((t) => {
     const treatmentSlug = generateSlug(t.name)
-    return treatmentSlug === normalizedSlug ||
-           treatmentSlug === slug || // Also try original case
-           t._id === slug ||
-           t._id === normalizedSlug
+    return treatmentSlug === slug
   })
-
-  // If not found by direct match, try fuzzy matching
-  if (!treatment) {
-    // Try partial match (for slugs like "treatment-name-delhi")
-    treatment = treatments.find((t) => {
-      const treatmentSlug = generateSlug(t.name)
-      return normalizedSlug.includes(treatmentSlug) ||
-             slug.includes(treatmentSlug)
-    })
-  }
-
-  if (!treatment) {
-    return null
-  }
-
-  // Find all branches offering this treatment
-  const branchesOfferingTreatment: Map<string, any> = new Map()
-
-  hospitals.forEach((hospital) => {
-    hospital.branches.forEach((branch) => {
-      // Check treatments directly on branch
-      const branchTreatments = [...(branch.treatments || [])]
-      
-      // Check treatments from specialists
-      branch.specialists?.forEach((specialist) => {
-        specialist.treatments?.forEach((specTreatment) => {
-          if (specTreatment._id === treatment?._id) {
-            const branchKey = `${hospital._id}-${branch._id}`
-            if (!branchesOfferingTreatment.has(branchKey)) {
-              branchesOfferingTreatment.set(branchKey, {
-                ...branch,
-                hospitalName: hospital.hospitalName,
-                hospitalId: hospital._id,
-                hospitalLogo: hospital.logo,
-              })
-            }
-          }
-        })
-      })
-
-      // Check treatments directly on branch
-      branchTreatments.forEach((branchTreatment) => {
-        if (branchTreatment._id === treatment?._id) {
-          const branchKey = `${hospital._id}-${branch._id}`
-          if (!branchesOfferingTreatment.has(branchKey)) {
-            branchesOfferingTreatment.set(branchKey, {
-              ...branch,
-              hospitalName: hospital.hospitalName,
-              hospitalId: hospital._id,
-              hospitalLogo: hospital.logo,
-            })
-          }
-        }
-      })
-    })
-  })
-
-  // Build treatment location data
-  const branchesAvailableAt = Array.from(branchesOfferingTreatment.values()).map((branch) => ({
-    branchId: branch._id,
-    branchName: branch.branchName,
-    hospitalName: branch.hospitalName,
-    hospitalId: branch.hospitalId,
-    cities: branch.city || [],
-    departments: [],
-    cost: treatment.cost || null,
-  }))
-
-  return {
-    ...treatment,
-    branchesAvailableAt,
-  }
+  
+  return treatment || null
 }
-
-/**
- * Search hospitals by query
- * Fixed: Added debug logging for treatment verification
- */
-export async function searchHospitals(query: string): Promise<HospitalData[]> {
-  console.log(`[DEBUG] searchHospitals: Starting with query="${query}"`)
-  
-  const { hospitals } = await getAllCMSData()
-  console.log(`[DEBUG] searchHospitals: Retrieved ${hospitals.length} hospitals from cache`)
-  
-  // Debug: Log treatment counts per hospital
-  hospitals.forEach((h, idx) => {
-    const treatmentCount = h.treatments?.length || 0
-    const branchCount = h.branches?.length || 0
-    console.log(`[DEBUG] searchHospitals: Hospital ${idx+1}: "${h.hospitalName}" - ${branchCount} branches, ${treatmentCount} treatments`)
-    
-    // Debug: Log first few treatments
-    if (treatmentCount > 0) {
-      const treatmentNames = h.treatments.slice(0, 5).map((t: any) => t.name).join(', ')
-      console.log(`[DEBUG] searchHospitals:   Treatments: ${treatmentNames}${treatmentCount > 5 ? '...' : ''}`)
-    }
-  })
-  
-  const normalizedQuery = query.toLowerCase().trim()
-  
-  if (!normalizedQuery) {
-    console.log(`[DEBUG] searchHospitals: No query, returning all ${hospitals.length} hospitals`)
-    return hospitals
-  }
-  
-  const filtered = hospitals.filter((h) => {
-    const nameMatch = h.hospitalName.toLowerCase().includes(normalizedQuery)
-    const cityMatch = h.branches.some((b) => b.city.some((c) => c.cityName.toLowerCase().includes(normalizedQuery)))
-    const treatmentMatch = h.treatments.some((t) => t.name.toLowerCase().includes(normalizedQuery))
-    
-    if (nameMatch || cityMatch || treatmentMatch) {
-      console.log(`[DEBUG] searchHospitals: Matched "${h.hospitalName}" - name:${nameMatch}, city:${cityMatch}, treatment:${treatmentMatch}`)
-    }
-    
-    return nameMatch || cityMatch || treatmentMatch
-  })
-  
-  console.log(`[DEBUG] searchHospitals: Query "${query}" matched ${filtered.length} hospitals`)
-  
-  return filtered
-}
-
-// Export cached version for server components
-export const getCachedCMSData = createCachedFetcher(getAllCMSData, ['cms-all-data'], {
-  revalidate: CACHE_CONFIG.HOSPITALS,
-  tags: [CACHE_TAGS.ALL_DATA],
-})

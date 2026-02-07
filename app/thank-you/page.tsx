@@ -98,21 +98,19 @@ export default function ThankYou() {
           </div>
 
           <div className="space-y-4">
-            <h1
-              className="text-4xl md:text-3xl font-extrabold text-gray-800 leading-tight"
-            >
-             Your appointment is confirmed!
+            <h1 className="text-4xl md:text-3xl font-extrabold text-gray-800 leading-tight">
+              Thank you for connecting with Medivisor PNG
             </h1>
-            <p
-              className="text-lg text-slate-600 max-w-2xl mx-auto leading-relaxed"
-            >
-              Thank you for registering with us. You may kindly walk in as scheduled. Patients will be attended to on a first-come, first-served basis.
+
+            <p className="text-lg text-slate-600 max-w-2xl mx-auto leading-relaxed">
+              Your application has been successfully received. We will get back to you soon.
             </p>
           </div>
+
         </div>
 
         {/* What's Next Section */}
-      
+
 
         {/* Action Buttons Section */}
         <div

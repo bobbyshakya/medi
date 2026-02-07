@@ -1,19 +1,9 @@
-// components/MedivisorForm.tsx
+// components/EspeForm.tsx
 'use client';
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { submitMedivisorForm } from '@/app/api/submit-espe/route';
-
-// Define simplified interface for the form
-interface FormData {
-  name: string;
-  email: string;
-  phone: string;
-  organization?: string;
-  background: string;
-  message?: string;
-}
 
 export default function MedivisorForm() {
   const router = useRouter();
@@ -29,32 +19,29 @@ export default function MedivisorForm() {
     const formData = new FormData(form);
 
     try {
-      // Prepare data for server action - map to expected structure
-      const simpleData = {
-        name: formData.get('name') as string,
-        email: formData.get('email') as string,
-        phone: formData.get('phone') as string,
-        organization: formData.get('organization') as string || '',
-        background: formData.get('background') as string,
-        message: formData.get('message') as string || '',
-      };
+      // Get form values
+      const name = formData.get('name') as string;
+      const email = formData.get('email') as string;
+      const whatsapp = formData.get('whatsapp') as string;
+      const background = formData.get('background') as string;
+      const message = formData.get('message') as string || '';
 
       // Transform to match submitMedivisorForm structure
       const data = {
-        fullName: simpleData.name,
-        applicantType: 'individual', // Default for this simple form
-        contactPerson: simpleData.name,
-        phone: simpleData.phone,
-        whatsapp: simpleData.phone, // Assuming same as phone
-        email: simpleData.email,
+        fullName: name,
+        applicantType: 'individual',
+        contactPerson: name,
+        phone: whatsapp, // Use WhatsApp as the primary phone
+        whatsapp: whatsapp,
+        email: email,
         address: '',
         city: '',
-        background: simpleData.background,
+        background: background,
         backgroundDescription: '',
-        yearsWorking: '1-3', // Default value
-        motivation: simpleData.message || 'No motivation provided',
+        yearsWorking: '1-3',
+        motivation: message || 'No motivation provided',
         experience: '',
-        hasOffice: 'no',
+        hasOffice: 'false',
         officeLocation: '',
         hasSmartphone: true,
         hasWhatsapp: true,
@@ -62,11 +49,11 @@ export default function MedivisorForm() {
         hasInternet: true,
         serviceArea: 'local',
         agreeTerms: true,
-        signatureName: simpleData.name,
+        signatureName: name,
         signatureDate: new Date().toISOString().split('T')[0],
       };
 
-      // Default attachments (none for this simple form)
+      // Default attachments
       const attachments = {
         idProof: false,
         cv: false,
@@ -74,11 +61,10 @@ export default function MedivisorForm() {
         reference: false,
       };
 
-      // Call server action with correct function name
+      // Call server action
       const result = await submitMedivisorForm(data, attachments);
 
       if (result && result.ok) {
-        // Redirect to thank you page
         router.push('/thank-you');
       } else {
         setError(result?.error || 'Something went wrong');
@@ -112,19 +98,15 @@ export default function MedivisorForm() {
         </div>
       )}
 
-      {/* Professional form */}
+      {/* Form */}
       <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Form fields with professional sizing */}
+        {/* Form fields */}
         {[
           { id: "name", name: "name", label: "Full Name", type: "text", placeholder: "Enter your full name", required: true },
           { id: "email", name: "email", label: "Email Address", type: "email", placeholder: "Enter your email address", required: true },
-          { id: "phone", name: "phone", label: "Phone Number", type: "tel", placeholder: "Enter phone number", required: true },
-          { id: "organization", name: "organization", label: "Organization/Community", type: "text", placeholder: "Organization name", required: false }
+          { id: "whatsapp", name: "whatsapp", label: "WhatsApp Number", type: "tel", placeholder: "Enter WhatsApp number", required: true }
         ].map((field) => (
           <div key={field.id}>
-            {/* <label htmlFor={field.id} className="block text-sm font-medium text-gray-700 mb-1">
-              {field.label} {field.required && <span className="text-red-500">*</span>}
-            </label> */}
             <input
               type={field.type}
               id={field.id}

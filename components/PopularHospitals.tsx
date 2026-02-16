@@ -162,7 +162,7 @@ export default function PopularHospitalsSection() {
 
   return (
     <>
-      <section className="bg-gray-50 px-2 md:px-0 py-12">
+      <section className="bg-gray-50 px-2 md:px-0 pb-12">
         <div className="container mx-auto">
           {error && (
             <div className="flex items-center gap-2 mb-4 text-sm text-amber-600">

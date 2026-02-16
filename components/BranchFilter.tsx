@@ -141,7 +141,7 @@ const SearchDropdown = ({
 
   // Lightweight, real-time filtered results with relevance scoring
   const filtered = useMemo(() => {
-    if (!value) return options.slice(0, 6)
+    if (!value) return options // Show all options by default
     
     return options
       .map(opt => ({
@@ -150,8 +150,7 @@ const SearchDropdown = ({
       }))
       .filter(({ score }) => score > 0)
       .sort((a, b) => b.score - a.score || a.opt.name.localeCompare(b.opt.name))
-      .map(({ opt }) => opt)
-      .slice(0, 8)
+      .map(({ opt }) => opt) // Show all matching results (no limit)
   }, [value, options])
 
   useEffect(() => {
@@ -190,7 +189,7 @@ const SearchDropdown = ({
         )}
       </div>
       {isOpen && filtered.length > 0 && (
-        <div className="absolute w-[98%] mx-auto left-0 right-0 z-50 md:mt-1.5 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-72 overflow-y-auto md:left-auto md:right-auto md:w-full">
+        <div className="absolute w-[98%] mx-auto left-0 right-0 z-50 md:mt-1.5 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-96 overflow-y-auto md:left-auto md:right-auto md:w-full">
           {filtered.map(opt => (
             <button
               key={`${opt.type}-${opt.id}`}

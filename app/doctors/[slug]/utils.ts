@@ -1,7 +1,7 @@
 // app/doctors/[slug]/utils.ts
 // Simplified utility functions for doctor slug page data fetching
 
-import { getAllCMSData, generateSlug as cmsGenerateSlug } from '@/lib/cms'
+import { getAllCMSData, generateSlug as cmsGenerateSlug, getDoctorBySlug } from '@/lib/cms'
 import type {
   HospitalData,
   BranchData,
@@ -53,6 +53,25 @@ export function slugify(name: string | null | undefined): string {
  */
 function normalizeSlug(slug: string): string {
   return slug.toLowerCase().trim().replace(/[-_]+/g, '-')
+}
+
+/**
+ * Clean doctor name by removing common prefixes like Dr., Dr, etc.
+ */
+function cleanDoctorName(name: string | null | undefined): string {
+  if (!name) return ''
+  return name
+    .replace(/^(Dr\.?\s*)/i, '')
+    .replace(/^(Dr\s*)/i, '')
+    .trim()
+}
+
+/**
+ * Generate a slug from doctor name, handling common prefixes
+ */
+function generateDoctorSlug(name: string | null | undefined): string {
+  const cleanedName = cleanDoctorName(name)
+  return slugify(cleanedName)
 }
 
 /**
@@ -162,9 +181,156 @@ function extractDoctorsWithLocations(hospitals: HospitalData[]): DoctorDataWithL
 
 /**
  * Find doctor by slug and return with all related data
- * Uses direct CMS library for efficient data access
+ * Uses direct CMS query for efficiency, then enriches with hospital location data
  */
 export async function findDoctorBySlug(slug: string): Promise<DoctorDataWithLocations | null> {
+  try {
+    const normalizedSlug = normalizeSlug(slug)
+    
+    // First try to get doctor directly from DoctorMaster collection
+    const doctorFromCMS = await getDoctorBySlug(slug)
+    
+    if (!doctorFromCMS) {
+      // Fallback: search through all CMS data (original approach)
+      console.log('[findDoctorBySlug] Falling back to searching all CMS data')
+      return findDoctorBySlugFallback(slug)
+    }
+    
+    // Fetch hospitals to get locations for this doctor
+    const { hospitals } = await getAllCMSData()
+    
+    if (!hospitals) {
+      console.warn('CMS data not available')
+      return null
+    }
+    
+    // Find all locations where this doctor practices
+    const doctorLocations = findDoctorLocations(hospitals, doctorFromCMS)
+    
+    if (doctorLocations.length === 0) {
+      console.warn('Doctor found but no locations:', doctorFromCMS.doctorName)
+    }
+    
+    // Build the enriched doctor data
+    return enrichDoctorWithLocations(doctorFromCMS, doctorLocations, hospitals)
+  } catch (error) {
+    console.error('Error finding doctor by slug:', error)
+    return null
+  }
+}
+
+/**
+ * Find all hospital/branch locations where a doctor practices
+ */
+function findDoctorLocations(hospitals: HospitalData[], doctor: DoctorData): DoctorLocation[] {
+  const locations: DoctorLocation[] = []
+  const doctorId = doctor._id
+  const doctorName = doctor.doctorName
+  
+  hospitals.forEach((h) => {
+    // Check main hospital doctors
+    h.doctors?.forEach((d: DoctorData) => {
+      if (d._id === doctorId || d.doctorName === doctorName) {
+        // Get cities from branches or use default
+        const cities = h.branches && h.branches.length > 0 
+          ? h.branches.flatMap(b => b.city || []) 
+          : []
+        locations.push({
+          hospitalId: h._id,
+          hospitalName: h.hospitalName,
+          hospitalLogo: h.logo || null,
+          cities,
+        })
+      }
+    })
+    
+    // Check branch doctors
+    h.branches?.forEach((b: BranchData) => {
+      b.doctors?.forEach((d: DoctorData) => {
+        if (d._id === doctorId || d.doctorName === doctorName) {
+          locations.push({
+            hospitalId: h._id,
+            hospitalName: h.hospitalName,
+            hospitalLogo: h.logo || null,
+            branchId: b._id,
+            branchName: b.branchName,
+            cities: b.city || [],
+          })
+        }
+      })
+    })
+  })
+  
+  return locations
+}
+
+/**
+ * Enrich doctor data with locations and related treatments
+ */
+function enrichDoctorWithLocations(
+  doctor: DoctorData, 
+  locations: DoctorLocation[],
+  hospitals: HospitalData[]
+): DoctorDataWithLocations {
+  // Get unique treatments from all locations
+  const allTreatments: TreatmentData[] = []
+  const allDepartments: DepartmentData[] = []
+  
+  locations.forEach((loc) => {
+    const hospital = hospitals.find(h => h._id === loc.hospitalId)
+    if (!hospital) return
+    
+    if (loc.branchId) {
+      const branch = hospital.branches?.find(b => b._id === loc.branchId)
+      if (branch) {
+        allTreatments.push(...(branch.treatments || []))
+        branch.specialists?.forEach(s => {
+          allTreatments.push(...(s.treatments || []))
+        })
+        branch.specialty?.forEach(s => {
+          allTreatments.push(...(s.treatments || []))
+        })
+      }
+    } else {
+      allTreatments.push(...(hospital.treatments || []))
+      hospital.specialists?.forEach(s => {
+        allTreatments.push(...(s.treatments || []))
+      })
+      hospital.specialty?.forEach(s => {
+        allTreatments.push(...(s.treatments || []))
+      })
+    }
+  })
+  
+  // Add doctor's own specialization treatments
+  doctor.specialization?.forEach((spec: SpecializationData) => {
+    spec.treatments?.forEach(t => allTreatments.push(t))
+    spec.department?.forEach(d => allDepartments.push(d))
+  })
+  
+  // Deduplicate treatments
+  const uniqueTreatments = Array.from(
+    new Map(allTreatments.map(t => [t._id, t])).values()
+  )
+  
+  // Deduplicate departments
+  const uniqueDepartments = Array.from(
+    new Map(allDepartments.map(d => [d._id, d])).values()
+  )
+  
+  return {
+    ...doctor,
+    baseId: doctor._id || doctor.doctorName,
+    locations,
+    departments: uniqueDepartments,
+    relatedTreatments: uniqueTreatments,
+  }
+}
+
+/**
+ * Fallback: Find doctor by searching all CMS data (original implementation)
+ */
+async function findDoctorBySlugFallback(slug: string): Promise<DoctorDataWithLocations | null> {
   try {
     const normalizedSlug = normalizeSlug(slug)
     
@@ -181,8 +347,28 @@ export async function findDoctorBySlug(slug: string): Promise<DoctorDataWithLoca
     
     // Find doctor by slug
     const foundDoctor = allDoctors.find((d: DoctorDataWithLocations) => {
-      const doctorSlug = slugify(d.doctorName)
-      return doctorSlug === normalizedSlug || doctorSlug === slug
+      // Generate slug from doctor name (handles Dr. prefix)
+      const doctorSlug = generateDoctorSlug(d.doctorName)
+      const normalizedDoctorSlug = normalizeSlug(doctorSlug)
+      
+      // Also check with original slugify for backward compatibility
+      const originalSlug = slugify(d.doctorName)
+      
+      // Debug logging
+      console.log('Doctor slug matching:', {
+        doctorName: d.doctorName,
+        doctorSlug,
+        normalizedDoctorSlug,
+        originalSlug,
+        normalizedSlug,
+        slug
+      })
+      
+      // Match against normalized slug or original
+      return normalizedDoctorSlug === normalizedSlug || 
+             originalSlug === normalizedSlug ||
+             doctorSlug === slug ||
+             originalSlug === slug
     })
     
     if (!foundDoctor) {
@@ -192,7 +378,7 @@ export async function findDoctorBySlug(slug: string): Promise<DoctorDataWithLoca
     
     return foundDoctor
   } catch (error) {
-    console.error('Error finding doctor by slug:', error)
+    console.error('Error finding doctor by slug (fallback):', error)
     return null
   }
 }

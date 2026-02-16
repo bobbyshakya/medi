@@ -8,7 +8,7 @@
  * It displays filtered results for branches, doctors, and treatments.
  */
 
-import React, { Suspense } from "react"
+import { useState, Suspense } from "react"
 import { Loader2 } from "lucide-react"
 import Banner from "@/components/HospitalBanner"
 import FilterDropdown from "@/components/search/FilterDropdown"
@@ -40,7 +40,7 @@ function HospitalsPageContent() {
   } = useCMSData()
 
   // State for controlling mobile filter sidebar visibility
-  const [showFilters, setShowFilters] = React.useState(false)
+  const [showFilters, setShowFilters] = useState(false)
 
   // Handler for changing view type (clears filters when switching views)
   const setView = (v: FilterState["view"]) => {
@@ -62,7 +62,7 @@ function HospitalsPageContent() {
         description={`
           <p>Our virtual clinic offers <strong>24/7 access</strong> to board-certified physicians.</p>
           <p>Book a consultation in minutes and get the care you need.</p>
-        `}
+        `.trim()}
         ctas={[
           {
             text: 'Book an Appointment',
@@ -98,7 +98,7 @@ function HospitalsPageContent() {
           />
 
           {/* Main content area */}
-          <main className="flex-1 min-w-0 lg:pb-0 min-h-screen">
+          <main className="flex-1 min-w-0 lg:pb-0">
             {/* Top bar with view toggle, location filter, and results header */}
             <div className="md:flex justify-between items-center bg-gray-50">
               <div className="flex flex-col lg:flex-row lg:items-center ml-4 gap-4">

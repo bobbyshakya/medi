@@ -2,7 +2,7 @@
 // Unified CMS API endpoint - single source of truth for all CMS data
 
 import { NextResponse } from 'next/server'
-import { getAllCMSData, getHospitalBySlug, searchHospitals } from '@/lib/cms'
+import { getAllCMSData, getHospitalBySlug, getDoctorBySlug, searchHospitals } from '@/lib/cms'
 
 // Cache configuration
 const CACHE_HEADERS = {
@@ -28,9 +28,26 @@ export async function GET(req: Request) {
     const slug = url.searchParams.get('slug')
     const query = url.searchParams.get('q')
     const page = Math.max(0, Number(url.searchParams.get('page') || 0))
-    const pageSize = Math.min(100, Math.max(1, Number(url.searchParams.get('pageSize') || 50)))
+    // Allow fetching up to 1000 records (Wix API limit)
+    const pageSize = Math.max(1, Number(url.searchParams.get('pageSize') || 1000))
 
     switch (action) {
+      case 'doctor': {
+        if (!slug) {
+          return NextResponse.json(
+            { error: 'Slug parameter is required for doctor action' },
+            { status: 400, headers: { 'X-Request-Id': requestId } }
+          )
+        }
+        const result = await getDoctorBySlug(slug)
+        return NextResponse.json(result, {
+          headers: {
+            ...CACHE_HEADERS,
+            'X-Request-Id': requestId,
+          },
+        })
+      }
+
       case 'hospital': {
         if (!slug) {
           return NextResponse.json(
@@ -87,8 +104,10 @@ export async function GET(req: Request) {
           {
             hospitals: paginatedHospitals,
             treatments: data.treatments,
+            doctors: data.doctors,
             totalHospitals,
             totalTreatments: data.totalTreatments,
+            totalDoctors: data.totalDoctors,
             page,
             pageSize,
             hasMore,

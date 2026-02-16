@@ -1,11 +1,12 @@
 import React, { useRef, useEffect, useState } from "react"
 
-const ScrollableTitle = ({ text, className, isHovered }: { text: string; className?: string; isHovered: boolean }) => {
+const ScrollableTitle = ({ text, className }: { text: string; className?: string }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const textRef = useRef<HTMLSpanElement>(null);
   const [isOverflowing, setIsOverflowing] = useState(false);
   const [animationDuration, setAnimationDuration] = useState('0s');
   const [isMobile, setIsMobile] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
@@ -40,18 +41,29 @@ const ScrollableTitle = ({ text, className, isHovered }: { text: string; classNa
     return () => window.removeEventListener('resize', checkOverflow);
   }, [text]);
 
-  const isMarqueeActive = isOverflowing && (isHovered || isMobile);
+  // On mobile: show 2 lines (no hover effects)
+  if (isMobile) {
+    return (
+      <div className={`${className} line-clamp-2`}>
+        {text}
+      </div>
+    );
+  }
+
+  // On desktop: use marquee logic when hovered
+  const isMarqueeActive = isOverflowing && isHovered;
 
   return (
     <div
       ref={containerRef}
       className={`relative w-full overflow-hidden ${className}`}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
     >
       <div
         className={`whitespace-nowrap inline-block ${!isMarqueeActive ? 'truncate w-full' : ''}`}
         style={{
           animation: isMarqueeActive ? `marquee ${animationDuration} linear infinite` : 'none',
-          transform: 'translateX(0)',
         }}
       >
         <span ref={textRef} className="inline-block pr-8">
@@ -59,7 +71,7 @@ const ScrollableTitle = ({ text, className, isHovered }: { text: string; classNa
         </span>
 
         {isMarqueeActive && (
-          <span className="inline-block pr-8">
+          <span className="inline-block pr-8 mb-[6px]">
             {text}
           </span>
         )}

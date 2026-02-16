@@ -9,6 +9,7 @@ import Partners from "@/components/Partners";
 import TreatmentServices from "@/components/TreatmentServices";
 import Testimonials from "@/components/Testimonials";
 import MediaCoverage from "@/components/mediaCovrage";
+import PopularHospitalsSection from "@/components/PopularHospitals";
 import BlogSection from "@/components/BlogSection";
 import PaitentSupport from "@/components/paitentSupport";
 import PartnerSection from "@/components/PartnerSection";
@@ -48,6 +49,7 @@ export default function Home() {
           <DidYouKnowSection />
           <BlogSection />
           <TreatmentServices />
+          <PopularHospitalsSection/>
           <Testimonials />
           <PaitentSupport />
           <Activities />

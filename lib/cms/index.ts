@@ -10,4 +10,5 @@ export {
   getTreatmentBySlug,
   searchHospitals,
   generateSlug,
+  getDoctorBySlug,
 } from './data-service'

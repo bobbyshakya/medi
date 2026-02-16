@@ -9,6 +9,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import type {
   HospitalData,
   BranchData,
+  DoctorData,
   ExtendedDoctorData,
   ExtendedTreatmentData,
   FilterState,
@@ -28,8 +29,10 @@ type AvailableOptions = Record<FilterKey, FilterOption[]>
 interface CMSApiResponse {
   hospitals: HospitalData[]
   treatments: ExtendedTreatmentData[]
+  doctors: DoctorData[]
   totalHospitals: number
   totalTreatments: number
+  totalDoctors: number
   hasMore: boolean
   lastUpdated: string
 }
@@ -89,7 +92,10 @@ const getMatchingBranches = (
   filters: FilterState,
   allTreatments: ExtendedTreatmentData[]
 ): BranchWithHospital[] => {
-  if (!hospitals?.length) return []
+  if (!hospitals?.length) {
+    console.log('[Filter] No hospitals to filter')
+    return []
+  }
 
   const { city, state, specialization, branch, department, treatment, location, doctor } = filters
   const lowerCity = city.query.toLowerCase()
@@ -100,6 +106,14 @@ const getMatchingBranches = (
   const lowerTreatment = treatment.query.toLowerCase()
   const lowerDoctor = doctor.query.toLowerCase()
   const lowerLocation = location.query.toLowerCase()
+
+  console.log('[Filter] Starting filter with:', {
+    hospitalCount: hospitals.length,
+    treatmentId: treatment.id,
+    treatmentQuery: treatment.query,
+    cityQuery: city.query,
+    stateQuery: state.query
+  })
 
   // Build comprehensive treatment-to-branch mapping
   const treatmentBranchIds = new Set<string>()
@@ -190,7 +204,8 @@ const getMatchingBranches = (
     if (treatmentBranchIds.size === 0) return []
   }
 
-  return hospitals
+  // Filter and collect results
+  const filteredResult = hospitals
     .flatMap((h) =>
       h.branches?.map((b) => ({
         ...b,
@@ -293,6 +308,178 @@ const getMatchingBranches = (
 
       return true
     })
+
+  // Log filter results with comprehensive mapping
+  console.log('[Filter] Debug - allTreatments count:', allTreatments.length)
+  console.log('[Filter] Debug - allHospitals count:', hospitals.length)
+  console.log('[Filter] Debug - total branches:', hospitals.flatMap(h => h.branches || []).length)
+  
+  // Debug: sample first Apollo hospital branches
+  const sampleHospital = hospitals.find(h => h.hospitalName?.includes('Apollo'))
+  if (sampleHospital) {
+    console.log('[Filter] Debug - Sample Apollo hospital:', sampleHospital.hospitalName, {
+      branchesCount: sampleHospital.branches?.length,
+      sampleBranch: sampleHospital.branches?.[0] ? {
+        name: sampleHospital.branches[0].branchName,
+        specializationCount: sampleHospital.branches[0].specialization?.length || 0,
+        specialistsCount: sampleHospital.branches[0].specialists?.length || 0,
+        doctorsCount: sampleHospital.branches[0].doctors?.length || 0,
+      } : null
+    })
+  }
+  
+  // Build specialist mapping from branches
+  const specialistMapping = filteredResult.reduce((acc: Record<string, { count: number, branches: string[] }>, branch) => {
+    // Get specializations from branch
+    branch.specialization?.forEach((spec: any) => {
+      const specName = spec.name || 'Unknown'
+      if (!acc[specName]) {
+        acc[specName] = { count: 0, branches: [] }
+      }
+      acc[specName].count++
+      if (branch.branchName && !acc[specName].branches.includes(branch.branchName)) {
+        acc[specName].branches.push(branch.branchName)
+      }
+    })
+    // Also get from specialists
+    branch.specialists?.forEach((spec: any) => {
+      const specName = spec.name || 'Unknown'
+      if (!acc[specName]) {
+        acc[specName] = { count: 0, branches: [] }
+      }
+      // Only increment if not already counted from specialization
+      if (!branch.specialization?.some((s: any) => s.name === specName)) {
+        acc[specName].count++
+      }
+      if (branch.branchName && !acc[specName].branches.includes(branch.branchName)) {
+        acc[specName].branches.push(branch.branchName)
+      }
+    })
+    return acc
+  }, {})
+
+  // Build treatment mapping from branches
+  const treatmentMapping = filteredResult.reduce((acc: Record<string, { count: number, branches: string[] }>, branch) => {
+    branch.treatments?.forEach((t: any) => {
+      const tName = t.name || t.treatmentName || 'Unknown'
+      if (!acc[tName]) {
+        acc[tName] = { count: 0, branches: [] }
+      }
+      acc[tName].count++
+      if (branch.branchName && !acc[tName].branches.includes(branch.branchName)) {
+        acc[tName].branches.push(branch.branchName)
+      }
+    })
+    // Also check specialist treatments
+    branch.specialists?.forEach((spec: any) => {
+      spec.treatments?.forEach((t: any) => {
+        const tName = t.name || t.treatmentName || 'Unknown'
+        if (!acc[tName]) {
+          acc[tName] = { count: 0, branches: [] }
+        }
+        if (!branch.treatments?.some((bt: any) => (bt.name || bt.treatmentName) === tName)) {
+          acc[tName].count++
+        }
+        if (branch.branchName && !acc[tName].branches.includes(branch.branchName)) {
+          acc[tName].branches.push(branch.branchName)
+        }
+      })
+    })
+    return acc
+  }, {})
+
+  // Build hospital → branch → specialist mapping (detailed per branch)
+  const branchSpecialistMapping = filteredResult.reduce((acc: Record<string, { hospital: string, specialists: string[] }>, branch) => {
+    const branchName = branch.branchName || 'Unknown Branch'
+    const hospitalName = branch.hospitalName || 'Unknown Hospital'
+    const key = `${hospitalName}|${branchName}`
+    
+    if (!acc[key]) {
+      acc[key] = { hospital: hospitalName, specialists: [] }
+    }
+    
+    // Debug: log branch data structure
+    if (key.includes('Apollo')) {
+      console.log('[Filter] Debug branch:', branchName, {
+        specializationCount: branch.specialization?.length || 0,
+        specialistsCount: branch.specialists?.length || 0,
+        doctorsCount: branch.doctors?.length || 0,
+        specialization: branch.specialization?.slice(0, 5),
+        specialists: branch.specialists?.slice(0, 5)
+      })
+    }
+    
+    // Add branch's own specializations
+    branch.specialization?.forEach((s: any) => {
+      const specName = s.name || ''
+      if (specName && !acc[key].specialists.includes(specName)) {
+        acc[key].specialists.push(specName)
+      }
+    })
+    
+    // Add specialists
+    branch.specialists?.forEach((spec: any) => {
+      const specName = spec.name || ''
+      if (specName && !acc[key].specialists.includes(specName)) {
+        acc[key].specialists.push(specName)
+      }
+    })
+    
+    // Add doctors' specializations
+    branch.doctors?.forEach((doc: any) => {
+      const specs = Array.isArray(doc.specialization) ? doc.specialization : doc.specialization ? [doc.specialization] : []
+      specs.forEach((s: any) => {
+        const specName = typeof s === 'string' ? s : (s.name || '')
+        if (specName && !acc[key].specialists.includes(specName)) {
+          acc[key].specialists.push(specName)
+        }
+      })
+    })
+    
+    return acc
+  }, {})
+
+  console.log('[Filter] Results:', {
+    totalHospitals: hospitals.length,
+    totalBranches: hospitals.flatMap(h => h.branches || []).length,
+    filteredBranches: filteredResult.length,
+    appliedFilters: {
+      treatment: !!treatment.id || !!lowerTreatment,
+      city: !!city.id || !!lowerCity,
+      state: !!state.id || !!lowerState,
+      branch: !!branch.id || !!lowerBranch,
+      department: !!department.id || !!lowerDept,
+      specialization: !!specialization.id || !!lowerSpec,
+      doctor: !!doctor.id || !!lowerDoctor,
+      location: !!location.id || !!lowerLocation
+    },
+    // Specialist mapping (top 20)
+    specialistMapping: Object.fromEntries(
+      Object.entries(specialistMapping)
+        .sort(([,a], [,b]) => b.count - a.count)
+        .slice(0, 20)
+        .map(([name, data]) => [name, { branchesCount: data.count, branches: data.branches.slice(0, 8) }])
+    ),
+    totalSpecializations: Object.keys(specialistMapping).length,
+    // Treatment mapping (top 15)
+    treatmentMapping: Object.fromEntries(
+      Object.entries(treatmentMapping)
+        .sort(([,a], [,b]) => b.count - a.count)
+        .slice(0, 15)
+        .map(([name, data]) => [name, { branchesCount: data.count }])
+    ),
+    totalTreatments: Object.keys(treatmentMapping).length,
+    // Detailed branch → specialist mapping (all branches with all specialists)
+    branchSpecialistMapping: Object.fromEntries(
+      Object.entries(branchSpecialistMapping)
+        .sort(([,a], [,b]) => b.specialists.length - a.specialists.length)
+        .slice(0, 20)
+        .map(([key, data]) => [key, { specialistsCount: data.specialists.length, specialists: data.specialists }])
+    ),
+    totalBranchesWithSpecialists: Object.keys(branchSpecialistMapping).length
+  })
+
+  return filteredResult
 }
 
 const getAllExtendedDoctors = (hospitals: HospitalData[]): ExtendedDoctorData[] => {
@@ -417,13 +604,19 @@ export const useCMSData = () => {
   const queryClient = useQueryClient()
   const fullDataLoadedRef = useRef(false)
 
-  // Step 1: Fast initial load with first 20 items
+  // Step 1: Fast initial load with first 50 items
   const { data: initialData, isLoading: initialLoading } = useQuery({
     queryKey: ['cms', 'initial'],
     queryFn: async () => {
-      const res = await fetch('/api/cms?action=all&pageSize=20')
+      const res = await fetch('/api/cms?action=all&pageSize=50')
       if (!res.ok) throw new Error('Failed to fetch initial CMS data')
-      return res.json() as Promise<CMSApiResponse>
+      const data = await res.json() as CMSApiResponse
+      console.log('[CMS] Initial data fetched:', { 
+        hospitals: data.hospitals?.length || 0, 
+        treatments: data.treatments?.length || 0,
+        totalHospitals: data.totalHospitals 
+      })
+      return data
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000,
@@ -433,10 +626,17 @@ export const useCMSData = () => {
   const { data: fullData, isLoading: fullLoading } = useQuery({
     queryKey: ['cms', 'full'],
     queryFn: async () => {
+      // Fetch with larger pageSize to get all records (max 1000 due to Wix API limit)
       const res = await fetch('/api/cms?action=all&pageSize=1000')
       if (!res.ok) throw new Error('Failed to fetch full CMS data')
       const data = await res.json() as CMSApiResponse
       fullDataLoadedRef.current = true
+      console.log('[CMS] Full data loaded:', { 
+        hospitals: data.hospitals?.length || 0, 
+        treatments: data.treatments?.length || 0,
+        totalHospitals: data.totalHospitals,
+        totalTreatments: data.totalTreatments
+      })
       return data
     },
     enabled: !initialLoading && !!initialData, // Only start after initial load
@@ -451,6 +651,7 @@ export const useCMSData = () => {
 
   const allHospitals = cmsData?.hospitals || []
   const allTreatments = cmsData?.treatments || []
+  const allDoctors = cmsData?.doctors || []
 
   // Initialize filters from URL
   const [filters, setFilters] = useState<FilterState>(() => {
@@ -474,6 +675,14 @@ export const useCMSData = () => {
       sortBy: 'all',
     }
   })
+
+  // Log filter changes for debugging
+  useEffect(() => {
+    console.log('[Filter] Filters updated:', JSON.stringify(filters, (key, value) => {
+      if (key === 'sortBy') return value
+      return value
+    }, 2))
+  }, [filters])
 
   // Filter update handlers
   const updateFilter = useCallback(<K extends keyof FilterState>(key: K, value: FilterState[K]) => {
@@ -511,13 +720,42 @@ export const useCMSData = () => {
   )
 
   const filteredDoctors = useMemo(() => {
+    // First try to use doctors from CMS data directly
+    if (allDoctors.length > 0) {
+      if (filters.treatment.id || filters.treatment.query) {
+        // Filter by treatment
+        const treatmentParam = filters.treatment.id || filters.treatment.query
+        return getDoctorsByTreatment(allHospitals, treatmentParam, allTreatments)
+      }
+      // Map CMS doctors to ExtendedDoctorData format for compatibility
+      return allDoctors.map(d => {
+        // Extract specialization names for display
+        const specs = d.specialization || []
+        const specNames = Array.isArray(specs) 
+          ? specs.map((s: any) => s.name || s.title || s.specialty || 'Unknown').filter(Boolean)
+          : []
+        
+        return {
+          ...d,
+          baseId: d._id,
+          // Add location from hospital if doctor is linked to any hospital
+          locations: [],
+          departments: [],
+          // Override specialization with properly formatted array for display
+          specialization: specNames.length > 0 
+            ? specNames.map((name: string) => ({ _id: '', name, department: [], treatments: [] }))
+            : []
+        } as ExtendedDoctorData
+      })
+    }
+    // Fallback to extracting from hospitals
     if (filters.treatment.id || filters.treatment.query) {
       // Use treatment ID if available, otherwise use the query
       const treatmentParam = filters.treatment.id || filters.treatment.query
       return getDoctorsByTreatment(allHospitals, treatmentParam, allTreatments)
     }
     return getAllExtendedDoctors(allHospitals)
-  }, [allHospitals, filters.treatment, allTreatments])
+  }, [allDoctors, allHospitals, filters.treatment, allTreatments])
 
   const filteredTreatments = useMemo(() => {
     // If a specific treatment ID is selected, show only that treatment
@@ -603,7 +841,7 @@ export const useCMSData = () => {
       return allTreatments
     }
 
-    // Extract treatments from hospitals and merge with TreatmentMaster data
+    // Extract treatments from hospitals AND branches and merge with TreatmentMaster data
     const treatmentMap = new Map<string, ExtendedTreatmentData>()
     
     // First, add all treatments from TreatmentMaster
@@ -622,7 +860,45 @@ export const useCMSData = () => {
           })
         }
       })
+      
+      // Also add treatments from hospital branches
+      h.branches?.forEach((b) => {
+        b.treatments?.forEach((t: any) => {
+          const tid = t._id || t.name || ''
+          if (tid && !treatmentMap.has(tid)) {
+            treatmentMap.set(tid, {
+              _id: tid,
+              name: t.name || t.treatmentName || '',
+              branchesAvailableAt: [],
+              departments: [],
+            })
+          }
+        })
+        
+        // Also add treatments from branch specialists
+        b.specialists?.forEach((spec: any) => {
+          spec.treatments?.forEach((t: any) => {
+            const tid = t._id || t.name || ''
+            if (tid && !treatmentMap.has(tid)) {
+              treatmentMap.set(tid, {
+                _id: tid,
+                name: t.name || t.treatmentName || '',
+                branchesAvailableAt: [],
+                departments: [],
+              })
+            }
+          })
+        })
+      })
     })
+    // Add debug logging
+    console.log('[Filter] Debug - filteredTreatments computed:', {
+      fromAllTreatments: allTreatments.length,
+      fromHospitals: allHospitals.length,
+      totalFiltered: Array.from(treatmentMap.values()).length,
+      view: filters.view
+    })
+    
     return Array.from(treatmentMap.values())
   }, [allHospitals, filters.view, filters.treatment, filters.doctor, allTreatments])
 
@@ -684,12 +960,46 @@ export const useCMSData = () => {
       options.branch = filteredBranches.map((b) => ({ id: b._id || '', name: b.branchName || '' }))
     }
 
-    // Treatments - use ALL treatments for filter options
+    // Treatments - from allTreatments AND branch-level treatments
     // Only include treatments that have at least one branch available
     if (visibleKeys.includes('treatment')) {
-      options.treatment = allTreatments
+      const treatments = new Map<string, FilterOption>()
+      
+      // First: add treatments from allTreatments (TreatmentMaster)
+      allTreatments
         .filter((t) => t.branchesAvailableAt && t.branchesAvailableAt.length > 0)
-        .map((t) => ({ id: t._id || '', name: t.name || '' }))
+        .forEach((t) => {
+          if (t._id && t.name) {
+            treatments.set(t._id, { id: t._id, name: t.name })
+          }
+        })
+      
+      console.log('[Filter] Debug - treatments from TreatmentMaster:', treatments.size)
+      
+      // Second: add branch-level treatments
+      filteredBranches.forEach((b) => {
+        b.treatments?.forEach((t: any) => {
+          const id = t._id || t.name || ''
+          const name = t.name || t.treatmentName || ''
+          if (id && name && !treatments.has(id)) {
+            treatments.set(id, { id, name })
+          }
+        })
+        // Also get from specialists
+        b.specialists?.forEach((spec: any) => {
+          spec.treatments?.forEach((t: any) => {
+            const id = t._id || t.name || ''
+            const name = t.name || t.treatmentName || ''
+            if (id && name && !treatments.has(id)) {
+              treatments.set(id, { id, name })
+            }
+          })
+        })
+      })
+      
+      console.log('[Filter] Debug - total treatments after adding branches:', treatments.size)
+      
+      options.treatment = Array.from(treatments.values())
     }
 
     // Doctors
@@ -697,9 +1007,11 @@ export const useCMSData = () => {
       options.doctor = filteredDoctors.map((d) => ({ id: d._id || '', name: d.doctorName || '' }))
     }
 
-    // Specializations
+    // Specializations - from doctors AND branches
     if (visibleKeys.includes('specialization')) {
       const specs = new Map<string, FilterOption>()
+      
+      // First: collect from filteredDoctors
       filteredDoctors.forEach((d) => {
         const specsArr = Array.isArray(d.specialization) ? d.specialization : d.specialization ? [d.specialization] : []
         specsArr.forEach((s: any) => {
@@ -710,12 +1022,35 @@ export const useCMSData = () => {
           }
         })
       })
+      
+      // Second: collect from filteredBranches (branch-level specializations)
+      filteredBranches.forEach((b) => {
+        // Branch's own specializations
+        b.specialization?.forEach((s: any) => {
+          const id = s._id || s.name || ''
+          const name = s.name || s.title || ''
+          if (id && name && !specs.has(id)) {
+            specs.set(id, { id, name })
+          }
+        })
+        // Branch's specialists' specializations
+        b.specialists?.forEach((spec: any) => {
+          const id = spec._id || spec.name || ''
+          const name = spec.name || spec.title || ''
+          if (id && name && !specs.has(id)) {
+            specs.set(id, { id, name })
+          }
+        })
+      })
+      
       options.specialization = Array.from(specs.values())
     }
 
-    // Departments
+    // Departments - from doctors AND branches/specialists
     if (visibleKeys.includes('department')) {
       const depts = new Map<string, FilterOption>()
+      
+      // First: collect from filteredDoctors
       filteredDoctors.forEach((d) => {
         d.departments?.forEach((dept) => {
           if (dept._id && dept.name && !depts.has(dept._id)) {
@@ -723,6 +1058,21 @@ export const useCMSData = () => {
           }
         })
       })
+      
+      // Second: collect from filteredBranches (branch specialists' departments)
+      filteredBranches.forEach((b) => {
+        // Branch specialists' departments
+        b.specialists?.forEach((spec: any) => {
+          spec.department?.forEach((dept: any) => {
+            const id = dept._id || dept.name || ''
+            const name = dept.name || ''
+            if (id && name && !depts.has(id)) {
+              depts.set(id, { id, name })
+            }
+          })
+        })
+      })
+      
       options.department = Array.from(depts.values())
     }
 

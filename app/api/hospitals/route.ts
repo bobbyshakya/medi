@@ -25,7 +25,8 @@ export async function GET(req: Request) {
     const url = new URL(req.url)
     const query = url.searchParams.get('q')
     const page = Math.max(0, Number(url.searchParams.get('page') || 0))
-    const pageSize = Math.min(100, Math.max(1, Number(url.searchParams.get('pageSize') || 50)))
+    // Allow fetching up to 1000 records (Wix API limit)
+    const pageSize = Math.max(1, Number(url.searchParams.get('pageSize') || 1000))
 
     console.log(`[DEBUG] /api/hospitals: requestId=${requestId}, query="${query}", page=${page}, pageSize=${pageSize}`)
 

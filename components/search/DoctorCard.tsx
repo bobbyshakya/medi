@@ -2,9 +2,9 @@
 
 import React, { useState, useMemo } from "react"
 import Link from "next/link"
-import { Users, MapPin, Star } from "lucide-react"
+import { Users, Star } from "lucide-react"
 import type { ExtendedDoctorType, SpecialtyType } from '@/types/search'
-import { getWixImageUrl, generateSlug, formatLocation } from '@/types/search'
+import { getWixImageUrl, generateSlug } from '@/types/search'
 
 type DoctorCardProps = {
   doctor: ExtendedDoctorType
@@ -97,68 +97,46 @@ const ScrollableTitle = ({ text, className, isHovered }: { text: string; classNa
 const DoctorCard = ({ doctor }: DoctorCardProps) => {
   const [isHovered, setIsHovered] = useState(false)
   
-  // Helper to safely extract the name/title from a specialization object or return the string
-  const getSpecializationName = (s: any): string => {
-    if (typeof s === "object" && s !== null) {
-      return (s as any).name || (s as any).title || ""
-    }
-    return String(s)
+  // Helper to safely extract the name from a specialization object (SpecialtyType/SpecializationData from CMS) or return the string
+  const getSpecializationName = (s: SpecialtyType | string | null | undefined): string => {
+    if (!s) return "";
+    if (typeof s === "string") return s.trim() || "";
+    // Handle SpecialtyType (SpecializationData) - use name property from CMS
+    return s.name || "";
   }
 
   // 1. Convert specialization data into a clean array of names
+  // Handles: SpecialtyType[] | string[] | string | null | undefined
   const specializationArray = useMemo(() => {
-    return (Array.isArray(doctor.specialization) ? doctor.specialization : [doctor.specialization])
+    const specs = doctor.specialization;
+    if (!specs) return [];
+    
+    const array = Array.isArray(specs) ? specs : [specs];
+    return array
       .map(getSpecializationName)
-      .filter(Boolean)
+      .filter((name): name is string => Boolean(name));
   }, [doctor.specialization])
 
-  // 2. Determine the display string: Primary specialization + Count (+N)
+  // 2. Determine the display string: All specializations joined, or fallback
   const specializationDisplay = useMemo(() => {
     if (specializationArray.length === 0) {
-      return "Specialty not specified";
+      return "Specialist"; // Better fallback than "Specialty not specified"
     }
 
-    const primary = specializationArray[0];
-    const remainingCount = specializationArray.length - 1;
-
-    if (remainingCount > 0) {
-      // Example: "Cardiology +1"
-      return `${primary} +${remainingCount} Specialties`;
-    }
-
-    // Example: "Cardiology"
-    return primary;
+    // Join all specializations with comma for multi-reference display
+    return specializationArray.join(", ");
   }, [specializationArray]);
   // --- END Specialization Logic ---
 
-
   const slug = generateSlug(`${doctor.doctorName}`);
   const imageUrl = getWixImageUrl(doctor.profileImage);
-
-  // Location display: Format "City, State, Country"
-  // All data fetched from Wix CMS, Delhi NCR cities normalized
-  const primaryLocationDisplay = useMemo(() => {
-    // Handle both ExtendedDoctorData and regular doctor data
-    const locations = (doctor as any).filteredLocations || doctor.locations
-
-    if (!locations || locations.length === 0) {
-      return "Location not specified"
-    }
-
-    const first = locations[0]
-    const cityData = first?.cities?.[0]
-    
-    // Format: "City, State, Country" (e.g., "Gurugram, Delhi NCR, India")
-    return formatLocation(cityData)
-  }, [doctor])
-
   const handleMouseEnter = () => setIsHovered(true)
   const handleMouseLeave = () => setIsHovered(false)
 
   return (
     <Link href={`/doctors/${slug}`} className="block">
       <article
-        className="group bg-white xs md:mb-0 mb-5 rounded-xs shadow-lg md:shadow-xs transition-all duration-300 overflow-hidden cursor-pointer h-full flex flex-col hover:shadow-sm border border-gray-100"
+        className="group bg-white md:mb-0 mb-5 rounded-xs shadow-lg md:shadow-xs transition-all duration-300 overflow-hidden cursor-pointer h-full flex flex-col hover:shadow-sm border border-gray-100"
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
       >
@@ -191,7 +169,7 @@ const DoctorCard = ({ doctor }: DoctorCardProps) => {
 
           </div>
 
-          <div className="flex gap-x-2 mb-2 md:mt-0 mt-2 mb:mb-0">
+          <div className="flex gap-x-2 mb-2 md:mt-0 mt-2 md:mb-0">
             <p className=" text-lg md:text-sm text-gray-900 font-normal flex items-center gap-2 line-clamp-1">
               {specializationDisplay}
             </p>
@@ -201,10 +179,7 @@ const DoctorCard = ({ doctor }: DoctorCardProps) => {
           </div>
 
           <footer className="border-t border-gray-100 pt-2">
-            <p className="text-lg md:text-sm text-gray-900 font-normal flex items-center gap-2 line-clamp-1">
-              <MapPin className="w-4 h-4 flex-shrink-0 text-gray-400" />
-              {primaryLocationDisplay}
-            </p>
+            {/* Location removed as per requirement */}
           </footer>
         </div>
       </article>

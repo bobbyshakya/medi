@@ -71,10 +71,16 @@ export const DataMappers = {
     yearEstablished: getValue(item, "yearEstablished"),
     branchImage: item.branchImage || item.data?.branchImage || item["Branch Image"],
     logo: item.logo || item.data?.logo || item.Logo,
-    doctors: ReferenceMapper.multiReference(item.doctor, "doctorName", "Doctor Name"),
-    specialists: ReferenceMapper.multiReference(item.specialist, "specialty", "Specialty Name", "title", "name"),
+    doctors: ReferenceMapper.multiReference(item.doctor || item.data?.doctor, "doctorName", "Doctor Name"),
+    specialists: ReferenceMapper.multiReference(
+      item.specialist || item.specialists || item.data?.specialist || item.data?.specialists,
+      "specialty",
+      "Specialty Name",
+      "title",
+      "name"
+    ),
     treatments: ReferenceMapper.multiReference(
-      item.treatment || item["treatment"],
+      item.treatment || item["treatment"] || item.data?.treatment || item.data?.["treatment"],
       "treatmentName",
       "Treatment Name",
       "title",
@@ -83,7 +89,7 @@ export const DataMappers = {
     specialization: [
       ...ReferenceMapper.multiReference(item.specialty, "specialty", "Specialty Name", "title", "name"),
       ...ReferenceMapper.multiReference(
-        item.treatment || item["treatment"],
+        item.treatment || item["treatment"] || item.data?.treatment || item.data?.["treatment"],
         "treatmentName",
         "Treatment Name",
         "title",
@@ -298,7 +304,7 @@ export const DataMappers = {
     name: getValue(item, "specialty", "Specialty Name", "title", "name") || "Unknown Specialist",
     department: ReferenceMapper.multiReference(item.department, "department", "Name"),
     treatments: ReferenceMapper.multiReference(
-      item.treatment || item["treatment"],
+      item.treatment || item["treatment"] || item.data?.treatment || item.data?.["treatment"],
       "treatmentName",
       "Treatment Name",
       "title",
@@ -340,8 +346,9 @@ export const ReferenceMapper = {
           const name = getValue(ref, ...nameKeys) || ref.name || ref.title || "Unknown"
           const id = ref._id || ref.ID || ref.data?._id || ref.wixId
 
+          // Always return if we have an ID, even if name is unknown - enrichment will fetch full data
           const finalName = name === "Unknown" ? (id ? "ID Reference" : "Unknown") : name
-          return finalName && id ? { _id: id, name: finalName, ...ref } : null
+          return id ? { _id: id, name: finalName, ...ref } : null
         }
         return null
       })

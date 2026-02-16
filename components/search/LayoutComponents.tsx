@@ -160,7 +160,7 @@ export const RenderContent = ({
     )
   }
 
-  // Always show Coming Soon for doctors view (temporary)
+  // Show Coming Soon for doctors view (temporary)
   if (view === "doctors") {
     return (
       <div className="flex flex-col items-center justify-center py-24 bg-gradient-to-b from-gray-50 to-white rounded-xl shadow-sm border border-gray-100 mx-4">

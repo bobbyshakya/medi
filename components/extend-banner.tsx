@@ -13,9 +13,9 @@ export default function PNGBanner() {
             {/* ================= DESKTOP BANNER ================= */}
             <div className="relative hidden md:block min-h-[88vh] w-full">
                 {/* Background */}
-          
+              
                 <img
-                    src="/png-banner.png"
+                    src="/banner/extend-banner.jpeg"
                     alt="Medivisor PNG Banner"
                     className="absolute inset-0 w-full h-full object-cover"
                 />
@@ -23,7 +23,7 @@ export default function PNGBanner() {
                 {/* Left content is already baked into image */}
 
                 {/* Right Content */}
-                <div className="absolute right-28 top-12 z-30 max-w-2xl text-white">
+                {/* <div className="absolute right-28 top-12 z-30 max-w-2xl text-white">
                     <h1 className="text-6xl lg:text-5xl 2xl:text-[55px] font-bold leading-tight uppercase">
                         Medivisor Expanded <br />
                         Patient Support <br />
@@ -41,7 +41,7 @@ export default function PNGBanner() {
                     >
                         JOIN US
                     </button>
-                </div>
+                </div> */}
 
                 {/* Whale Logo */}
                 <div className="absolute  left-20 z-40">

@@ -134,8 +134,10 @@ export interface ExtendedTreatmentData extends TreatmentData {
 export interface CMSDataResponse {
   hospitals: HospitalData[]
   treatments: ExtendedTreatmentData[]
+  doctors: DoctorData[]
   totalHospitals: number
   totalTreatments: number
+  totalDoctors: number
   lastUpdated: string
 }
 

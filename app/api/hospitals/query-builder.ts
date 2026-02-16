@@ -135,7 +135,7 @@ export async function getHospitalIds(filters: HospitalFilters): Promise<string[]
     !specialistIds?.length &&
     !departmentIds?.length
   ) {
-    console.log('[DEBUG] getHospitalIds: No filters provided, returning empty array')
+    // [DEBUG] getHospitalIds: No filters provided, returning empty array')
     return []
   }
 

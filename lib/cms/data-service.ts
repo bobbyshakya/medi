@@ -343,7 +343,7 @@ function mapDoctor(item: any): DoctorData {
   return {
     _id: item._id || item.ID,
     doctorName: getValue(item, 'doctorName', 'Doctor Name') || 'Unknown Doctor',
-    specialization: extractMultiReference(item.specialization, 'specialty', 'Specialty Name', 'title', 'name'),
+    specialization: extractMultiReference(item.Specialist, 'specialty', 'Specialty Name', 'title', 'name', 'Specialist'),
     qualification: getValue(item, 'qualification', 'Qualification'),
     experienceYears: getValue(item, 'experienceYears', 'Experience (Years)'),
     designation: getValue(item, 'designation', 'Designation'),
@@ -368,7 +368,7 @@ function mapBranch(item: any): BranchData {
     branchImage: item.branchImage || item['Branch Image'] || null,
     logo: item.logo || item.Logo || null,
     doctors: extractMultiReference(item.doctor, 'doctorName', 'Doctor Name'),
-    specialists: extractMultiReference(item.specialist, 'specialty', 'Specialty Name', 'title', 'name'),
+    specialists: extractMultiReference(item.specialist || item.specialists, 'specialty', 'Specialty Name', 'title', 'name'),
     treatments: extractMultiReference(item.treatment, 'treatmentName', 'Treatment Name', 'title', 'name'),
     specialization: [
       ...extractMultiReference(item.specialty, 'specialty', 'Specialty Name', 'title', 'name'),
@@ -443,6 +443,7 @@ async function fetchAllBranches(): Promise<any[]> {
         'accreditation',
         'treatment',
         'specialist',
+        'specialists',
         'ShowHospital'
       )
       .limit(1000)
@@ -485,6 +486,22 @@ async function fetchAllTreatments(): Promise<any[]> {
       .find()
 
     memoryCache.set(cacheKey, res.items, CACHE_CONFIG.TREATMENTS * 1000)
+    return res.items
+  })
+}
+
+async function fetchAllDoctors(): Promise<any[]> {
+  const cacheKey = 'all_doctors'
+  const cached = memoryCache.get<any[]>(cacheKey)
+  if (cached) return cached
+
+  return memoryCache.dedupe(cacheKey, async () => {
+    const res = await wixClient.items
+      .query(COLLECTIONS.DOCTORS)
+      .limit(1000)
+      .find()
+
+    memoryCache.set(cacheKey, res.items, CACHE_CONFIG.HOSPITALS * 1000)
     return res.items
   })
 }
@@ -548,6 +565,33 @@ async function fetchAllSpecialists(): Promise<any[]> {
   })
 }
 
+async function fetchSpecialistsWithTreatments(
+  specialistIds: string[]
+): Promise<Record<string, any>> {
+  if (!specialistIds.length) return {}
+
+  const sortedIds = [...specialistIds].sort()
+  const cacheKey = `specialists_with_treatments_${sortedIds.slice(0, 10).join('_')}_${sortedIds.length}`
+  const cached = memoryCache.get<Record<string, any>>(cacheKey)
+  if (cached) return cached
+
+  // Fetch specialists WITH treatment and department included
+  const res = await wixClient.items
+    .query(COLLECTIONS.SPECIALTIES)
+    .hasSome('_id', sortedIds)
+    .include('treatment', 'department')
+    .limit(Math.min(sortedIds.length, 1000))
+    .find()
+
+  const result: Record<string, any> = {}
+  res.items.forEach((item) => {
+    result[item._id!] = mapSpecialistWithTreatments(item)
+  })
+
+  memoryCache.set(cacheKey, result, CACHE_CONFIG.HOSPITALS * 1000)
+  return result
+}
+
 async function fetchByIds<T>(
   collection: string,
   ids: string[],
@@ -563,7 +607,7 @@ async function fetchByIds<T>(
   const res = await wixClient.items
     .query(collection)
     .hasSome('_id', sortedIds)
-    .limit(Math.min(sortedIds.length, 500))
+    .limit(Math.min(sortedIds.length, 1000))
     .find()
 
   const result = res.items.reduce((acc, item) => {
@@ -645,12 +689,13 @@ export async function getAllCMSData(): Promise<CMSDataResponse> {
 
   return memoryCache.dedupe(cacheKey, async () => {
     // Fetch all base data in parallel
-    const [rawHospitals, rawBranches, rawTreatments, rawCities, rawSpecialists] = await Promise.all([
+    const [rawHospitals, rawBranches, rawTreatments, rawCities, rawSpecialists, rawDoctors] = await Promise.all([
       fetchAllHospitals(),
       fetchAllBranches(),
       fetchAllTreatments(),
       fetchAllCities(),
       fetchAllSpecialists(),
+      fetchAllDoctors(),
     ])
 
     // Fetch all states for proper city-state mapping
@@ -776,12 +821,12 @@ export async function getAllCMSData(): Promise<CMSDataResponse> {
       extractIds(mapped.specialists).forEach((id) => allSpecialistIds.add(id))
     })
 
-    // Batch fetch related data
+    // Batch fetch related data - specialists need treatment/department included
     const [doctorsMap, accreditationsMap, treatmentsMap, specialistsMap] = await Promise.all([
       fetchByIds(COLLECTIONS.DOCTORS, Array.from(allDoctorIds), mapDoctor),
       fetchByIds(COLLECTIONS.ACCREDITATIONS, Array.from(allAccreditationIds), mapAccreditation),
       fetchByIds(COLLECTIONS.TREATMENTS, Array.from(allTreatmentIds), mapTreatment),
-      fetchByIds(COLLECTIONS.SPECIALTIES, Array.from(allSpecialistIds), mapSpecialistWithTreatments),
+      fetchSpecialistsWithTreatments(Array.from(allSpecialistIds)),
     ])
 
     // Build hospitals with enriched branches
@@ -1100,10 +1145,21 @@ export async function getAllCMSData(): Promise<CMSDataResponse> {
     const response: CMSDataResponse = {
       hospitals,
       treatments,
+      doctors: rawDoctors.map(mapDoctor),
       totalHospitals: hospitals.length,
       totalTreatments: treatments.length,
+      totalDoctors: rawDoctors.length,
       lastUpdated: new Date().toISOString(),
     }
+
+    // Log data summary for debugging
+    console.log('[CMS Data] Final data summary:', {
+      totalHospitals: hospitals.length,
+      totalTreatments: treatments.length,
+      hospitalsWithBranches: hospitals.filter(h => (h.branches?.length || 0) > 0).length,
+      hospitalsWithTreatments: hospitals.filter(h => (h.treatments?.length || 0) > 0).length,
+      treatmentSample: treatments.slice(0, 3).map(t => ({ name: t.name, branchesCount: t.branchesAvailableAt?.length || 0 }))
+    })
     
     memoryCache.set(cacheKey, response, CACHE_CONFIG.HOSPITALS * 1000)
     return response
@@ -1344,3 +1400,63 @@ export const getCachedCMSData = createCachedFetcher(getAllCMSData, ['cms-all-dat
   revalidate: CACHE_CONFIG.HOSPITALS,
   tags: [CACHE_TAGS.ALL_DATA],
 })
+
+/**
+ * Get a single doctor by slug directly from Wix CMS
+ * This is more efficient than fetching all data and searching
+ */
+export async function getDoctorBySlug(slug: string): Promise<DoctorData | null> {
+  try {
+    const normalizedSlug = slug.toLowerCase().trim().replace(/[-_]+/g, '-')
+    
+    // Query the DoctorMaster collection - fetch all to find by slug
+    const res = await wixClient.items
+      .query(COLLECTIONS.DOCTORS)
+      .limit(1000)
+      .find()
+    
+    if (!res.items || res.items.length === 0) {
+      console.warn('[getDoctorBySlug] No doctors found in CMS')
+      return null
+    }
+    
+    // Find doctor by matching slug (generated from doctorName)
+    const foundDoctor = res.items.find((item: any) => {
+      const doctorName = item.doctorName || item.DoctorName || item.name || ''
+      const generatedSlug = generateSlug(doctorName)
+      const normalizedGeneratedSlug = generatedSlug.toLowerCase().trim().replace(/[-_]+/g, '-')
+      
+      return normalizedGeneratedSlug === normalizedSlug || 
+             generatedSlug === slug
+    })
+    
+    if (!foundDoctor) {
+      console.warn('[getDoctorBySlug] Doctor not found for slug:', slug)
+      return null
+    }
+    
+    // Map the doctor data to our type
+    return mapDoctorData(foundDoctor)
+  } catch (error) {
+    console.error('[getDoctorBySlug] Error fetching doctor:', error)
+    return null
+  }
+}
+
+/**
+ * Map raw Wix doctor data to our DoctorData type
+ */
+function mapDoctorData(item: any): DoctorData {
+  return {
+    _id: item._id || item.ID || '',
+    doctorName: item.doctorName || item.DoctorName || item.name || '',
+    specialization: extractMultiReference(item.Specialist, 'specialty', 'Specialty Name', 'title', 'name', 'Specialist'),
+    qualification: item.qualification || item.Qualification || null,
+    experienceYears: item.experienceYears?.toString() || item.ExperienceYears?.toString() || null,
+    designation: item.designation || item.Designation || null,
+    aboutDoctor: item.aboutDoctor || item.AboutDoctor || null,
+    aboutDoctorHtml: item.aboutDoctorHtml || item.AboutDoctorHtml || null,
+    profileImage: item.profileImage || item.ProfileImage || item.photo || item.Photo || null,
+    popular: item.popular || item.Popular || false,
+  }
+}

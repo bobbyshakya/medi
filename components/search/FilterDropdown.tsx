@@ -44,11 +44,13 @@ const FilterDropdown = React.memo(({ placeholder, filterKey, filters, updateSubF
   )
 
   const handleQueryChange = (q: string) => {
+    console.log(`[FilterDropdown] ${filterKey} query changed: "${q}"`)
     updateSubFilter(filterKey, "id", "")
     updateSubFilter(filterKey, "query", q)
   }
 
   const handleOptionSelect = (id: string, name: string) => {
+    console.log(`[FilterDropdown] ${filterKey} selected:`, { id, name })
     if (filterKey === 'location') {
       if (id.startsWith('city:')) {
         const cityId = id.split(':')[1]
@@ -71,6 +73,7 @@ const FilterDropdown = React.memo(({ placeholder, filterKey, filters, updateSubF
   }
 
   const handleClear = () => {
+    console.log(`[FilterDropdown] ${filterKey} cleared`)
     if (filterKey === 'location') {
       updateSubFilter('city', 'id', '')
       updateSubFilter('city', 'query', '')

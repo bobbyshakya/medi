@@ -418,7 +418,7 @@ export async function fetchStatesWithCountry(ids: string[]) {
  */
 export async function fetchDoctors(ids: string[]) {
   if (!ids.length) {
-    console.log('[DEBUG] fetchDoctors: No doctor IDs provided, returning empty object')
+    // [DEBUG] fetchDoctors: No doctor IDs provided, returning empty object')
     return {}
   }
 
@@ -477,7 +477,7 @@ export async function fetchDoctors(ids: string[]) {
  */
 export async function fetchSpecialistsWithDeptAndTreatments(specialistIds: string[]) {
   if (!specialistIds.length) {
-    console.log('[DEBUG] fetchSpecialistsWithDeptAndTreatments: No specialist IDs provided, returning empty object')
+    // [DEBUG] fetchSpecialistsWithDeptAndTreatments: No specialist IDs provided, returning empty object')
     return {}
   }
 
@@ -588,7 +588,7 @@ export async function fetchSpecialistsWithDeptAndTreatments(specialistIds: strin
  */
 export async function fetchTreatmentsWithFullData(treatmentIds: string[]) {
   if (!treatmentIds.length) {
-    console.log('[DEBUG] fetchTreatmentsWithFullData: No treatment IDs provided, returning empty object')
+    // [DEBUG] fetchTreatmentsWithFullData: No treatment IDs provided, returning empty object')
     return {}
   }
 
@@ -651,11 +651,11 @@ export async function fetchAllBranches(): Promise<any[]> {
   const cacheKey = 'all_branches'
   const cached = branchesCache.get(cacheKey)
   if (cached) {
-    console.log('[DEBUG] fetchAllBranches: Cache hit, returning cached branches')
+    // [DEBUG] fetchAllBranches: Cache hit, returning cached branches')
     return cached
   }
 
-  console.log('[DEBUG] fetchAllBranches: Cache miss, querying CMS for branches')
+  // [DEBUG] fetchAllBranches: Cache miss, querying CMS for branches')
 
   const res = await wixClient.items
     .query(COLLECTIONS.BRANCHES)
@@ -668,9 +668,11 @@ export async function fetchAllBranches(): Promise<any[]> {
       "accreditation",
       "treatment",
       "specialist",
+      "specialists",
       "ShowHospital",
       "department"
     )
+    .limit(1000)
     .find()
 
   console.log(`[DEBUG] fetchAllBranches: Found ${res.items.length} branches in CMS`)

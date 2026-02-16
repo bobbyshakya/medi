@@ -1,8 +1,10 @@
 // src/app/api/doctor-profile/route.ts
+// API route to get doctor profile by slug from Wix CMS
 
 import { NextResponse } from "next/server";
+import { getDoctorBySlug, getAllCMSData } from '@/lib/cms';
 
-// Data structure interface (can be moved to a types file later)
+// Data structure interface
 export interface DoctorProfile {
     _id: string;
     name: string;
@@ -46,123 +48,147 @@ export interface DoctorProfile {
     }>;
 }
 
-// Static data for the doctor profile
-const mockDoctor: DoctorProfile = {
-    _id: "doc2",
-    name: "Dr. Anant Kumar",
-    title: "Chairman - Urology Renal Transplant and Robotics of Max Saket Complex and Uro-Oncology of MSSH Saket",
-    specialty: "Urology, Kidney Transplant, Robotic Surgery",
-    photo: "https://max-website20-images.s3.ap-south-1.amazonaws.com/Dr_Anant_Kumar_50e3223068.jpg",
-    experience: "38+",
-    languages: ["English", "Hindi"],
-    hospitals: ["Max Hospital, Saket, India", "Max Hospital, Vaishali, India"],
-    contactPhone: "+91 926 888 0303",
-    whatsapp: "+91 926 888 0303",
-    rating: 4.8,
-    reviewsCount: 1800,
-    about: "Dr. Anant Kumar has 35 years of experience in Urology & Kidney Transplant. He is currently,Chairman of Uro-Oncology, Robotic & Kidney Transplantation, Max Hospital at Saket New Delhi & Max Hospital Vaishali. He is well-known as one of the best robotic and laparoscopic surgeons in India. He was also Director of the Department of Urology, Renal transplantation and Robotics at Fortis hospital & Apollo Hospital in Delhi & NCR. Prior to this, he was the Professor and Head, Urology & Kidney Transplantation at SGPGIMS, Lucknow. He was also a Consultant Urologist in Addenbrooke’s Hospital, Cambridge, UK.\nDr. Anant Kumar,widely known as the best urologist in NCR, is also known as the best robotic surgeon in Delhi and highly-skilled kidney stone specialist in Delhi. Being the best urologist in Delhi, he specialises in Kidney Transplantation, Robotic Assisted Laparoscopic Urology, Reno vascular Hypertension, Laparoscopic Urology, Urological Oncology, Laser Urological Surgery and Reconstructive Urology. Currently regarded as one of the most well-known Urologists in India.\nPopularly known as the best urologist in Delhi and Uro-oncology in Delhi, Dr. Anant Kumar has 35 years of experience in Urology & Renal Transplantation as a teacher and clinician. A leading urologist in Delhi NCR, he has truly earned the title of the best robotic surgeon in Delhi by performing over 500 robotic surgeries in the last 5 years. Also, He has done over 3500 kidney transplants in the last 30 years & has been retrieving all kidneys laparoscopically in the last 20 years and has done over 2200 lap donor nephrectomy.\n\u00a0He has extensive experience in Reno vascular hypertension. Being a highly skilled, experienced and best robotic surgeon in Delhi, he has done several hundred endourological procedures like PCNL, URS, flexible ureteroscopy, endopyelotomy, TURP, TUBT, optical urethrotomy etc. Dr. Anant Kumar has been removing prostate gland by laser for the last 10 years and has used Thulium, green light and Holmium laser. Presently he has been doing HOLEP by Lumenis machine. He has done all kinds of reconstructive urology of kidney, bladder & urethra. He has been doing urethral stricture surgery for the last 30 years and has performed over 700 such cases. For the last 20 years, he has developed special interest in laparoscopic urology & has now performed almost all laparoscopic urological procedures including radical Prostatectomy, Cystectomy and Partial Nephrectomy. He has started Robotic assisted urological surgery for the last 6 years for prostate, kidney and bladder cancer and other urological reconstructions like pyeloplasty, ureteric reimplantation bladder augmentation etc. and is well-known as one of the best robotic surgeons in Delhi.",
-    workExperience: [
-        {
-            position: "Chairman - Urology Renal Transplant and Robotics",
-            organization: "Max Saket Complex",
-            period: "Present",
-        },
-        {
-            position: "Professor and Head, Department of Urology & Renal Transplantation",
-            organization: "Sanjay Gandhi Post Graduate Institute of Medical Sciences, Lucknow",
-            period: "1988 - 1998",
-        },
-        {
-            position: "Director, Department of Urology, Robotic and Kidney Transplantation",
-            organization: "Fortis Group of Hospitals, Delhi and NCR",
-            period: "1998 - 2009",
-        },
-        {
-            position: "Senior Consultant, Urology and Transplantation",
-            organization: "Indraprastha Apollo Hospital, New Delhi",
-            period: "2009 - 2019",
-        },
-        {
-            position: "Consultant Urologist",
-            organization: "Addenbrooke's NHS foundation, Cambridge, UK",
-            period: "1998 - 2009",
-        },
-    ],
-    education: [
-        {
-            degree: "DNB (Urology)",
-            institution: "PGIMER, Chandigarh, India",
-            year: "",
-        },
-        {
-            degree: "M.Ch(Urology)",
-            institution: "PGIMER, Chandigarh, India",
-            year: "",
-        },
-        {
-            degree: "M.S(General Surgery)",
-            institution: "PGIMER, Chandigarh India",
-            year: "",
-        },
-        {
-            degree: "M.B.B.S",
-            institution: "King George Medical University, Lucknow, India",
-            year: "",
-        },
-    ],
-    memberships: [
-        "American Urological Association",
-        "British Association of Urological Surgeon",
-        "Societe Internationale D'Urologie",
-        "International Transplant Society",
-        "International Society of Nephrology",
-        "European Association of Urology",
-        "Asian society of Transplantation",
-        "Association of Surgeons of India",
-        "Urological Society of India",
-        "Indian Society of Organ Transplantation",
-        "Urological Society of India(Northern Chapter)",
-        "Indian Society of Peritoneal Dialysis",
-        "Indian Science Congress Society",
-    ],
-    awards: [
-        {
-            title: "Won many awards and distinctions during medical education and training",
-            year: "",
-            organization: "",
-        },
-    ],
-    specialtyInterests: ["Kidney Transplantation and Renovascular Hypertension", "Robotic and Laparoscopic Urology", "Stricture Urethra", "Uro - Oncology", "Laser Prostate Surgery"],
-    faqs: [
-        {
-            q: "What conditions does Dr. Anant Kumar specialize in treating?",
-            a: "Dr. Anant Kumar specializes in a wide range of urological conditions, including Kidney Transplantation, Robotic and Laparoscopic Urology, Stricture Urethra, Uro-Oncology, and Laser Prostate Surgery.",
-        },
-        {
-            q: "How can I book an appointment with Dr. Anant Kumar?",
-            a: "You can book an appointment by calling +91 926 888 0303 or through WhatsApp. Online booking is also available through the hospital's website.",
-        },
-        {
-            q: "Does Dr. Anant Kumar see international patients?",
-            a: "Yes, Dr. Anant Kumar sees international patients at Max Healthcare facilities. The hospital provides comprehensive support for international patients including visa assistance and travel coordination.",
-        },
-    ],
-    testimonials: [
-        {
-            id: 1,
-            name: "Ravi Sharma",
-            rating: 5,
-            text: "Dr. Anant Kumar is an excellent surgeon. He performed my kidney transplant with great expertise and care. Highly recommend him!",
-        },
-        {
-            id: 2,
-            name: "Priya Singh",
-            rating: 5,
-            text: "Exceptional care. Dr. Anant Kumar's experience and professionalism made me feel very comfortable throughout my treatment.",
-        },
-    ],
-};
+/**
+ * Generate slug from doctor name
+ */
+function generateSlug(name: string): string {
+    if (!name) return ''
+    return name
+        .toLowerCase()
+        .trim()
+        .replace(/^(dr\.?\s*)/i, '')
+        .replace(/[^\w\s-]/g, '')
+        .replace(/\s+/g, '-')
+        .replace(/-+/g, '-')
+}
 
-export async function GET() {
-    return NextResponse.json(mockDoctor);
+/**
+ * Convert CMS doctor data to profile format
+ */
+function convertToProfile(doctor: any, hospitalName: string): DoctorProfile {
+    const specNames = doctor.specialization?.map((s: any) => s.name).join(', ') || 'Specialist'
+    
+    return {
+        _id: doctor._id || '',
+        name: doctor.doctorName ? `Dr. ${doctor.doctorName}` : 'Doctor',
+        title: doctor.designation || specNames,
+        specialty: specNames,
+        photo: doctor.profileImage || '',
+        experience: doctor.experienceYears || '0',
+        languages: ['English', 'Hindi'],
+        hospitals: hospitalName ? [hospitalName] : [],
+        contactPhone: '',
+        whatsapp: '',
+        rating: 0,
+        reviewsCount: 0,
+        about: doctor.aboutDoctor || doctor.aboutDoctorHtml || '',
+        workExperience: [],
+        education: [],
+        memberships: [],
+        awards: [],
+        specialtyInterests: [],
+        faqs: [],
+        testimonials: [],
+    }
+}
+
+/**
+ * GET handler for fetching doctor profile by slug
+ * Query params: ?slug=doctor-slug
+ */
+export async function GET(request: Request) {
+    const { searchParams } = new URL(request.url);
+    const slug = searchParams.get('slug');
+    
+    if (!slug) {
+        return NextResponse.json(
+            { error: 'Missing slug parameter' },
+            { status: 400 }
+        );
+    }
+    
+    try {
+        // First try to get doctor directly from CMS
+        const doctor = await getDoctorBySlug(slug);
+        
+        if (!doctor) {
+            // Fallback: try to find from all CMS data
+            const { hospitals } = await getAllCMSData();
+            
+            // Search through hospitals for the doctor
+            let foundDoctor = null;
+            let hospitalName = '';
+            
+            for (const hospital of hospitals || []) {
+                // Check main hospital doctors
+                for (const d of hospital.doctors || []) {
+                    const doctorSlug = generateSlug(d.doctorName);
+                    if (doctorSlug === slug || doctorSlug === slug.toLowerCase()) {
+                        foundDoctor = d;
+                        hospitalName = hospital.hospitalName;
+                        break;
+                    }
+                }
+                
+                // Check branch doctors
+                if (!foundDoctor) {
+                    for (const branch of hospital.branches || []) {
+                        for (const d of branch.doctors || []) {
+                            const doctorSlug = generateSlug(d.doctorName);
+                            if (doctorSlug === slug || doctorSlug === slug.toLowerCase()) {
+                                foundDoctor = d;
+                                hospitalName = branch.branchName || hospital.hospitalName;
+                                break;
+                            }
+                        }
+                        if (foundDoctor) break;
+                    }
+                }
+                
+                if (foundDoctor) break;
+            }
+            
+            if (!foundDoctor) {
+                return NextResponse.json(
+                    { error: 'Doctor not found' },
+                    { status: 404 }
+                );
+            }
+            
+            // Convert to profile format
+            const profile = convertToProfile(foundDoctor, hospitalName);
+            return NextResponse.json(profile);
+        }
+        
+        // Get hospital info for this doctor
+        const { hospitals } = await getAllCMSData();
+        const doctorHospitals: string[] = [];
+        
+        hospitals?.forEach((h: any) => {
+            // Check main hospital
+            h.doctors?.forEach((d: any) => {
+                if (d._id === doctor._id) {
+                    doctorHospitals.push(h.hospitalName);
+                }
+            });
+            // Check branches
+            h.branches?.forEach((b: any) => {
+                b.doctors?.forEach((d: any) => {
+                    if (d._id === doctor._id) {
+                        doctorHospitals.push(b.branchName || h.hospitalName);
+                    }
+                });
+            });
+        });
+        
+        const profile = convertToProfile(doctor, doctorHospitals.join(', '));
+        return NextResponse.json(profile);
+        
+    } catch (error) {
+        console.error('[doctor-profile API] Error:', error);
+        return NextResponse.json(
+            { error: 'Failed to fetch doctor profile' },
+            { status: 500 }
+        );
+    }
 }
